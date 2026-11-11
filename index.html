@@ -92,6 +92,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--straw);outline-
 .item small{color:var(--muted);font-size:12px}
 .item canvas{width:96px;height:64px;flex:0 0 auto}
 .price{font-variant-numeric:tabular-nums}
+.upd{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);width:min(420px,calc(100% - 24px));background:var(--straw);color:#1b1407;border-radius:14px;padding:12px 14px;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.35);display:flex;flex-direction:column;gap:8px;font-size:14px}.upd .row{gap:8px;justify-content:flex-start;flex-wrap:wrap}.upd button{background:#1b1407;color:var(--straw);border:0;border-radius:10px;padding:8px 14px;font-weight:800;font:inherit;font-weight:800}.upd button.l{background:transparent;color:#1b1407;text-decoration:underline}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:var(--fg);color:var(--bg);font-weight:800;padding:10px 16px;border-radius:12px;opacity:0;transition:.25s;pointer-events:none;max-width:calc(100% - 40px);text-align:center;z-index:5}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .note{margin:0;font-size:13px;color:var(--muted)}
@@ -289,6 +290,7 @@ details summary{cursor:pointer}
   <section id="v-trophy" hidden style="flex-direction:column;gap:12px">
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 2.7</p>
     <div class="card" id="lbCard" hidden><span class="label">Рейтинг игроков</span><div id="lb"></div></div>
     <div class="card" id="teamCard" hidden><span class="label">Команды</span><div id="teamBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card shop" id="peekBox" hidden></div>
@@ -306,6 +308,7 @@ details summary{cursor:pointer}
   </section>
 </div>
 <div class="toast" id="toast" role="status"></div>
+<div class="upd" id="updBar" hidden role="alert"></div>
 
 <script id="horsedata" type="text/plain">А`накийя Ех Дункан|1|1|-5|k||Нема
 Абба|1|1|11|k
@@ -6872,6 +6875,26 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
     lastSave+=dt;if(lastSave>5){lastSave=0;save();ON.cs+=5;if(ON.cs>=120){ON.cs=0;cloudSave();pushPlayer()}ON.poll+=5;if(ON.be==='supa'&&ON.poll>=(raceHot()||view==='trophy'?15:45))supaRefresh();raceTick();if(DU&&view==='trophy')renderDuel();}}
   requestAnimationFrame(loop)}
 
+
+/* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
+const APP_V='2.7',SITE='https://aslan-bolshoy.github.io/podkova/';
+const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
+const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
+let updShown=null,updTimer=null,updLater=0;
+async function checkUpdate(){if(!onSite()&&!inApk())return;
+  try{const r=await fetch((onSite()?'./':SITE)+'version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
+    if(vNum(j.v)>vNum(APP_V)&&Date.now()>updLater)showUpdate(j)}catch(e){}}
+function busy(){try{return !!(ar&&ar.running)||!!(DU&&DU.go&&!DU.done)}catch(e){return false}}
+function doUpdate(v){try{save()}catch(e){}location.replace(location.pathname+'?v='+encodeURIComponent(v)+'&t='+Date.now())}
+function showUpdate(j){const el=$('#updBar');if(!el)return;updShown=j;clearInterval(updTimer);
+  if(inApk()){el.innerHTML=`<b>Вышла новая версия ${esc(j.v)}</b>${j.n?`<span>${esc(j.n)}</span>`:''}<span>Скачай новое приложение и установи поверх старого: <b>aslan-bolshoy.github.io/podkova/Podkova.apk</b></span><div class="row"><button id="updCopy">Скопировать ссылку</button><button class="l" id="updNo">Позже</button></div>`;
+    $('#updCopy').onclick=()=>{const t=SITE+'Podkova.apk';(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Ссылка скопирована — открой её в браузере'),()=>toast(t))};}
+  else{let left=15;const draw=()=>{el.innerHTML=`<b>Вышло обновление ${esc(j.v)}</b>${j.n?`<span>${esc(j.n)}</span>`:''}<span>${busy()?'Обновлю сразу после заезда.':`Игра обновится сама через ${left} с. Прогресс сохранится.`}</span><div class="row"><button id="updGo">Обновить сейчас</button><button class="l" id="updNo">Позже</button></div>`;
+      $('#updGo').onclick=()=>doUpdate(j.v);$('#updNo').onclick=later};
+    draw();updTimer=setInterval(()=>{if(busy())return draw();left--;if(left<=0){clearInterval(updTimer);doUpdate(j.v)}else draw()},1000)}
+  el.hidden=false;const n=$('#updNo');if(n)n.onclick=later}
+function later(){clearInterval(updTimer);updLater=Date.now()+10*60e3;const el=$('#updBar');if(el)el.hidden=true;toast('Хорошо, напомню через 10 минут')}
+setInterval(checkUpdate,3*60e3);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});setTimeout(checkUpdate,4000);
 function start(data){
   S=(data&&data.state)||load()||fresh();
   if(!data||!data.state){const mins=Math.min(180,(Date.now()-(S.seen||Date.now()))/60000);

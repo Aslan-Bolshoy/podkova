@@ -34,8 +34,8 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--straw);outline-
 .chips{display:flex;gap:6px}
 .chip{display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-weight:800;font-variant-numeric:tabular-nums;font-size:14px}
 .chip svg{width:16px;height:16px}
-.tabs{display:grid;grid-template-columns:repeat(5,1fr);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px}
-.tabs button{padding:9px 2px;border-radius:10px;font-weight:800;font-size:13px;color:var(--muted);min-width:0}
+.tabs{display:grid;grid-template-columns:repeat(6,1fr);background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px;gap:4px}
+.tabs button{padding:9px 1px;border-radius:10px;font-weight:800;font-size:12px;color:var(--muted);min-width:0}
 .tabs button[aria-selected="true"]{background:var(--straw);color:var(--straw-ink)}
 .scene{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#3a2616}
 .scene canvas{display:block;width:100%;height:auto;aspect-ratio:4/3;touch-action:manipulation}
@@ -101,7 +101,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--straw);outline-
 .task b{font-variant-numeric:tabular-nums;font-size:13px}
 .task small{color:var(--straw);font-weight:800;font-variant-numeric:tabular-nums}
 .task.done{opacity:.55}.task.done span{text-decoration:line-through}
-.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;background:var(--panel2);border-radius:12px;padding:4px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;overflow-x:auto;background:var(--panel2);border-radius:12px;padding:4px}
 .seg button{padding:8px;border-radius:9px;font-weight:800;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
 .drbtns{display:flex;gap:6px}
@@ -126,6 +126,11 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--straw);outline-
 .item .tag{font-size:12px;font-weight:800;color:var(--straw);font-variant-numeric:tabular-nums;white-space:nowrap}
 .dots{display:flex;gap:12px;font-weight:800;font-variant-numeric:tabular-nums;font-size:13px}
 .dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px}
+.racecard{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--straw) 16%,transparent);font-size:13px}.racecard .row{gap:8px;flex-wrap:wrap}.racecard ol{margin:0;padding-left:20px}.live{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--bad);margin-right:6px;animation:blink 1s infinite}@keyframes blink{50%{opacity:.25}}
+#disc{grid-auto-flow:row;grid-template-columns:repeat(3,1fr)}
+.tut{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(380px,calc(100% - 32px));background:var(--panel);border:2px solid var(--straw);border-radius:16px;padding:14px;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,.4);display:flex;flex-direction:column;gap:6px}.tut p{margin:0;font-size:14px;color:var(--fg)}
+.task.done{opacity:.55}
+.chat{max-height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:4px 0}.msg{font-size:14px;background:var(--panel2);border-radius:10px;padding:6px 10px;overflow-wrap:anywhere}.msg.mine{border-left:3px solid var(--straw)}.msg.feed{font-size:13px;color:var(--muted);background:transparent;border:1px dashed var(--line)}
 .cupnote{margin:0;font-size:13px;font-weight:800;color:var(--straw)}
 #sndBtn[aria-pressed="false"]{opacity:.55}
 .search{width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:12px;color:var(--fg);padding:11px 12px;font:inherit}
@@ -173,6 +178,7 @@ details summary{cursor:pointer}
     <button role="tab" data-v="stable" aria-selected="true">Денник</button>
     <button role="tab" data-v="arena" aria-selected="false">Манеж</button>
     <button role="tab" data-v="market" aria-selected="false">Ярмарка</button>
+    <button role="tab" data-v="base" aria-selected="false">База</button>
     <button role="tab" data-v="reg" aria-selected="false">Реестр</button>
     <button role="tab" data-v="trophy" aria-selected="false">Клуб</button>
   </nav>
@@ -218,6 +224,7 @@ details summary{cursor:pointer}
   <!-- ARENA -->
   <section id="v-arena" hidden style="flex-direction:column;gap:12px">
     <div class="card">
+      <div class="racecard" id="raceCard"></div>
       <div class="seg" id="disc"></div>
       <div class="row"><span class="label" id="clsLabel">Класс</span><span class="label" id="arHorse"></span></div>
       <div class="classes" id="classes"></div>
@@ -257,6 +264,15 @@ details summary{cursor:pointer}
     </div>
   </section>
 
+  <!-- BASE -->
+  <section id="v-base" hidden style="flex-direction:column;gap:12px">
+    <div class="card" id="dailyCard"></div>
+    <div class="card" id="seasonCard"></div>
+    <div class="card" id="trainCard"></div>
+    <div class="card"><span class="label">Постройки</span><div class="tasks" id="buildList"></div></div>
+    <div class="card"><span class="label">Персонал · зарплата каждую ночь</span><div class="tasks" id="staffList"></div></div>
+  </section>
+
   <!-- REGISTRY -->
   <section id="v-reg" hidden style="flex-direction:column;gap:12px">
     <div class="card">
@@ -272,7 +288,13 @@ details summary{cursor:pointer}
   <!-- TROPHIES -->
   <section id="v-trophy" hidden style="flex-direction:column;gap:12px">
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
+    <p class="note card" id="v2note" hidden>Чат, аукцион и случка заработают после одного шага: выполни на сервере Supabase файл podkova-setup-2.sql (SQL Editor → New query → Run).</p>
+    <div class="card" id="chatCard" hidden><span class="label">Чат клуба и лента событий</span><div class="chat" id="chatList"></div>
+      <form id="chatForm" class="row" style="flex-wrap:nowrap"><input id="chatIn" class="search" style="flex:1;min-width:0" maxlength="300" placeholder="Сообщение" autocomplete="off"><button class="btn" type="submit">Отправить</button></form></div>
     <div class="card" id="lbCard" hidden><span class="label">Рейтинг игроков</span><div id="lb"></div></div>
+    <div class="card" id="teamCard" hidden><span class="label">Команды</span><div id="teamBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
+    <div class="card" id="aucCard" hidden><span class="label">Аукцион</span><div class="shop" id="aucList"></div></div>
+    <div class="card" id="studCard" hidden><span class="label">Жеребцы для случки · для кобылы, выбранной в деннике</span><div class="shop" id="studList"></div></div>
     <div class="card" id="trCard" hidden><span class="label">Онлайн-рынок лошадей</span><div class="shop" id="tradeList"></div></div>
     <div class="card">
       <div class="row"><span class="label">Достижения</span><span class="label" id="achHead"></span></div>
@@ -5021,7 +5043,7 @@ function realHorse(r){const bk=baseBreed(r.b);const h=makeHorse(bk,r.n);const cs
   if(h.spots)for(let i=0;i<18;i++)h.spotDots.push([rnd(-88,-20),rnd(-150,-104),rnd(2.5,5)]);
   h.blaze=Math.random()<.35;h.socks=ri(0,2);h.sex=r.g==='k'?'f':r.g==='m'?'g':'m';h.breedName=disp(r.b);h.suitName=r.s||'';
   h.level=Math.max(1,Math.min(7,1+Math.floor(r.c/2)));h.permit=permitFrom(r.d);h.fitBonus=Math.min(.25,r.c*.02);h.bond=20;h.prone=r.t?Math.min(.5,(r.t-r.c)/r.t*.6):.15;
-  h.real={f:r.f,y:r.y,sire:r.sire,dam:r.dam,t:r.t,c:r.c};return h}
+  h.real={f:r.f,y:r.y,sire:r.sire,dam:r.dam,t:r.t,c:r.c};h.spec='end';h.spd=spdFor(h);h.gen=genesFromCoat(h.coat);return h}
 function realPrice(r){const age=r.y?new Date().getFullYear()-r.y:10;return Math.max(80,Math.round((BREEDS[baseBreed(r.b)].price*.8+r.c*20+(permitFrom(r.d)-40)*2)*(age>18?.6:1)/10)*10)}
 
 const INJ={
@@ -5057,7 +5079,7 @@ function renderInj(h){const el=$('#injBox');if(!el)return;let html='';const load
   if(h.inj){const i=h.inj,I=INJ[i.type];const pf=prognosis(h);const pw=pf>=80?'благоприятный':pf>=55?'осторожный':'неблагоприятный';const stuck=I.serious&&!i.treated;
     html+=`<div class="inj"><b>${I.n}</b><small>Причина: ${esc(i.cause)}</small><small>${stuck?'Без ветеринара эта травма не заживает':'Лечение и отдых: ещё '+i.left+' '+dn(i.left)}</small><small>Прогноз: ${pw}, ${Math.round(pf)}% на полное восстановление. Процедуры каждый день повышают шансы.</small>
     <div class="procs">${i.treated?'':`<button class="btn" data-vet>Ветеринар · ${I.vet}</button>`}${procsFor(i.type).map(([k,n])=>`<button class="btn ghost" data-proc="${k}" ${i.done&&i.done[k]?'disabled':''}>${n}</button>`).join('')}</div></div>`}
-  else if(h.rest>0&&!h.retired)html+=`<p class="note">Обязательный отдых после пробега: ещё ${h.rest} ${dn(h.rest)}. Соревнования недоступны.</p>`;
+  else if(h.rest>0&&!h.retired)html+=`<p class="note">Обязательный отдых после пробега: ещё ${h.rest} ${dn(h.rest)}. Соревнования недоступны.${h.pen?` Штрафные очки: ${h.pen}/100.`:''}</p>`;
   html+=`<div class="bar xp">Накопленная нагрузка${load>75?' · высокий риск травмы':load>50?' · лучше дать отдых':''}<b>${load}%</b><i><span style="width:${load}%;background:${load>75?'var(--bad)':load>50?'var(--warn)':'var(--good)'}"></span></i></div>`;
   if(h.chronic&&h.chronic.length)html+=`<p class="note">Хроническое: ${h.chronic.map(c=>CHRON[c]).join('; ')}.</p>`;
   if(h.med&&h.med.length)html+=`<details><summary class="note">Медкарта · ${h.med.length}</summary><ul class="med">${h.med.slice(-6).reverse().map(m=>`<li>День ${m.day}: ${INJ[m.type].n.toLowerCase()} — ${m.out==='full'?'полное восстановление':m.out==='chronic'?'хроническая проблема':m.out==='retired'?'завершение карьеры':'лечится'}</li>`).join('')}</ul></details>`;
@@ -5082,12 +5104,55 @@ function makeHorse(bk,name){
     sex:Math.random()<.5?'f':'m',permit:40,prone:+rnd(.05,.2).toFixed(2),load:0,hooves:85,stones:[],hunger:75,thirst:75,energy:100,bond:10,joy:0,xp:0,level:1,ribbons:[],dirt:[],manure:[]};
   if(h.pinto)for(let i=0;i<5;i++)h.patches.push([rnd(-95,70),rnd(-148,-88),rnd(16,30)]);
   if(h.spots)for(let i=0;i<18;i++)h.spotDots.push([rnd(-88,-20),rnd(-150,-104),rnd(2.5,5)]);
+  h.spec=specFor(h);h.spd=spdFor(h);fixHorse(h);
   addDirt(h,3);addManure(h,1);addStones(h,1);return h;
 }
+const SPEC={jump:{n:'Конкурная',d:'конкур'},dress:{n:'Выездковая',d:'выездка'},end:{n:'Пробежная',d:'пробеги'}};
+const SPEC_BY={arab:['end'],akhal:['end','jump'],kabard:['end','jump'],native:['end'],trot:['end','jump'],hann:['jump','dress'],half:['jump','dress','end'],friz:['dress'],appa:['jump','end'],tinker:['dress'],draft:['dress'],pony:['jump','dress']};
+function specFor(h){return h.real?'end':pick(SPEC_BY[h.breed]||['jump','dress','end'])}
+function spdFor(h){const B=BREEDS[h.breed]||{speed:0};return +(1+B.speed/220+rnd(-.06,.07)+(h.spec==='end'?.03:0)+(h.real?Math.min(.05,(h.real.c||0)*.006):0)).toFixed(3)}
+const specMul=(h,d)=>!h.spec?1:h.spec===d?1.06:.95;
+const gallopKmh=h=>Math.round(21*(h.spd||1));
+const CHAR={calm:{n:'спокойная',d:2,j:0,s:0,f:.03},hot:{n:'горячая',d:-2,j:1,s:.03,f:-.05},lazy:{n:'ленивая',d:0,j:-1,s:-.03,f:.04},shy:{n:'пугливая',d:-1,j:-2,s:0,f:-.02},brave:{n:'смелая',d:0,j:3,s:.01,f:0}};
+const charOf=h=>CHAR[h.char]||CHAR.calm;
+function fixHorse(h){if(!SPEC[h.spec])h.spec=specFor(h);if(!h.spd)h.spd=spdFor(h);
+  if(!CHAR[h.char]){h.char=pick(Object.keys(CHAR));h.spd=+(h.spd*(1+CHAR[h.char].s)).toFixed(3)}
+  if(h.form==null)h.form=50;h.sk=h.sk||{jump:0,dress:0,end:0};if(!h.gen)h.gen=genesFromCoat(h.coat)}
+/* генетика масти: E (рыжая/чёрная основа), A (гнедая), G (серая), Cr (буланая/соловая), D (мышастая), Rn (чалая) */
+function genesFromCoat(coat){const r=()=>Math.random()<.5,g={E:['E',r()?'E':'e'],A:['A',r()?'A':'a'],G:['g','g'],Cr:['n','n'],D:['n','n'],Rn:['n','n']};
+  if(['chestnut','palomino','isabella','igren'].includes(coat))g.E=['e','e'];
+  if(['black','mouse'].includes(coat))g.A=['a','a'];
+  if(['grey','dgrey'].includes(coat))g.G=['G',r()?'G':'g'];
+  if(['palomino','dun','gold'].includes(coat))g.Cr=['Cr','n'];if(coat==='isabella')g.Cr=['Cr','Cr'];
+  if(coat==='mouse')g.D=['D','n'];if(coat==='roan')g.Rn=['Rn','n'];return g}
+function coatFromGenes(g,pa,pb){const has=(k,a)=>g[k].includes(a);const n=(k,a)=>g[k].filter(x=>x===a).length;
+  if(has('G','G'))return Math.random()<.5?'grey':'dgrey';if(has('Rn','Rn'))return 'roan';
+  const red=n('E','e')===2,blk=!red&&n('A','a')===2,cr=n('Cr','Cr');
+  if(cr===2)return 'isabella';
+  if(red)return cr?'palomino':has('D','D')?'igren':Math.random()<.15?'igren':'chestnut';
+  if(blk)return has('D','D')?'mouse':'black';
+  if(cr)return Math.random()<.5?'dun':'gold';
+  const dark=[pa,pb].find(c=>['darkbay','karak','brown'].includes(c));return dark&&Math.random()<.5?dark:'bay'}
+const geneStr=g=>g?['E','A','G','Cr'].map(k=>g[k].join('')).join(' '):'';
+const cmToHands=cm=>{const inch=cm/2.54;return Math.floor(inch/4)+'.'+Math.min(3,Math.round(inch%4))};
+const TRAIN={lunge:{n:'Корда',e:12,f:8,sk:null,l:3,d:'форма'},interval:{n:'Интервалы в поле',e:25,f:10,sk:'end',l:8,d:'выносливость'},poles:{n:'Жерди и гимнастика',e:18,f:6,sk:'jump',l:6,d:'прыжок'},flat:{n:'Работа на манеже',e:15,f:6,sk:'dress',l:4,d:'выездка'},hack:{n:'Прогулка шагом',e:5,f:3,sk:null,l:-6,d:'отдых'}};
+function doTrain(k){const h=cur(),t=TRAIN[k];if(!canCompete(h))return;if(h.trainedDay===S.day){toast(`${h.name} сегодня уже тренировалась`);return}
+  if(h.energy<t.e+5){toast(`${h.name} устала. Тренировка завтра`);return}
+  h.trainedDay=S.day;h.energy=clamp(h.energy-t.e);h.form=clamp((h.form==null?50:h.form)+t.f*(S.build&&S.build.manege&&k!=='interval'?1.2:1));h.load=clamp((h.load||0)+t.l);
+  if(t.sk){h.sk=h.sk||{jump:0,dress:0,end:0};h.sk[t.sk]=Math.min(20,+(h.sk[t.sk]+.8*(S.staff&&S.staff.trainer?1.3:1)).toFixed(1))}
+  addXP(h,8);addDirt(h,k==='interval'?3:1);h.workedToday=true;dq('train');SFX.good();toast(`${t.n}: форма ${Math.round(h.form)}${t.sk?`, ${t.d} ${h.sk[t.sk]}`:''}`);ui();save()}
 function genOffers(){const keys=Object.keys(BREEDS);const out=[];const used=new Set();
   while(out.length<3){const k=pick(keys);if(used.has(k))continue;used.add(k);const h=makeHorse(k);h.price=Math.round(BREEDS[k].price*rnd(.9,1.15)/10)*10;out.push(h)}for(let i=0;i<2&&REG.length;i++){const h=realHorse(pickReal());h.price=realPrice({b:'',c:h.real.c,d:h.permit>=160?160:h.permit>=120?139:h.permit>=80?99:79,y:h.real.y});h.price=Math.round((h.price+BREEDS[h.breed].price*.2)/10)*10;out.push(h)}return out}
+const BUILD={manege:{n:'Крытый манеж',d:'нет штрафа погоды в конкуре и выездке, тренировки эффективнее',c:[600,900,1400]},
+  paddock:{n:'Левады',d:'ночью лошади гуляют: +энергия, меньше нагрузки',c:[250,450,700]},
+  clinic:{n:'Ветклиника',d:'травмы заживают быстрее',c:[500,800,1200]},
+  barn:{n:'Сенник',d:'каждую ночь +2 сена за уровень',c:[200,350,550]}};
+const STAFF={groom:{n:'Конюх',d:'ночью убирает навоз, половину грязи, кормит и поит',w:25},farrier:{n:'Коваль',d:'вынимает камни и подравнивает копыта',w:20},vet:{n:'Ветврач',d:'лечит болезни ночью',w:30},trainer:{n:'Тренер',d:'+25% опыта, тренировки дают больше умения',w:35}};
+const staffWage=()=>Object.keys(S.staff||{}).reduce((a,k)=>a+(S.staff[k]?STAFF[k].w:0),0);
+const stallPrice=()=>300+Math.max(0,S.stalls-10)*50;
+function buyStall(){const p=stallPrice();if(S.coins<p){toast(`Новый денник стоит ${p} монет`);return}S.coins-=p;S.stalls++;SFX.coin();toast(`Построен денник №${S.stalls}`);ui();save()}
 function fresh(){const h=makeHorse('arab','Звёздочка');h.coat='grey';h.blaze=false;h.socks=0;h.hunger=60;h.thirst=55;h.sex='f';
-  return{v:1,coins:120,day:1,food:{hay:6,carrot:4,apple:3},horses:[h],cur:h.id,offers:genOffers(),tasks:genTasks(),stats:{},ach:{},cups:0,weather:'sun',sound:true,seen:Date.now()}}
+  return{v:1,stalls:10,tut:0,coins:120,day:1,food:{hay:6,carrot:4,apple:3},horses:[h],cur:h.id,offers:genOffers(),tasks:genTasks(),stats:{},ach:{},cups:0,weather:'sun',sound:true,seen:Date.now()}}
 
 let S;
 const KEY='podkova-stable-v1';
@@ -5129,7 +5194,23 @@ const SFX={
 let lastNeigh=-9;
 /* weather */
 const WX={sun:'ясно',cloud:'пасмурно',rain:'дождь',snow:'снег'};
-function genWeather(){const r=Math.random();return r<.3?'sun':r<.55?'cloud':r<.8?'rain':'snow'}
+const SEASONS=['Весна','Лето','Осень','Зима'];
+const seasonOf=d=>Math.floor(((d||(S&&S.day)||1)-1)/14)%4,sDay=d=>((d||S.day)-1)%14+1,yearOf=d=>Math.floor(((d||S.day)-1)/56)+1;
+const isHot=()=>S&&seasonOf()===1&&S.weather==='sun';
+const wxName=()=>isHot()?'жара':WX[S.weather];
+function genWeather(){const se=S?seasonOf():0,r=Math.random();
+  const t=[[.3,.65,1,1],[.55,.8,1,1],[.2,.55,1,1],[.15,.5,.5,1]][se];return r<t[0]?'sun':r<t[1]?'cloud':r<t[2]?'rain':'snow'}
+/* календарь сезона: 14 дней, официальные старты дают очки рейтинга */
+const CAL={3:{n:'1-й этап Кубка',m:1.5,p:1},6:{n:'2-й этап Кубка',m:1.5,p:1},9:{n:'3-й этап Кубка',m:1.5,p:1},12:{n:'Чемпионат региона',m:2,p:1.5},14:{n:'Финал сезона',m:3,p:2,q:15}};
+const seasonKey=()=>yearOf()+'-'+seasonOf();
+const seasonPts=()=>S.season&&S.season.id===seasonKey()?S.season.pts:0;
+function calEvent(d){const e=CAL[sDay(d)];if(!e)return null;if(e.q&&seasonPts()<e.q)return Object.assign({closed:true},e);return e}
+function calAward(place){const e=calEvent();if(!e||e.closed)return 0;if(!S.season||S.season.id!==seasonKey())S.season={id:seasonKey(),pts:0,days:{}};
+  const pts=Math.round(([10,7,5,3,1][place]||1)*e.p),prev=S.season.days[S.day]||0;if(pts>prev){S.season.pts+=pts-prev;S.season.days[S.day]=pts;return pts-prev}return 0}
+const prizeMult=()=>{const e=calEvent();return Math.max(S.day%5===0?2:1,e&&!e.closed?e.m:1)};
+function seasonEnd(news,oldDay){const k=yearOf(oldDay)+'-'+seasonOf(oldDay);if(!S.season||S.season.id!==k)return;const pts=S.season.pts;
+  S.seasons=S.seasons||[];let r='';if(pts>=45){S.coins+=500;S.cups=(S.cups||0)+1;r='Чемпион сезона! +500 монет и кубок'}else if(pts>=25){S.coins+=200;r='Призёр сезона: +200 монет'}else if(pts>=10){S.coins+=60;r='Участник сезона: +60 монет'}
+  S.seasons.unshift({id:k,n:SEASONS[seasonOf(oldDay)]+' '+yearOf(oldDay),pts,r});S.seasons=S.seasons.slice(0,8);S.season=null;news.unshift(`Сезон окончен: ${pts} очков. ${r||'В следующем сезоне получится лучше'}`)}
 const cupDay=()=>S.day%5===0;
 /* achievements */
 const ACH=[
@@ -5139,7 +5220,7 @@ const ACH=[
   {id:'gp',n:'Гран-при',d:'Победа на 120 см или в Большом призе',r:150,ok:()=>!!S.stats.gp},
   {id:'cup',n:'Обладатель кубка',d:'Победи в Кубке выходного дня',r:80,ok:()=>(S.cups||0)>0},
   {id:'foal',n:'Пополнение',d:'Дождись первого жеребёнка',r:40,ok:()=>(S.stats.foals||0)>0},
-  {id:'herd',n:'Полный двор',d:'Займи все 6 денников',r:60,ok:()=>S.horses.length>=6},
+  {id:'herd',n:'Полный двор',d:'Поставь лошадей в 10 денников',r:60,ok:()=>S.horses.length>=10},
   {id:'lvl5',n:'Опытная пара',d:'Лошадь 5 уровня',r:50,ok:()=>S.horses.some(h=>h.level>=5)},
   {id:'lvl10',n:'Звезда манежа',d:'Лошадь 10 уровня',r:150,ok:()=>S.horses.some(h=>h.level>=10)},
   {id:'groom',n:'Чистюля',d:'Счисти 100 пятен грязи',r:40,ok:()=>(S.stats.spots||0)>=100,prog:()=>Math.min(100,S.stats.spots||0)+'/100'},
@@ -5153,89 +5234,219 @@ function checkAch(){S.ach=S.ach||{};ACH.forEach(a=>{if(!S.ach[a.id]&&a.ok()){S.a
 const sellPrice=h=>Math.round(BREEDS[h.breed].price*.6+h.level*25+h.ribbons.length*5);
 function addXP(h,n){h.xp+=n;while(h.level<10&&h.xp>=need(h.level)){h.xp-=need(h.level);h.level++;toast(`${h.name} теперь на уровне ${h.level}`)}if(h.level>=10)h.xp=Math.min(h.xp,need(10))}
 
-/* ============ HORSE DRAWING ============ */
-function drawLeg(c,x,y,a,b,up,low,sock,fea,feaC){
-  const kx=x-52*Math.sin(a),ky=y+52*Math.cos(a);
-  const fx=kx-46*Math.sin(a+b),fy=ky+46*Math.cos(a+b);
-  c.lineCap='round';
-  c.strokeStyle=up;c.lineWidth=24;c.beginPath();c.moveTo(x,y);c.lineTo(x+(kx-x)*.5,y+(ky-y)*.5);c.stroke();
-  c.lineWidth=14;c.beginPath();c.moveTo(x,y);c.lineTo(kx,ky);c.stroke();
-  c.strokeStyle=low;c.lineWidth=10;c.beginPath();c.moveTo(kx,ky);c.lineTo(fx,fy);c.stroke();
-  if(sock){c.strokeStyle=typeof sock==='string'?sock:'#f3f0e8';c.lineWidth=typeof sock==='string'?13:10.5;c.beginPath();c.moveTo(kx+(fx-kx)*.45,ky+(fy-ky)*.45);c.lineTo(fx,fy);c.stroke()}
-  if(fea){c.fillStyle=feaC;c.beginPath();c.ellipse(fx+2,fy-3,10,8,0,0,7);c.fill()}
-  c.save();c.translate(fx,fy);c.rotate(a+b);c.fillStyle='#2a221d';
-  c.beginPath();c.moveTo(-6,-1);c.lineTo(7,-1);c.lineTo(9,9);c.lineTo(-7,9);c.closePath();c.fill();c.restore();
-}
-function bodyPath(c,br){c.beginPath();c.ellipse(0,-112+br,72,34,0,0,Math.PI*2);c.moveTo(-11,-118);c.arc(-48,-118,37,0,Math.PI*2);c.moveTo(77,-114);c.arc(44,-114,33,0,Math.PI*2)}
+/* ============ HORSE DRAWING v2: анатомия, суставы и настоящие аллюры ============ */
+const sh=(col,f)=>/^#[0-9a-f]{6}$/i.test(col)?shade(col,f):col;
+const shL=(col,f)=>{if(!/^#[0-9a-f]{6}$/i.test(col))return col;const n=parseInt(col.slice(1),16);const m=v=>Math.round(v+(255-v)*f);return `rgb(${m((n>>16)&255)},${m((n>>8)&255)},${m(n&255)})`};
+/* фазы ног: lf/rf передние, lh/rh задние; duty — доля опоры; stride — длина шага; lift — подъём [перед,зад] */
+/* фазы ног: lf/rf передние, lh/rh задние; duty — доля опоры; stride — шаг копыта; lift — подъём [перед,зад] */
+const GAIT={
+  walk:{off:{lh:0,lf:.25,rh:.5,rf:.75},duty:.62,stride:58,lift:[18,13],bob:1.6,bobN:2,nod:.06,pitch:0,tail:.15},
+  trot:{off:{lf:0,rh:0,rf:.5,lh:.5},duty:.42,stride:80,lift:[34,24],bob:4,bobN:2,nod:.015,pitch:0,tail:.45},
+  canter:{off:{rh:0,lh:.3,rf:.3,lf:.52},duty:.34,stride:100,lift:[40,30],bob:6,bobN:1,nod:.08,pitch:.05,tail:.85}
+};
+const ROOT={lf:[50,-96],rf:[44,-98],lh:[-58,-98],rh:[-64,-100]};
+const LEN={f:[50,56],h:[52,58]};
+const OL='rgba(34,20,12,.62)';
+function ik(rx,ry,tx,ty,a,b,sg){let dx=tx-rx,dy=ty-ry,d=Math.hypot(dx,dy);const mx=a+b-.5,mn=Math.abs(a-b)+1;
+  if(d>mx){tx=rx+dx/d*mx;ty=ry+dy/d*mx;d=mx}if(d<mn)d=mn;
+  const base=Math.atan2(ty-ry,tx-rx),al=Math.acos(Math.max(-1,Math.min(1,(a*a+d*d-b*b)/(2*a*d))));
+  return[rx+a*Math.cos(base+sg*al),ry+a*Math.sin(base+sg*al),tx,ty]}
+function capsule(c,x1,y1,x2,y2,w1,w2){const a=Math.atan2(y2-y1,x2-x1),nx=-Math.sin(a),ny=Math.cos(a);
+  c.beginPath();c.moveTo(x1+nx*w1/2,y1+ny*w1/2);c.lineTo(x2+nx*w2/2,y2+ny*w2/2);c.arc(x2,y2,w2/2,a+Math.PI/2,a-Math.PI/2,true);
+  c.lineTo(x1-nx*w1/2,y1-ny*w1/2);c.arc(x1,y1,w1/2,a-Math.PI/2,a+Math.PI/2,true);c.closePath();c.fill();
+  if(c.__ol){c.strokeStyle=OL;c.stroke()}}
+const olStroke=c=>{if(c.__ol){c.strokeStyle=OL;c.stroke()}};
+/* одна нога: front — передняя (колено вперёд), иначе задняя (скакательный сустав назад) */
+function leg2(c,front,rx,ry,hx,hy,flex,col,low,sock,fea,feaC){
+  const [a,b]=front?LEN.f:LEN.h;
+  const fx=hx+(-6+flex*14),fy=hy-14+flex*3;
+  let [jx,jy]=ik(rx,ry,fx,fy,a,b-13,front?-1:1);
+  // передняя нога под весом (стоя и в фазе опоры) прямая: колено не сгибается
+  if(front&&flex===0){const L=a+b-13;jx=rx+(fx-rx)*a/L;jy=ry+(fy-ry)*a/L}
+  c.fillStyle=col;
+  if(front)capsule(c,rx,ry-18,jx,jy,32,14);
+  else{capsule(c,rx+4,ry-20,jx,jy,40,15);c.beginPath();c.moveTo(jx-7,jy-9);c.quadraticCurveTo(jx-14,jy-1,jx-5,jy+6);c.closePath();c.fill()}
+  c.fillStyle=low;capsule(c,jx,jy,fx,fy,12,11);
+  if(sock){c.fillStyle=typeof sock==='string'?sock:'#f4f0e6';const mx=jx+(fx-jx)*.4,my=jy+(fy-jy)*.4;capsule(c,mx,my,fx,fy,typeof sock==='string'?14:12,11.5)}
+  const pc=sock&&typeof sock!=='string'?'#f4f0e6':low;c.fillStyle=pc;c.beginPath();c.ellipse(fx,fy,7.5,6.5,0,0,7);c.fill();olStroke(c);
+  capsule(c,fx,fy,hx+1,hy-4,10,10.5);
+  if(fea){c.fillStyle=feaC;c.beginPath();c.moveTo(fx-4,fy-9);c.quadraticCurveTo(fx-16,fy+4,hx-8,hy+1);c.lineTo(hx+7,hy+1);c.quadraticCurveTo(fx+7,fy,fx+5,fy-6);c.closePath();c.fill()}
+  // копыто: округлое, с бликом
+  const ang=(Math.atan2(hy-fy,hx-fx)-Math.PI/2)*.6+.2;
+  c.save();c.translate(hx+1,hy-4);c.rotate(ang);c.fillStyle=sock&&typeof sock!=='string'?'#9b8a70':'#33271f';
+  c.beginPath();c.moveTo(-7,-2);c.quadraticCurveTo(0,-5,7,-2);c.lineTo(10,5);c.quadraticCurveTo(1,8,-8,5);c.closePath();c.fill();olStroke(c);
+  c.fillStyle='rgba(255,255,255,.18)';c.beginPath();c.ellipse(1,0,5,1.4,0,0,7);c.fill();c.restore()}
+function hoofTarget(k,G,p){const front=k[1]==='f';const u=((p-G.off[k])%1+1)%1;
+  if(u<G.duty){const s=u/G.duty;return[G.stride*(.5-s),0,0]}
+  const s=(u-G.duty)/(1-G.duty),e=s*s*(3-2*s);const lift=G.lift[front?0:1]*Math.pow(Math.sin(Math.PI*s),.8);
+  return[G.stride*(-.5+e),-lift,Math.sin(Math.PI*s)]}
+function bodyPath(c){c.beginPath();c.moveTo(40,-154);
+  c.bezierCurveTo(24,-146,6,-142,-12,-143);c.bezierCurveTo(-30,-144,-46,-150,-62,-154);
+  c.bezierCurveTo(-80,-157,-94,-150,-98,-136);c.bezierCurveTo(-103,-120,-100,-102,-90,-92);
+  c.bezierCurveTo(-82,-84,-72,-80,-62,-84);c.bezierCurveTo(-48,-71,-26,-67,-6,-67);
+  c.bezierCurveTo(14,-67,30,-71,42,-80);c.bezierCurveTo(52,-86,60,-92,66,-100);
+  c.bezierCurveTo(76,-110,79,-126,72,-138);c.bezierCurveTo(64,-150,52,-156,40,-154);c.closePath()}
+const CREST=[[14,-150],[40,-170],[60,-194],[82,-208]];
+function neckPath(c){c.beginPath();c.moveTo(14,-150);c.bezierCurveTo(40,-170,60,-194,82,-208);
+  c.bezierCurveTo(93,-215,106,-208,107,-195);c.bezierCurveTo(103,-174,90,-148,79,-120);c.lineTo(28,-108);c.closePath()}
+function headPath(c){c.beginPath();c.moveTo(-6,-12);c.bezierCurveTo(8,-17,30,-15,46,-11);c.bezierCurveTo(60,-8,64,6,56,12);
+  c.bezierCurveTo(50,16,42,15,38,12);c.bezierCurveTo(30,12,26,15,20,19);c.bezierCurveTo(8,28,-8,25,-10,12);c.bezierCurveTo(-12,2,-12,-6,-6,-12);c.closePath()}
+const HP={};
 function drawHorse(c,h,o){
   const B=BREEDS[h.breed],C=COATS[h.coat];
   const t=o.t||0,g=o.gallop;
   const body=C.body,low=C.legs||body,mane=C.mane;
   const s=o.s*scaleOf(h);
+  const gk=({w:'walk',t:'trot',c:'canter'})[o.gait]||o.gait||'canter';o=Object.assign({},o,{gait:gk});
+  const moving=g!=null&&!o.air;const G=moving?GAIT[gk]||GAIT.canter:null;
+  // фаза шага привязана к пройденному пути — копыта не скользят по земле
+  let p=g!=null?((g/(Math.PI*2))%1+1)%1:0;
+  if(G&&o.dist!=null){const L=G.stride*s/G.duty;p=((o.dist/L)%1+1)%1}
+  let bob=0,pitch=o.pitch||0,nod=0;
+  if(G){bob=-G.bob*Math.abs(Math.sin(Math.PI*p*G.bobN));if(G.bobN===1)bob=-G.bob*(.5+.5*Math.sin(Math.PI*2*p+.6));pitch+=G.pitch*Math.sin(Math.PI*2*p+.4);nod=G.nod*Math.sin(Math.PI*2*p*(G.bobN===2?2:1)+1.2)}
+  else if(g==null)bob=Math.sin(t*1.7)*.6;
+  HP.bob=bob;HP.pitch=pitch;HP.rise=G&&gk==='trot'?Math.max(0,Math.sin(Math.PI*2*p*2))*5:0;
   c.save();c.translate(o.x,o.y);c.scale(s,s);
-  let bob=0,L;
-  if(g!=null){
-    if(o.air)L={fh:[.55,-.6],ff:[-1.0,1.7],nh:[.75,-.7],nf:[-1.15,1.8]};
-    else{const f=(off,front)=>{const a=Math.sin(g+off)*.62;const lift=Math.max(0,Math.sin(g+off+1.6));return[a,front?lift*1.3:-lift*.7]};
-      L={fh:f(0,0),nh:f(.5,0),ff:f(2.4,1),nf:f(2.9,1)};bob=-Math.abs(Math.sin(g))*5}
-  }else L={fh:[0,0],nh:[.04,0],ff:[0,0],nf:[-.04,0]};
-  c.translate(0,bob);
-  const br=g==null?Math.sin(t*1.7)*1.1:0;
-  const socks=h.socks||0;const feaC=h.breed==='tinker'?'#f3f0e8':mane;
-  drawLeg(c,-54,-108,L.fh[0],L.fh[1],shade(body,.72),shade(low.startsWith('#')?low:'#000000',.72),socks>=3,B.feather,feaC);
-  drawLeg(c,34,-108,L.ff[0],L.ff[1],shade(body,.72),shade(low,.72),socks>=4,B.feather,feaC);
-  // tail
-  c.strokeStyle=mane;c.lineCap='round';
-  if(g!=null){c.lineWidth=h.thinTail?7:15;c.beginPath();c.moveTo(-100,-128);c.quadraticCurveTo(-135,-132+Math.sin(g*2)*4,-166,-112);c.stroke();
-    c.lineWidth=h.thinTail?2.5:6;c.beginPath();c.moveTo(-104,-124);c.quadraticCurveTo(-140,-122,-170,-100);c.stroke()}
-  else{const sw=Math.sin(t*1.2)*6+(o.swish||0);
-    c.lineWidth=h.thinTail?7:16;c.beginPath();c.moveTo(-100,-128);c.quadraticCurveTo(-124+sw*.4,-100,-112+sw,-36);c.stroke();
-    c.lineWidth=h.thinTail?2.5:6;c.beginPath();c.moveTo(-104,-120);c.quadraticCurveTo(-132+sw*.5,-90,-125+sw*1.2,-32);c.stroke()}
-  // body
-  c.fillStyle=body;bodyPath(c,br*.3);c.fill();
-  if(h.pinto||h.spots){c.save();bodyPath(c,br*.3);c.clip();
-    if(h.pinto){c.fillStyle='#f3f0e8';h.patches.forEach(p=>{c.beginPath();c.ellipse(p[0],p[1],p[2]*1.3,p[2],p[0]*.01,0,7);c.fill()})}
-    if(h.spots){c.fillStyle='#f3f0e8';c.beginPath();c.ellipse(-58,-128,44,30,-.2,0,7);c.fill();c.fillStyle=shade(body,.7);h.spotDots.forEach(p=>{c.beginPath();c.arc(p[0],p[1],p[2],0,7);c.fill()})}
+  c.__ol=true;c.lineWidth=Math.max(2.2,1.2/s);c.lineJoin='round';c.lineCap='round';
+  const cp=Math.cos(pitch),sp=Math.sin(pitch);const R=k=>{const [x,y]=ROOT[k];const yy=y+110;return[x*cp-yy*sp,-118+x*sp+yy*cp+bob]};
+  const legs={};
+  ['lf','rf','lh','rh'].forEach(k=>{const [rx,ry]=R(k);const front=k[1]==='f';let hx,hy,fl=0;
+    const sx=ROOT[k][0]+(front?2:-16);
+    if(o.air){if(front){hx=rx+18;hy=ry+40;fl=1}else{hx=rx-48;hy=ry+66;fl=.5}}
+    else if(G){const [dx,dy,f]=hoofTarget(k,G,p);hx=sx+dx;hy=dy;fl=f}
+    else{hx=sx+(k==='rh'?8:k==='rf'?-3:0)+(k==='lh'&&o.rest?4:0);hy=k==='lh'&&o.rest?-3:0;fl=k==='lh'&&o.rest?.5:0}
+    legs[k]=[front,rx,ry,hx,hy,fl]});
+  const socks=h.socks||0;const feaC=h.breed==='tinker'?'#f4f0e6':mane;const farB=sh(body,.68),farL=sh(low,.68);
+  // дальние ноги
+  leg2(c,...legs.rh,farB,farL,socks>=3,B.feather,feaC);leg2(c,...legs.rf,farB,farL,socks>=4,B.feather,feaC);
+  // хвост
+  c.save();c.translate(0,-118+bob);c.rotate(pitch);c.translate(0,110);
+  {const sw=g==null?Math.sin(t*1.1)*5+(o.swish||0):Math.sin((G?p*Math.PI*2:g)*2)*4;const lift=G?G.tail:o.air?.9:0;
+    const ex=-104-lift*58+sw*.4,ey=-30-lift*80,W=h.thinTail?9:22;
+    c.fillStyle=mane;c.beginPath();c.moveTo(-94,-146);
+    c.bezierCurveTo(-114-lift*20,-142-lift*14,-112+sw*.5-lift*44,ey+56-lift*12,ex-W*.55+sw,ey);
+    c.quadraticCurveTo(ex-W*.2+sw,ey+8,ex+sw,ey+2);c.quadraticCurveTo(ex+W*.25+sw,ey+9,ex+W*.6+sw,ey-2);
+    c.bezierCurveTo(-98+sw*.4-lift*36,ey+50-lift*14,-96-lift*12,-126-lift*10,-88,-136);c.closePath();c.fill();olStroke(c);
+    c.strokeStyle=shL(mane,.18);c.lineWidth=Math.max(1.6,1/s);for(let i=0;i<3;i++){const f=(i-1)*.3;c.beginPath();c.moveTo(-98,-134);c.bezierCurveTo(-110-lift*16,-126-lift*14,-106+sw*.5-lift*40+f*W*.6,ey+50-lift*12,ex+f*W*.7+sw,ey-4);c.stroke()}
+    c.lineWidth=Math.max(2.2,1.2/s)}
+  c.restore();
+  // ближние ноги (верх уходит под корпус)
+  const legC=sh(body,.9);
+  leg2(c,...legs.lh,legC,low,socks>=1,B.feather,feaC);
+  leg2(c,...legs.lf,legC,low,h.inj&&INJ[h.inj.type]&&INJ[h.inj.type].leg?'#5b8de0':socks>=2,B.feather,feaC);
+  c.save();c.translate(0,-118+bob);c.rotate(pitch);c.translate(0,110);
+  // корпус
+  const gr=c.createLinearGradient(0,-158,0,-66);gr.addColorStop(0,shL(body,.2));gr.addColorStop(.42,body);gr.addColorStop(1,sh(body,.72));
+  c.fillStyle=gr;bodyPath(c);c.fill();
+  if(h.pinto||h.spots){c.save();bodyPath(c);c.clip();
+    if(h.pinto){c.fillStyle='#f4f0e6';h.patches.forEach(q=>{c.beginPath();c.ellipse(q[0]*.9,q[1],q[2]*1.35,q[2],q[0]*.01,0,7);c.fill()})}
+    if(h.spots){c.fillStyle='#f4f0e6';c.beginPath();c.ellipse(-58,-130,44,30,-.2,0,7);c.fill();c.fillStyle=sh(body,.7);h.spotDots.forEach(q=>{c.beginPath();c.arc(q[0]*.9,q[1],q[2],0,7);c.fill()})}
     c.restore()}
-  c.fillStyle='rgba(0,0,0,.13)';c.beginPath();c.ellipse(0,-86,56,9,0,0,7);c.fill();
-  c.fillStyle=`rgba(255,255,255,${C.sheen?.24:.09})`;c.beginPath();c.ellipse(-8,-133,54,9,-.04,0,7);c.fill();
-  if(o.rug&&h.rug){c.save();bodyPath(c,br*.3);c.clip();c.fillStyle=h.rug;c.fillRect(-92,-152,178,50);c.fillStyle='rgba(255,255,255,.55)';c.fillRect(-92,-104,178,3);c.fillStyle='rgba(0,0,0,.15)';c.fillRect(-92,-152,178,8);c.restore()}
-  if(o.saddle){c.fillStyle=h.pad||'#2f3f6a';c.beginPath();c.roundRect(-32,-150,56,36,6);c.fill();c.fillStyle='rgba(255,255,255,.5)';c.fillRect(-32,-118,56,2);
-    c.fillStyle='#4a2c17';c.beginPath();c.ellipse(-4,-148,26,8,0,0,7);c.fill();c.fillRect(-6,-140,6,40)}
-  drawLeg(c,-42,-106,L.nh[0],L.nh[1],body,low,socks>=1,B.feather,feaC);
-  drawLeg(c,46,-106,L.nf[0],L.nf[1],body,low,h.inj&&INJ[h.inj.type]&&INJ[h.inj.type].leg?'#5b8de0':socks>=2,B.feather,feaC);
-  // neck + head
-  c.save();c.translate(48,-128);c.rotate(o.neck||0);
-  c.fillStyle=body;c.beginPath();c.moveTo(-26,22);c.quadraticCurveTo(-8,-36,6,-68);c.lineTo(36,-56);c.quadraticCurveTo(26,-16,34,24);c.closePath();c.fill();
-  if(h.pinto&&h.patches[0]){c.fillStyle='#f3f0e8';c.beginPath();c.ellipse(14,-10,12,18,.3,0,7);c.fill()}
-  // mane
-  c.strokeStyle=mane;c.lineWidth=h.thickMane?16:11;c.beginPath();c.moveTo(4,-70);c.quadraticCurveTo(-12,-36,-28,14);c.stroke();
-  c.fillStyle=mane;const wv=g!=null?Math.sin(g*2):Math.sin(t*1.3)*.4;
-  for(let i=0;i<8;i++){const u=i/7,qx=(1-u)*(1-u)*4+2*u*(1-u)*-12+u*u*-28,qy=(1-u)*(1-u)*-70+2*u*(1-u)*-36+u*u*14;
-    c.beginPath();c.moveTo(qx,qy-6);c.lineTo(qx-(h.thickMane?19:13)-wv*3-(g!=null?6:0),qy+2);c.lineTo(qx+1,qy+5);c.closePath();c.fill()}
-  // head
-  c.save();c.translate(20,-62);c.rotate(.95);
-  const chew=o.chew?Math.sin(t*14)*1.4:0;
-  c.fillStyle=body;
-  c.beginPath();c.ellipse(14,4,17,15,0,0,7);c.fill();
-  c.beginPath();c.ellipse(28,0,28,12.5,0,0,7);c.fill();
-  c.beginPath();c.arc(50,3+chew*.5,12,0,7);c.fill();
-  c.fillStyle='rgba(0,0,0,.17)';c.beginPath();c.arc(52,5+chew*.5,9,0,7);c.fill();
-  if(h.blaze){c.fillStyle='#f3f0e8';c.beginPath();c.ellipse(30,-8,23,4,-.04,0,7);c.fill()}
-  if(h.grey2){c.strokeStyle='#ece8e0';c.lineWidth=1;c.lineCap='round';c.beginPath();c.moveTo(20,-11.5);c.lineTo(24,-13);c.moveTo(25,-10.5);c.lineTo(26.6,-11.2);c.stroke()}
-  c.fillStyle='#1a1210';c.beginPath();c.ellipse(57,-1,2.6,1.6,.5,0,7);c.fill();
-  const back=o.earsBack;
-  c.fillStyle=body;c.beginPath();c.moveTo(-3,-9);c.lineTo(9,-12);c.lineTo(back?-28:-18,back?-14:-30);c.closePath();c.fill();
-  c.fillStyle=shade(body,.65);c.beginPath();c.moveTo(0,-11);c.lineTo(6,-12);c.lineTo(back?-22:-14,back?-15:-26);c.closePath();c.fill();
-  c.fillStyle=mane;c.beginPath();c.moveTo(-2,-12);c.quadraticCurveTo(10,-15,19,-4);c.quadraticCurveTo(8,-6,-2,-4);c.fill();
-  if(o.blink){c.strokeStyle='#1a1210';c.lineWidth=1.8;c.beginPath();c.moveTo(9,-5);c.quadraticCurveTo(13,-3,17,-5);c.stroke()}
-  else{c.fillStyle='#16100d';c.beginPath();c.arc(13,-5,3.7,0,7);c.fill();c.fillStyle='#fff';c.beginPath();c.arc(14.3,-6.3,1.2,0,7);c.fill()}
-  c.restore();c.restore();
-  // dirt
-  if(o.dirt!==false&&h.dirt.length){h.dirt.forEach(d=>{c.fillStyle='rgba(96,64,34,.78)';c.beginPath();c.ellipse(d[0],d[1],d[2],d[2]*.75,d[0]*.03,0,7);c.fill();
+  if(h.coat==='dgrey'||h.coat==='grey'){c.save();bodyPath(c);c.clip();c.fillStyle='rgba(255,255,255,.22)';for(let i=0;i<24;i++){const x=-90+(i*37%160),y=-142+(i*23%60);c.beginPath();c.arc(x,y,4+(i%3),0,7);c.fill()}c.restore()}
+  // блики и мягкие тени мышц
+  c.fillStyle=`rgba(255,255,255,${C.sheen?.3:.14})`;c.beginPath();c.ellipse(-62,-142,20,6,-.2,0,7);c.fill();c.beginPath();c.ellipse(-10,-138,30,4.5,0,0,7);c.fill();
+  c.fillStyle='rgba(0,0,0,.035)';c.beginPath();c.ellipse(-70,-112,24,28,.2,0,7);c.fill();
+  c.strokeStyle=OL;bodyPath(c);c.stroke();
+  if(o.rug&&h.rug){c.save();bodyPath(c);c.clip();c.fillStyle=h.rug;c.beginPath();c.moveTo(36,-160);c.lineTo(-96,-160);c.lineTo(-100,-94);c.lineTo(48,-94);c.closePath();c.fill();
+    c.fillStyle='rgba(255,255,255,.55)';c.fillRect(-104,-97,160,3);c.fillStyle='rgba(0,0,0,.14)';c.fillRect(-104,-160,160,10);c.restore();c.strokeStyle=OL;bodyPath(c);c.stroke()}
+  if(o.saddle){c.fillStyle=h.pad||'#2f3f6a';c.beginPath();c.moveTo(-30,-148);c.quadraticCurveTo(-36,-118,-26,-106);c.lineTo(26,-106);c.quadraticCurveTo(34,-126,30,-152);c.quadraticCurveTo(0,-142,-30,-148);c.fill();olStroke(c);
+    c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=Math.max(1.6,.9/s);c.beginPath();c.moveTo(-28,-110);c.lineTo(27,-110);c.stroke();c.lineWidth=Math.max(2.2,1.2/s);
+    c.fillStyle='#4a2c18';c.beginPath();c.moveTo(-26,-157);c.quadraticCurveTo(-20,-146,0,-146);c.quadraticCurveTo(18,-146,26,-159);c.lineTo(28,-150);c.quadraticCurveTo(4,-137,-24,-148);c.closePath();c.fill();olStroke(c);
+    c.fillStyle='#6a4024';c.beginPath();c.moveTo(-8,-146);c.quadraticCurveTo(-14,-126,-6,-110);c.lineTo(14,-110);c.quadraticCurveTo(18,-128,14,-147);c.closePath();c.fill();olStroke(c);
+    c.fillStyle='#2a1a10';c.fillRect(16,-140,7,62)}
+  if(o.surcingle){c.fillStyle='#e9e2cf';c.beginPath();c.moveTo(18,-152);c.lineTo(26,-152);c.lineTo(30,-76);c.lineTo(20,-76);c.closePath();c.fill();olStroke(c);c.fillStyle='#b9b2a0';c.fillRect(16,-158,4,8);c.fillRect(24,-158,4,8);c.fillStyle='#c0396b';c.fillRect(-20,-150,40,4)}
+  // шея
+  c.translate(54,-128);c.rotate((o.neck||0)+nod);c.translate(-54,128);
+  const ng=c.createLinearGradient(30,-210,96,-120);ng.addColorStop(0,shL(body,.14));ng.addColorStop(1,sh(body,.86));c.fillStyle=ng;neckPath(c);c.fill();
+  if(h.pinto&&h.patches[0]){c.save();neckPath(c);c.clip();c.fillStyle='#f4f0e6';c.beginPath();c.ellipse(66,-158,14,22,.4,0,7);c.fill();c.restore()}
+  c.strokeStyle=OL;c.beginPath();c.moveTo(14,-150);c.bezierCurveTo(40,-170,60,-194,82,-208);c.stroke();
+  c.beginPath();c.moveTo(105,-188);c.bezierCurveTo(102,-170,90,-146,79,-120);c.stroke();
+  // грива: пышные волнистые пряди
+  {const wv=g!=null?Math.sin((G?p*Math.PI*2:g)*2):Math.sin(t*1.3)*.4;const P=u=>{const [a,b,cc,d]=CREST,m=1-u;
+      return[m*m*m*a[0]+3*m*m*u*b[0]+3*m*u*u*cc[0]+u*u*u*d[0],m*m*m*a[1]+3*m*m*u*b[1]+3*m*u*u*cc[1]+u*u*u*d[1]]};
+    const n=h.thickMane?11:8,len=h.thickMane?30:22;
+    for(let i=n-1;i>=0;i--){const u=.04+i/n*.92,[x,y]=P(u);const L=len*(.8+.2*Math.sin(i*2.3));const sway=(G?-10:0)+wv*3;
+      c.fillStyle=i%2?sh(mane,.82):mane;c.beginPath();c.moveTo(x+7,y-3);
+      c.bezierCurveTo(x+4,y+L*.4,x-4+sway*.5,y+L*.75,x-10+sway,y+L);c.quadraticCurveTo(x-6+sway*.4,y+L*.5,x-9,y+2);
+      c.quadraticCurveTo(x-1,y-6,x+7,y-3);c.closePath();c.fill();olStroke(c)}
+    c.fillStyle=mane;c.beginPath();c.moveTo(80,-212);c.bezierCurveTo(98,-214,108,-200,112,-184+wv);c.quadraticCurveTo(100,-192,92,-198);c.quadraticCurveTo(86,-204,80,-212);c.closePath();c.fill();olStroke(c)}
+  // голова: крупнее, круглее, большие глаза
+  c.save();c.translate(95,-200);c.rotate(.82);c.scale(1.32,1.32);
+  const chew=o.chew?Math.sin(t*14)*1.3:0;
+  const hg=c.createLinearGradient(0,-14,0,26);hg.addColorStop(0,shL(body,.16));hg.addColorStop(1,sh(body,.84));c.fillStyle=hg;headPath(c);c.fill();
+  c.fillStyle='rgba(0,0,0,.1)';c.beginPath();c.ellipse(6,10,11,9,.2,0,7);c.fill();
+  c.fillStyle=sh(body,.7);c.beginPath();c.ellipse(51,4+chew*.4,9.5,9,0,0,7);c.fill();
+  if(h.blaze){c.fillStyle='#f4f0e6';c.beginPath();c.moveTo(4,-14);c.bezierCurveTo(18,-17,34,-14,48,-10);c.quadraticCurveTo(56,-6,56,2);c.quadraticCurveTo(40,-5,22,-9);c.quadraticCurveTo(10,-10,5,-10);c.closePath();c.fill()}
+  if(h.grey2){c.strokeStyle='#ece8e0';c.lineWidth=.7;c.beginPath();c.moveTo(16,-14);c.lineTo(19,-15.5);c.moveTo(21,-13.5);c.lineTo(22.5,-14.4);c.stroke()}
+  c.lineWidth=Math.max(1.6,1/(s*1.32));c.strokeStyle=OL;headPath(c);c.stroke();
+  c.fillStyle='#24160f';c.beginPath();c.ellipse(52,-1,3.4,2.1,.55,0,7);c.fill();
+  c.strokeStyle='rgba(40,22,12,.55)';c.beginPath();c.moveTo(57,9+chew*.6);c.quadraticCurveTo(51,11.5,46,9.5);c.stroke();
+  if(o.blink){c.strokeStyle='#24160f';c.lineWidth=1.4;c.beginPath();c.moveTo(10,-3);c.quadraticCurveTo(15,0,20,-3);c.stroke()}
+  else{c.fillStyle='#fbf8f2';c.beginPath();c.ellipse(15,-3,6.4,5.4,.15,0,7);c.fill();
+    c.fillStyle='#3b2416';c.beginPath();c.arc(16,-2.6,4.3,0,7);c.fill();c.fillStyle='#0d0806';c.beginPath();c.arc(16.3,-2.4,2.5,0,7);c.fill();
+    c.fillStyle='#fff';c.beginPath();c.arc(17.8,-4.4,1.5,0,7);c.fill();c.beginPath();c.arc(14.6,-1,.8,0,7);c.fill();
+    c.strokeStyle='#24160f';c.lineWidth=1.3;c.beginPath();c.ellipse(15,-3,6.6,5.6,.15,Math.PI*1.05,Math.PI*1.95);c.stroke();
+    c.beginPath();c.moveTo(9.5,-6);c.lineTo(7.5,-8.5);c.moveTo(12,-7.8);c.lineTo(10.8,-10.4);c.moveTo(15,-8.4);c.lineTo(14.6,-11);c.stroke()}
+  if(o.saddle){c.strokeStyle='#2a1a10';c.lineWidth=2.2;c.beginPath();c.moveTo(-2,-11);c.lineTo(42,6);c.moveTo(32,-11);c.quadraticCurveTo(40,3,34,14);c.moveTo(0,-12);c.lineTo(4,15);c.stroke();
+    c.fillStyle='#c9c9cf';c.beginPath();c.arc(44,8,2.4,0,7);c.fill()}
+  HP.bit=c.getTransform().transformPoint(new DOMPoint(44,8));
+  c.restore();
+  c.lineWidth=Math.max(2.2,1.2/s);
+  // уши
+  const back=o.earsBack,ew=Math.sin(t*.7)*.08;
+  [[sh(body,.7),-6,-3],[body,0,0]].forEach(([col,dx,dy])=>{c.save();c.translate(88+dx,-206+dy);c.rotate((back?-1.2:-.3)+ew);
+    c.fillStyle=col;c.beginPath();c.moveTo(-6,3);c.quadraticCurveTo(-8,-14,0,-25);c.quadraticCurveTo(8,-14,6,3);c.closePath();c.fill();olStroke(c);
+    c.fillStyle='rgba(0,0,0,.28)';c.beginPath();c.moveTo(-2.5,0);c.quadraticCurveTo(-3,-11,0,-18);c.quadraticCurveTo(3,-11,2.5,0);c.fill();c.restore()});
+  c.restore();
+  // всадник
+  if(o.rider){const inv=c.getTransform().inverse();const bit=HP.bit?inv.transformPoint(HP.bit):{x:120,y:-150};drawRiderIn(c,h,o,bit,bob,pitch)}
+  c.__ol=false;
+  c.translate(0,-8);if(o.dirt!==false&&h.dirt.length){h.dirt.forEach(d=>{c.fillStyle='rgba(96,64,34,.78)';c.beginPath();c.ellipse(d[0],d[1],d[2],d[2]*.75,d[0]*.03,0,7);c.fill();
     c.fillStyle='rgba(70,46,24,.7)';c.beginPath();c.arc(d[0]+d[2]*.7,d[1]-d[2]*.4,d[2]*.35,0,7);c.fill()})}
   c.restore();
 }
+function arZoom(c,x,y,z=1.42){c.translate(x*.86,y);c.scale(z,z);c.translate(-x,-y)}
+function drawVaulter(c,pose,bob,pitch){c.save();c.translate(0,-118+bob);c.rotate(pitch);c.translate(0,110);
+  const suit='#c0396b',skin='#f0c8a4',shoe='#f1ede4';
+  const lim=(x1,y1,x2,y2,w,col)=>{c.fillStyle=col;capsule(c,x1,y1,x2,y2,w,w*.8)};
+  const head=(x,y)=>{c.fillStyle=skin;c.beginPath();c.arc(x,y,7.5,0,7);c.fill();c.fillStyle='#4a2c1c';c.beginPath();c.arc(x-1,y-2,7.5,Math.PI*.9,Math.PI*2.05);c.fill()};
+  if(pose==='halt'){ // стойка на спине лошади
+    lim(-6,-146,-4,-176,8,shoe);lim(6,-146,4,-176,8,suit);lim(0,-176,0,-206,13,suit);lim(0,-202,-24,-214,6,suit);lim(0,-202,24,-214,6,suit);head(0,-216)}
+  else if(pose==='trot'){ // флаг: колено на спине, нога назад, рука вперёд
+    lim(-2,-150,-12,-160,10,suit);lim(-12,-160,-46,-168,8,suit);lim(-46,-168,-54,-168,6,shoe);lim(8,-150,0,-158,10,suit);lim(0,-160,14,-186,13,suit);lim(12,-182,40,-190,6,suit);head(18,-196)}
+  else if(pose==='canter'){ // мельница: сидит боком, руки вверх
+    lim(-2,-150,10,-128,10,suit);lim(10,-128,6,-106,8,suit);lim(0,-150,0,-186,13,suit);lim(0,-182,-8,-210,6,suit);lim(0,-182,8,-210,6,suit);head(0,-196)}
+  else{ // базовая посадка: руки в стороны
+    lim(-4,-150,16,-124,10,suit);lim(16,-124,10,-102,8,suit);lim(0,-150,2,-186,13,suit);lim(2,-180,-24,-182,6,suit);lim(2,-180,30,-182,6,suit);head(3,-196)}
+  c.restore()}
+function drawRiderIn(c,h,o,bit,bob,pitch){if(o.vpose){drawVaulter(c,o.vpose,bob,pitch);return}
+  const air=o.air,trot=o.gait==='trot'&&o.gallop!=null&&!air,canter=(o.gait||'canter')==='canter'&&o.gallop!=null;
+  const rise=trot?HP.rise:0;const lean=air?.75:canter?.22:trot?.12:.04;
+  c.save();c.translate(0,-118+bob);c.rotate(pitch);c.translate(0,110);
+  const hipX=-4,hipY=-156-rise;
+  const kx=20,ky=-128,ax=12,ay=-102;
+  // нога
+  c.fillStyle='#ece6d8';capsule(c,hipX,hipY,kx,ky,16,11);
+  c.fillStyle='#17171c';capsule(c,kx,ky,ax,ay,11,9);c.beginPath();c.moveTo(ax-5,ay-3);c.lineTo(ax+12,ay+1);c.lineTo(ax+11,ay+5);c.lineTo(ax-5,ay+4);c.closePath();c.fill();
+  c.strokeStyle='#b9bcc4';c.lineWidth=2;c.beginPath();c.moveTo(ax-2,ay+5);c.lineTo(ax+9,ay+5);c.stroke();
+  // корпус
+  c.translate(hipX,hipY);c.rotate(lean);
+  c.fillStyle='#22304f';c.beginPath();c.moveTo(-8,4);c.lineTo(-9,-30);c.quadraticCurveTo(0,-44,9,-32);c.lineTo(10,2);c.closePath();c.fill();
+  c.fillStyle='#ece6d8';c.beginPath();c.moveTo(2,-36);c.lineTo(9,-32);c.lineTo(5,-24);c.closePath();c.fill();
+  // голова в шлеме
+  c.fillStyle='#f0c8a4';c.beginPath();c.ellipse(3,-50,7.5,8.5,0,0,7);c.fill();
+  c.fillStyle='#16161c';c.beginPath();c.arc(2,-53,9,Math.PI*.95,Math.PI*2.05);c.fill();c.fillRect(2,-54,13,2.6);
+  c.fillStyle='#7a5638';c.beginPath();c.ellipse(-6,-46,3.5,5,0,0,7);c.fill();
+  // рука к поводу
+  const inv=c.getTransform().inverse();const parent=c.getTransform();
+  c.restore();c.save();c.translate(0,0);
+  const M=parent;const sx=M.transformPoint(new DOMPoint(2,-34));const back=c.getTransform().inverse();const S0=back.transformPoint(sx);
+  const hx=S0.x+20+(air?16:0),hy=S0.y+22+(air?-4:0);const ex=S0.x+6,ey=S0.y+15;
+  c.fillStyle='#22304f';capsule(c,S0.x,S0.y,ex,ey,8,7);capsule(c,ex,ey,hx,hy,7,6);
+  c.fillStyle='#16161c';c.beginPath();c.arc(hx,hy,3.6,0,7);c.fill();
+  c.strokeStyle='#2a1a10';c.lineWidth=1.6;c.beginPath();c.moveTo(hx,hy);c.quadraticCurveTo((hx+bit.x)/2,Math.max(hy,bit.y)+8,bit.x,bit.y);c.stroke();
+  c.restore()}
+function drawRider(){}
 function drawRosette(c,x,y,r,col){
   c.fillStyle='#5b8de0';c.beginPath();c.moveTo(x-r*.5,y);c.lineTo(x-r*.9,y+r*2.1);c.lineTo(x-r*.35,y+r*1.75);c.lineTo(x-r*.05,y+r*2.2);c.lineTo(x,y);c.fill();
   c.beginPath();c.moveTo(x+r*.5,y);c.lineTo(x+r*.9,y+r*2.1);c.lineTo(x+r*.35,y+r*1.75);c.lineTo(x+r*.05,y+r*2.2);c.lineTo(x,y);c.fill();
@@ -5381,10 +5592,17 @@ document.querySelectorAll('.tool').forEach(b=>b.addEventListener('click',()=>act
 function setMode(m){mode=m;brush=m==='brush';hoofMode=m==='hoof';$('#scene').classList.toggle('brushing',brush);
   document.querySelector('[data-a=brush]').setAttribute('aria-pressed',brush);document.querySelector('[data-a=hoof]').setAttribute('aria-pressed',hoofMode);
   $('#hint').textContent=brush?'Води пальцем по грязным пятнам на шерсти.':hoofMode?'Нажимай на копыта с камешками, чтобы их вычистить.':'Нажми на лошадь, чтобы погладить. Навоз убирается нажатием.'}
-function makeFoal(m){const bk=Math.random()<.5?m.breed:m.preg.breed;const f=makeHorse(bk);
-  f.coat=pick([m.coat,m.preg.coat]);if(!COATS[f.coat])f.coat=pick(BREED_COATS[bk]);if(bk==='friz')f.coat='black';
+function makeFoal(m){const bk=Math.random()<.5?m.breed:m.preg.breed;const f=makeHorse(bk);const P=m.preg;fixHorse(m);
+  const dg=P.gen||genesFromCoat(P.coat);f.gen={};Object.keys(m.gen).forEach(k=>f.gen[k]=[pick(m.gen[k]),pick(dg[k]||['n','n'])]);
+  f.coat=coatFromGenes(f.gen,m.coat,P.coat);if(!COATS[f.coat])f.coat='bay';
+  const cm=Math.round((heightCm(m.hands||BREEDS[m.breed].hands)+(P.cm||heightCm(BREEDS[P.breed].hands)))/2+rnd(-4,4));f.hands=cmToHands(cm);
+  f.spd=+(((m.spd||1)+(P.spd||1))/2+rnd(-.03,.03)).toFixed(3);f.spec=Math.random()<.45?m.spec:Math.random()<.8?(P.spec||m.spec):specFor(f);
+  f.char=Math.random()<.4?m.char:Math.random()<.65?(P.char||m.char):pick(Object.keys(CHAR));f.bio=`Мать — ${m.name}, отец — ${P.sire||'жеребец конюшни'}. Рост ${cm} см, масть по генам ${geneStr(f.gen)}.`;
   f.age=0;f.dirt=[];f.manure=[];f.stones=[];f.bond=45;f.hooves=100;return f}
-$('#nightBtn').addEventListener('click',()=>{if(night)return;S.day++;const news=[];
+$('#nightBtn').addEventListener('click',()=>{if(night)return;const oldDay=S.day;S.day++;const news=[];
+  if(seasonOf(oldDay)!==seasonOf(S.day))seasonEnd(news,oldDay);
+  {const w=staffWage();if(w){if(S.coins>=w){S.coins-=w;news.push(`Зарплата персоналу: −${w} монет`)}else{Object.keys(S.staff).forEach(k=>S.staff[k]=0);news.push('Не хватило денег на зарплату — персонал уволился')}}}
+  const bl=S.build||{};if(bl.barn){S.food.hay+=bl.barn*2}
   S.horses.slice().forEach(h=>{h.energy=clamp(h.energy+65);h.hunger=clamp(h.hunger-18);h.thirst=clamp(h.thirst-22);h.hooves=clamp(h.hooves-(hasCh(h,'hoof')?10:5));h.joy=0;
     addManure(h,ri(1,3));addDirt(h,h.rug?ri(0,1):ri(2,4)+(S.weather==='rain'?2:0));addStones(h,ri(0,2));h.mangerHay=0;
     h.load=clamp((h.load||0)-(h.workedToday?4:16));h.workedToday=false;if(h.rest>0)h.rest--;
@@ -5394,17 +5612,26 @@ $('#nightBtn').addEventListener('click',()=>{if(night)return;S.day++;const news=
     else if(!h.retired&&h.load>75&&Math.random()<(h.load-75)/80*(1+(h.prone||0))){const m=injure(h,h.lastWork==='end'?(Math.random()<.4?'tying':'tendon'):'back','перегрузка: слишком много стартов без отдыха');if(m)news.push(m)}
     else if(!h.retired&&hoofOf(h)<25&&h.load>40&&Math.random()<.12){const m=injure(h,'laminitis','запущенные копыта при нагрузке');if(m)news.push(m)}
     if(!h.sick&&(h.hunger<15||h.thirst<15||h.hooves<20||(h.dirt.length>=10&&h.manure.length>=4))&&Math.random()<.6){h.sick=h.hooves<20?'Хромота':(h.hunger<15||h.thirst<15)?'Колики':'Простуда';news.push(`${h.name}: ${h.sick.toLowerCase()}. Нужен ветеринар`)}
+    if(bl.paddock){h.energy=clamp(h.energy+5*bl.paddock);h.load=clamp((h.load||0)-3*bl.paddock);h.joy=Math.min(30,(h.joy||0)+4*bl.paddock)}
+    if(seasonOf()===3&&!h.rug){h.energy=clamp(h.energy-8);addDirt(h,1)}
+    h.form=clamp((h.form==null?50:h.form)-(h.trainedDay===oldDay||h.workedToday?1:4));
+    if(bl.clinic&&h.inj&&Math.random()<.35*bl.clinic)h.inj.left=Math.max(1,h.inj.left-1);
+    const st=S.staff||{};if(st.groom){h.manure=[];h.dirt=h.dirt.slice(0,Math.floor(h.dirt.length/2));h.hunger=clamp(h.hunger+20);h.thirst=clamp(h.thirst+30)}
+    if(st.farrier){h.stones=[];h.hooves=clamp(h.hooves+6)}
+    if(st.vet&&h.sick&&Math.random()<.8){news.push(`Ветврач вылечил: ${h.name}`);h.sick=null}
     if(h.age!=null){h.age++;if(h.age===5)news.push(`${h.name} ${h.sex==='f'?'выросла':'вырос'} и может выступать`)}
-    if(h.preg){h.preg.days--;if(h.preg.days<=0){if(S.horses.length<6){const f=makeFoal(h);S.horses.push(f);S.stats.foals=(S.stats.foals||0)+1;h.preg=null;news.unshift(`Родился жеребёнок: ${f.name}!`)}else{h.preg.days=1;news.push('Для жеребёнка нужен свободный денник')}}}});
+    if(h.preg){h.preg.days--;if(h.preg.days<=0){if(S.horses.length<S.stalls){const f=makeFoal(h);S.horses.push(f);S.stats.foals=(S.stats.foals||0)+1;h.preg=null;news.unshift(`Родился жеребёнок: ${f.name}!`);feed(`в конюшне родился жеребёнок ${f.name} (${COATS[f.coat].name})`)}else{h.preg.days=1;news.push('Для жеребёнка нужен свободный денник')}}}});
   S.offers=genOffers();S.tasks=genTasks();S.weather=genWeather();if(cupDay())news.push('Сегодня Кубок выходного дня: призы ×2');night={t:0,news};anim=null;herdKey='';ui();save();pushPlayer(true);cloudSave();
   news.forEach((n,i)=>setTimeout(()=>toast(n),3000+i*2400))});
 
 /* selling */
 $('#sellBtn').addEventListener('click',()=>{const h=cur(),box=$('#sellBox');
-  if(S.horses.length<=1){toast('Последнюю лошадь продать нельзя');return}
   if(!box.hidden){box.hidden=true;return}
+  if(S.horses.length<=1&&!(ON.ok&&h.sex==='m')){toast('Последнюю лошадь продать нельзя');return}
   const price=sellPrice(h);box.hidden=false;
-  box.innerHTML=`<div class="row"><p class="note">Продать ${esc(h.name)} за ${price} монет? Розетки уедут вместе с лошадью.</p><button class="btn ghost" id="sellNo">Оставить</button><button class="btn" id="sellYes">Продать</button></div>${ON.ok&&!ON.ro?`<div class="row"><p class="note">Или выставить на онлайн-рынок другим игрокам за свою цену:</p><input id="tradePrice" class="search" style="flex:1;min-width:0;max-width:140px" inputmode="numeric" value="${price}" aria-label="Цена на онлайн-рынке"><button class="btn ghost" id="tradeGo">На онлайн-рынок</button></div>`:''}`;
+  box.innerHTML=`<div class="row"><p class="note">Продать ${esc(h.name)} за ${price} монет? Розетки уедут вместе с лошадью.</p><button class="btn ghost" id="sellNo">Оставить</button><button class="btn" id="sellYes">Продать</button></div>${ON.ok&&!ON.ro?`<div class="row"><p class="note">Или выставить на онлайн-рынок другим игрокам за свою цену:</p><input id="tradePrice" class="search" style="flex:1;min-width:0;max-width:140px" inputmode="numeric" value="${price}" aria-label="Цена на онлайн-рынке"><button class="btn ghost" id="tradeGo">На онлайн-рынок</button></div>
+    <div class="row"><p class="note">Или аукцион: стартовая цена и срок, кто больше даст — тот забирает:</p><input id="aucPrice" class="search" style="flex:1;min-width:0;max-width:110px" inputmode="numeric" value="${Math.round(price*.8)}" aria-label="Стартовая цена"><select id="aucH" class="search" style="max-width:110px" aria-label="Срок аукциона"><option value="1">1 час</option><option value="6">6 часов</option><option value="24" selected>24 часа</option></select><button class="btn ghost" id="aucGo">На аукцион</button></div>`:''}${ON.ok&&!ON.ro&&h.sex==='m'&&!isFoal(h)?`<div class="row"><p class="note">${esc(h.name)} остаётся у тебя, а другие игроки смогут свести с ним своих кобыл за плату:</p><input id="studFee" class="search" style="flex:1;min-width:0;max-width:110px" inputmode="numeric" value="${40+h.level*15}" aria-label="Плата за случку"><button class="btn ghost" id="studGo">Предложить для случки</button></div>`:''}`;
+  {const ag=$('#aucGo');if(ag)ag.onclick=()=>listAuction(h,+$('#aucPrice').value||price,+$('#aucH').value||24);const sg=$('#studGo');if(sg)sg.onclick=()=>listStud(h,+$('#studFee').value||60)}
   $('#sellNo').onclick=()=>{box.hidden=true};{const tg=$('#tradeGo');if(tg)tg.onclick=()=>listTrade(h,+$('#tradePrice').value||price)}
   $('#sellYes').onclick=()=>{S.coins+=price;S.horses=S.horses.filter(x=>x.id!==h.id);S.cur=S.horses[0].id;box.hidden=true;herdKey='';SFX.coin();toast(`${h.name}: новые хозяева найдены, +${price}`);ui();save()}});
 $('#sndBtn').addEventListener('click',()=>{S.sound=!S.sound;updSnd();save();if(S.sound)SFX.coin()});
@@ -5419,13 +5646,17 @@ function renderBreed(h){const el=$('#breedBox');
   if(h.sex!=='f'){el.innerHTML='';return}
   const dad=S.horses.filter(x=>x.sex==='m'&&!isFoal(x)).sort((a,b)=>b.level-a.level)[0];
   if(!dad){el.innerHTML='<p class="note">Купи жеребца на ярмарке, и у кобылы сможет родиться жеребёнок.</p>';return}
-  const ok=h.level>=2&&S.coins>=80&&S.horses.length<6;
-  el.innerHTML=`<div class="row"><p class="note">Жеребёнок от ${esc(dad.name)} родится через 2 ночи${h.level<2?'. Нужен уровень 2':''}${S.horses.length>=6?'. Нет свободного денника':''}</p><button class="btn ghost" id="breedBtn" ${ok?'':'disabled'}>Свести · 80</button></div>`;
-  $('#breedBtn').onclick=()=>{if(!ok)return;S.coins-=80;h.preg={days:2,breed:dad.breed,coat:dad.coat};toast(`${h.name} ждёт жеребёнка`);ui();save()}}
+  const ok=h.level>=2&&S.coins>=80&&S.horses.length<S.stalls;
+  el.innerHTML=`<div class="row"><p class="note">Жеребёнок от ${esc(dad.name)} родится через 2 ночи${h.level<2?'. Нужен уровень 2':''}${S.horses.length>=S.stalls?'. Нет свободного денника':''}</p><button class="btn ghost" id="breedBtn" ${ok?'':'disabled'}>Свести · 80</button></div>`;
+  $('#breedBtn').onclick=()=>{if(!ok)return;S.coins-=80;fixHorse(dad);h.preg={days:2,breed:dad.breed,coat:dad.coat,gen:dad.gen,spd:dad.spd,spec:dad.spec,char:dad.char,cm:heightCm(dad.hands||BREEDS[dad.breed].hands),sire:dad.name};toast(`${h.name} ждёт жеребёнка`);ui();save()}}
 const TASKS={feed:{t:'Покормить сеном',n:3,r:15},brush:{t:'Счистить пятна грязи',n:8,r:15},manure:{t:'Убрать навоз',n:3,r:10},hoof:{t:'Вынуть камни из копыт',n:2,r:15},
   pat:{t:'Погладить лошадей',n:10,r:10},treat:{t:'Угостить лакомством',n:2,r:10},show:{t:'Выступить на соревнованиях',n:1,r:20},ribbon:{t:'Выиграть розетку',n:1,r:30},dress:{t:'Выездка на 60% и выше',n:1,r:30},endrun:{t:'Финишировать в пробеге',n:1,r:30}};
 function genTasks(){return Object.keys(TASKS).sort(()=>Math.random()-.5).slice(0,3).map(k=>({k,got:0}))}
-function task(k,n=1){(S.tasks||[]).forEach(q=>{const d=TASKS[q.k];if(q.k===k&&q.got<d.n){q.got=Math.min(d.n,q.got+n);if(q.got>=d.n){S.coins+=d.r;toast(`Задание выполнено: +${d.r} монет`);SFX.coin()}}});renderTasks()}
+const DQ={start:{n:'Проведи 2 старта',g:2,r:30},train:{n:'Сделай 2 тренировки',g:2,r:30},groom:{n:'Счисти 15 пятен грязи',g:15,r:20},podium:{n:'Займи место на подиуме',g:1,r:40}};
+const today=()=>new Date().toISOString().slice(0,10);
+function dqInit(){if(!S.dq||S.dq.date!==today()){const ks=Object.keys(DQ).sort(()=>Math.random()-.5).slice(0,3);S.dq={date:today(),q:ks.map(k=>({k,got:0,done:0}))}}}
+function dq(k,n=1){dqInit();S.dq.q.forEach(q=>{const d=DQ[q.k];if(q.k===k&&!q.done){q.got=Math.min(d.g,q.got+n);if(q.got>=d.g){q.done=1;S.coins+=d.r;setTimeout(()=>{toast(`Ежедневное задание «${d.n}»: +${d.r} монет`);SFX.coin()},500)}}})}
+function task(k,n=1){if(k==='show')dq('start');if(k==='brush')dq('groom',n);if(k==='ribbon')dq('podium');(S.tasks||[]).forEach(q=>{const d=TASKS[q.k];if(q.k===k&&q.got<d.n){q.got=Math.min(d.n,q.got+n);if(q.got>=d.n){S.coins+=d.r;toast(`Задание выполнено: +${d.r} монет`);SFX.coin()}}});renderTasks()}
 function renderTasks(){$('#tasks').innerHTML=(S.tasks||[]).map(q=>{const d=TASKS[q.k];const done=q.got>=d.n;return`<div class="task${done?' done':''}"><span>${d.t}</span><b>${done?'готово':q.got+'/'+d.n}</b><small>+${d.r}</small></div>`}).join('')}
 
 /* rename */
@@ -5437,20 +5668,21 @@ function barCol(v){return v>=60?'var(--good)':v>=30?'var(--warn)':'var(--bad)'}
 function moodWord(m){return m>=80?'отличное':m>=60?'хорошее':m>=40?'так себе':'плохое'}
 function ui(){
   const h=cur(),B=BREEDS[h.breed],C=COATS[h.coat];
-  checkAch();$('#coins').textContent=S.coins;$('#wx').textContent=' · '+WX[S.weather];$('#day').textContent=S.day;$('#ros').textContent=S.horses.reduce((a,x)=>a+x.ribbons.length,0);
+  checkAch();$('#coins').textContent=S.coins;$('#wx').textContent=' · '+SEASONS[seasonOf()].toLowerCase()+', '+wxName();$('#day').textContent=S.day;$('#ros').textContent=S.horses.reduce((a,x)=>a+x.ribbons.length,0);
   $('#hName').textContent=h.name;
-  $('#hMeta').textContent=`${h.breedName||B.name} · ${sexWord(h)}${isFoal(h)?', '+h.age+' дн.':''} · ${h.suitName||C.name} масть · ${h.hands||B.hands} ладони (${heightCm(h.hands||B.hands)} см) · уровень ${h.level} · допуск ${permitOf(h)} км`;
+  $('#hMeta').textContent=`${h.breedName||B.name} · ${sexWord(h)}${isFoal(h)?', '+h.age+' дн.':''} · ${h.suitName||C.name} масть · рост ${heightCm(h.hands||B.hands)} см · ${SPEC[h.spec]?SPEC[h.spec].n.toLowerCase()+' · ':''}характер: ${charOf(h).n} · галоп ~${gallopKmh(h)} км/ч${h.gen?' · гены '+geneStr(h.gen):''} · уровень ${h.level} · допуск ${permitOf(h)} км`;
   const m=moodOf(h);
   const rows=[['Сытость',h.hunger],['Вода',h.thirst],['Чистота шерсти',cleanOf(h)],['Чистота денника',stallOf(h)],['Копыта',hoofOf(h)],['Энергия',h.energy],[`Настроение · ${moodWord(m)}`,m]];
   $('#bars').innerHTML=rows.map(([l,v],i)=>`<div class="bar${i===6?' xp':''}">${l}<b>${Math.round(v)}</b><i><span style="width:${clamp(v)}%;background:${barCol(v)}"></span></i></div>`).join('')+
     `<div class="bar xp">Привязанность к тебе<b>${Math.round(h.bond)}</b><i><span style="width:${h.bond}%;background:var(--rosette)"></span></i></div>`+
     `<div class="bar xp">Опыт · уровень ${h.level}<b>${h.level>=10?'макс.':Math.round(h.xp)+' / '+need(h.level)}</b><i><span style="width:${h.level>=10?100:h.xp/need(h.level)*100}%;background:var(--straw)"></span></i></div>`;
   ['hay','carrot','apple'].forEach(k=>$('#n-'+k).textContent=S.food[k]);
-  $('#stalls').textContent=`денники ${S.horses.length}/6`;
+  $('#stalls').innerHTML=`денники ${S.horses.length}/${S.stalls} <button class="linkbtn" id="buyStall">+ денник за ${stallPrice()}</button>`;$('#buyStall').onclick=buyStall;
   {const bio=h.bio||realBio(h);$('#hBio').hidden=!bio;$('#hBio').textContent=bio}
   renderBreed(h);renderInj(h);renderTasks();renderHerd();
   if(view==='arena')renderArenaUI();
   if(view==='market')renderMarket();
+  if(view==='base')renderBase();
   if(view==='trophy'){renderTrophy();renderClub()}
 }
 function liteUI(){ // bars only (called on tick)
@@ -5477,8 +5709,53 @@ let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add
 let view='stable';
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.v)));
 function setView(v){if(ar.running)return;if(v!=='arena')leaveRide();view=v;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===v));
-  ['stable','arena','market','reg','trophy'].forEach(k=>{const s=$('#v-'+k);s.hidden=k!==v;if(k===v)s.style.display='flex'});
-  if(v==='arena'){resetArena();renderArenaUI()}if(v==='market')renderMarket();if(v==='trophy'){renderTrophy();renderClub()}if(v==='reg')renderReg();ui()}
+  ['stable','arena','market','base','reg','trophy'].forEach(k=>{const s=$('#v-'+k);s.hidden=k!==v;if(k===v)s.style.display='flex'});
+  if(v==='arena'){resetArena();renderArenaUI()}if(v==='market')renderMarket();if(v==='trophy'){renderTrophy();renderClub()}if(v==='reg')renderReg();if(v==='base')renderBase();ui()}
+
+
+/* ============ BASE: сезон, тренировки, постройки, персонал, ежедневное ============ */
+function renderBase(){const h=cur();dqInit();S.build=S.build||{};S.staff=S.staff||{};
+  // ежедневная награда
+  const dl=S.daily||{};const got=dl.date===today();
+  $('#dailyCard').innerHTML=`<div class="row"><span class="label">Ежедневное</span><span class="label">серия ${dl.streak||0} дн.</span></div>
+    ${got?'<p class="note">Награда за сегодня получена. Заходи завтра — серия растёт, награда тоже.</p>':`<div class="row"><p class="note">Награда за вход: ${dailyAmt()} монет и сено</p><button class="btn" id="dailyBtn">Забрать</button></div>`}
+    <div class="tasks">${S.dq.q.map(q=>{const d=DQ[q.k];return`<div class="task${q.done?' done':''}"><span>${d.n}</span><b>${q.done?'готово':q.got+'/'+d.g} · ${d.r}</b></div>`}).join('')}</div>`;
+  const db=$('#dailyBtn');if(db)db.onclick=claimDaily;
+  // сезон
+  const se=seasonOf(),sd=sDay();
+  $('#seasonCard').innerHTML=`<div class="row"><span class="label">Сезон: ${SEASONS[se]} ${yearOf()}-го года</span><span class="label">день ${sd} из 14</span></div>
+    <p class="note">Очки сезона: <b>${seasonPts()}</b>. 45+ — чемпион сезона (500 монет и кубок), 25+ — призёр, 10+ — участник. ${se===1?'Летом в жару пульс на пробегах восстанавливается хуже.':se===3?'Зимой лошадям без попоны холодно ночью.':se===2?'Осенью часто дожди — манеж под крышей спасает.':'Весной погода переменчивая.'}</p>
+    <div class="tasks">${Object.keys(CAL).map(k=>{const e=CAL[k],past=+k<sd,now=+k===sd;const got=S.season&&S.season.id===seasonKey()&&S.season.days?Object.entries(S.season.days).filter(([d])=>sDay(+d)===+k).map(x=>x[1])[0]:0;
+      return`<div class="task${past?' done':''}"><span>${now?'Сегодня · ':`День ${k} · `}${e.n}${e.q?` (нужно ${e.q} очков)`:''}</span><b>×${e.m}${got?' · +'+got:''}</b></div>`}).join('')}</div>
+    ${S.seasons&&S.seasons.length?`<p class="note">Прошлые сезоны: ${S.seasons.slice(0,4).map(x=>`${x.n} — ${x.pts}`).join(', ')}</p>`:''}`;
+  // тренировки
+  const sk=h.sk||{jump:0,dress:0,end:0};const tr=h.trainedDay===S.day;
+  $('#trainCard').innerHTML=`<div class="row"><span class="label">Тренировка: ${esc(h.name)}</span><span class="label">${tr?'сегодня уже была':'раз в день'}</span></div>
+    <div class="bars"><div class="bar">Форма<b>${Math.round(h.form==null?50:h.form)}</b><i><span style="width:${h.form==null?50:h.form}%;background:${barCol(h.form==null?50:h.form)}"></span></i></div>
+    <div class="bar">Нагрузка<b>${Math.round(h.load||0)}</b><i><span style="width:${h.load||0}%;background:${(h.load||0)>70?'var(--bad)':'var(--straw)'}"></span></i></div></div>
+    <p class="note">Умения: прыжок ${sk.jump} · выездка ${sk.dress} · выносливость ${sk.end} (максимум 20). Характер: ${charOf(h).n}. Форма выше 50 помогает на стартах, без работы падает. Нагрузка выше 75 — риск травмы.</p>
+    <div class="shop">${Object.entries(TRAIN).map(([k,t])=>`<div class="item"><div><b>${t.n}</b><small>${t.d} · −${t.e} энергии</small></div><button class="btn" data-tr="${k}" ${tr?'disabled':''}>Тренировать</button></div>`).join('')}</div>`;
+  $('#trainCard').querySelectorAll('[data-tr]').forEach(b=>b.onclick=()=>{doTrain(b.dataset.tr);renderBase()});
+  // постройки
+  $('#buildList').innerHTML=Object.entries(BUILD).map(([k,b])=>{const lv=S.build[k]||0,pr=b.c[lv];return`<div class="task"><span><b>${b.n}</b>${lv?' · ур. '+lv:''}<br><small>${b.d}</small></span>${pr?`<button class="btn" data-b="${k}" ${S.coins<pr?'disabled':''}><span class="price">${pr}</span></button>`:'<b>макс.</b>'}</div>`}).join('');
+  $('#buildList').querySelectorAll('[data-b]').forEach(x=>x.onclick=()=>{const k=x.dataset.b,lv=S.build[k]||0,pr=BUILD[k].c[lv];if(!pr||S.coins<pr)return;S.coins-=pr;S.build[k]=lv+1;SFX.coin();toast(`${BUILD[k].n}: уровень ${lv+1}`);save();ui();renderBase()});
+  // персонал
+  $('#staffList').innerHTML=Object.entries(STAFF).map(([k,st])=>`<div class="task"><span><b>${st.n}</b> · ${st.w} в день<br><small>${st.d}</small></span><button class="btn ${S.staff[k]?'ghost':''}" data-s="${k}">${S.staff[k]?'Уволить':'Нанять'}</button></div>`).join('');
+  $('#staffList').querySelectorAll('[data-s]').forEach(x=>x.onclick=()=>{const k=x.dataset.s;S.staff[k]=S.staff[k]?0:1;toast(S.staff[k]?`${STAFF[k].n} нанят`:`${STAFF[k].n} уволен`);save();renderBase()})}
+const dailyAmt=()=>Math.min(150,30+((S.daily&&S.daily.streak)||0)*10);
+function claimDaily(){const d=S.daily||{};if(d.date===today())return;const y=new Date(Date.now()-864e5).toISOString().slice(0,10);
+  const streak=d.date===y?(d.streak||0)+1:1;S.daily={date:today(),streak};const a=dailyAmt();S.coins+=a;S.food.hay+=3;SFX.coin();toast(`Ежедневная награда: +${a} монет, +3 сена`);save();ui();renderBase()}
+/* ============ обучение для новичков ============ */
+const TUT=[['Добро пожаловать в «Подкову»!','Это твоя конюшня. Ухаживай за лошадью, тренируй её и выступай на соревнованиях. Пройдём коротко по главному.'],
+ ['Уход','Внизу инструменты: сено, вода, щётка, копыта. Нажми «Сено», потом на кормушку. Щёткой три грязь на шерсти, навоз убирай нажатием.'],
+ ['Манеж','Во вкладке «Манеж» — конкур, выездка, пробеги, троеборье и вольтижировка. Чем выше уровень лошади, тем серьёзнее старты.'],
+ ['База','Во вкладке «База» — тренировки, постройки, персонал, календарь сезона и ежедневная награда.'],
+ ['Ночь','Когда день закончен, нажми «Закончить день». Лошади отдохнут, а на ярмарке появятся новые лошади.'],
+ ['Онлайн','Во вкладке «Клуб» можно войти, попасть в рейтинг, общаться в чате и торговать. Удачи!']];
+function showTut(){if(S.tut==null||S.tut>=TUT.length)return;let el=$('#tutBox');if(!el){el=document.createElement('div');el.id='tutBox';el.className='tut';document.body.appendChild(el)}
+  const [t,d]=TUT[S.tut];el.innerHTML=`<b>${t}</b><p>${d}</p><div class="row"><button class="linkbtn" id="tutSkip">Пропустить</button><button class="btn" id="tutNext">${S.tut===TUT.length-1?'Играть':'Дальше'}</button></div>`;
+  $('#tutNext').onclick=()=>{S.tut++;save();if(S.tut>=TUT.length){el.remove();return}if(S.tut===2)setView('arena');if(S.tut===3)setView('base');if(S.tut===4||S.tut===1)setView('stable');if(S.tut===5)setView('trophy');showTut()};
+  $('#tutSkip').onclick=()=>{S.tut=TUT.length;save();el.remove()}}
 
 /* ============ MARKET ============ */
 const FOOD=[{k:'hay',n:'Тюк сена',d:'×5 · сытость +28 за порцию',p:20,q:5,i:'i-hay'},{k:'carrot',n:'Пучок моркови',d:'×5 · лакомство, растит привязанность',p:15,q:5,i:'i-carrot'},{k:'apple',n:'Корзина яблок',d:'×5 · сытость, вода и радость',p:15,q:5,i:'i-apple'}];
@@ -5496,48 +5773,86 @@ function renderMarket(){
    $('#tackShop').querySelectorAll('[data-rug]').forEach(b=>b.onclick=()=>{const c=b.dataset.rug;if(th.rug===c)return;if(S.coins<60){toast('Не хватает монет');return}S.coins-=60;th.rug=c;SFX.coin();toast(`${th.name} в новой попоне`);ui();save()})}
   const hs=$('#horseShop');hs.innerHTML='';
   S.offers.forEach((o,i)=>{const B=BREEDS[o.breed];const d=document.createElement('div');d.className='item';const cv=document.createElement('canvas');cv.width=192;cv.height=128;d.appendChild(cv);
-    const full=S.horses.length>=6;
-    d.insertAdjacentHTML('beforeend',`<div><b>${esc(o.name)}</b><small>${o.breedName||B.name}, ${sexWord(o)}, ${o.suitName||COATS[o.coat].name}<br>${o.real?`из базы probegi.ru · ${o.real.y||'?'} г. р. · допуск ${o.permit} км`:`${B.hands} ладони · прыжок ${B.jump>=0?'+':''}${B.jump}`}</small></div><button class="btn" ${S.coins<o.price||full?'disabled':''}><span class="price">${o.price}</span></button>`);
-    d.querySelector('button').addEventListener('click',()=>{if(S.coins<o.price||S.horses.length>=6)return;S.coins-=o.price;delete o.price;S.horses.push(o);S.offers.splice(i,1);S.cur=o.id;herdKey='';toast(`${o.name} переезжает в денник`);save();setView('stable')});
+    const full=S.horses.length>=S.stalls;
+    d.insertAdjacentHTML('beforeend',`<div><b>${esc(o.name)}</b><small>${o.breedName||B.name}, ${sexWord(o)}, ${o.suitName||COATS[o.coat].name}<br>${SPEC[o.spec]?SPEC[o.spec].n+' · ':''}${o.real?`из базы probegi.ru · ${o.real.y||'?'} г. р. · допуск ${o.permit} км`:`рост ${heightCm(B.hands)} см`} · галоп ~${gallopKmh(o)} км/ч</small></div><button class="btn" ${S.coins<o.price||full?'disabled':''}><span class="price">${o.price}</span></button>`);
+    d.querySelector('button').addEventListener('click',()=>{if(S.coins<o.price||S.horses.length>=S.stalls)return;S.coins-=o.price;delete o.price;S.horses.push(o);S.offers.splice(i,1);S.cur=o.id;herdKey='';toast(`${o.name} переезжает в денник`);save();setView('stable')});
     hs.appendChild(d);miniHorse(cv,o)});
   if(!S.offers.length)hs.innerHTML='<p class="hint" style="text-align:left;margin:0">Все лошади разобраны. Новые появятся завтра.</p>';
-  if(S.horses.length>=6)hs.insertAdjacentHTML('beforeend','<p class="hint" style="text-align:left;margin:0">Все 6 денников заняты.</p>');
+  if(S.horses.length>=S.stalls)hs.insertAdjacentHTML('beforeend',`<p class="hint" style="text-align:left;margin:0">Все ${S.stalls} денников заняты. Новый денник покупается во вкладке «Денник».</p>`);
 }
 
 /* ============ ARENA ============ */
 const AW=400,AH=240,GY=204,HX=92,G=1100;
 const acv=$('#arCv'),ax=acv.getContext('2d');ax.scale(2,2);
-let ar={},disc='jump';const sel={jump:0,dress:0,end:0};
+let ar={},disc='jump';const sel={jump:0,dress:0,end:0,event:0,volt:0};
+const EVENT=[{n:'Троеборье Интро',short:'Интро',lvl:2,d:0,j:0,prize:[60,35,20],xp:50},{n:'CCI1*',short:'CCI1*',lvl:4,d:1,j:1,prize:[110,65,35],xp:70},{n:'CCI2*',short:'CCI2*',lvl:6,d:2,j:2,prize:[180,110,60],xp:95},{n:'CCI3*',short:'CCI3*',lvl:8,d:3,j:3,prize:[280,170,90],xp:130}];
+const VOLT=[{n:'Начальный',short:'Нач.',lvl:1,prize:[40,25,15],xp:30,gap:1.6},{n:'Юниоры',short:'Юниоры',lvl:3,prize:[75,45,25],xp:45,gap:1.35},{n:'Взрослые',short:'Взрослые',lvl:5,prize:[130,80,45],xp:65,gap:1.12},{n:'Мастер',short:'Мастер',lvl:7,prize:[220,130,75],xp:90,gap:.95}];
+const VNAME={walk:'Посадка',trot:'Флаг',canter:'Мельница',halt:'Стойка'};
+let EV=null;
 const DRESS=[{n:'Предварительный приз',short:'Предв.',lvl:1,prize:[40,25,15],xp:30,gap:1.55},{n:'Малый приз',short:'Малый',lvl:3,prize:[75,45,25],xp:45,gap:1.3},{n:'Средний приз',short:'Средний',lvl:5,prize:[130,80,45],xp:65,gap:1.1},{n:'Большой приз',short:'Большой',lvl:7,prize:[220,130,75],xp:90,gap:.92}];
 const CMDS=[{k:'walk',n:'Шаг',ph:4.5,v:40,col:'#7cc46b'},{k:'trot',n:'Рысь',ph:9,v:90,col:'#ecc35a'},{k:'canter',n:'Галоп',ph:12,v:150,col:'#e8874a'},{k:'halt',n:'Стоп',ph:0,v:0,col:'#7ea3e6'}];
 const LETTERS=['A','K','E','H','C','M','B','F'];
-const ENDUR=[{km:40,lvl:1,prize:[50,30,20],xp:40,st:[20,20]},{km:80,lvl:3,prize:[100,60,35],xp:60,st:[30,25,25]},{km:120,lvl:5,prize:[170,100,60],xp:80,st:[40,30,30,20]},{km:160,lvl:7,prize:[300,180,100],xp:120,st:[40,35,30,30,25]}];
+const ENDUR=[{km:40,lvl:1,n:'Квалификационный 40 км',q:true,age:5,minHold:40,prize:[50,30,20],xp:40,st:[20,20]},
+ {km:80,lvl:3,n:'Квалификационный 80 км',q:true,age:5,minHold:40,prize:[100,60,35],xp:60,st:[30,25,25]},
+ {km:120,lvl:5,n:'CEI 2* · 120 км',age:7,minHold:50,prize:[170,100,60],xp:80,st:[40,30,30,20]},
+ {km:160,lvl:7,n:'CEI 3* · 160 км',age:8,minHold:50,prize:[300,180,100],xp:120,st:[35,30,30,25,20,20]}];
+/* правила ФКСР/FEI: пульс ≤64; предъявление 15 мин (промежуточный) / 20 мин (финал); остановка = км этапа, но 30–60 мин;
+   мин. скорость 10 км/ч, для квалификации не быстрее 16 км/ч; обязательный отдых по пройденным км */
+const FTQ={'FTQ-GA':'неправильный аллюр (хромота)','FTQ-ME':'метаболика (пульс)','FTQ-SI-META':'серьёзная метаболика','FTQ-SI-MUSCU':'серьёзная травма опорно-двигательного','FTQ-OT':'превышено время (скорость ниже 10 км/ч)','RET':'снят всадником'};
+const horseYears=h=>h.real&&h.real.y?new Date().getFullYear()-h.real.y:null;
+const tooYoung=(h,c)=>{const y=horseYears(h);return y!=null&&y<c.age};
+const restByKm=km=>km<54?5:km<=106?12:km<=126?19:km<=146?26:33;
+function holdsFor(cl){const hs=cl.st.slice(0,-1).map(L=>Math.min(60,Math.max(30,L)));
+  if(hs.length&&Math.max(...hs)<cl.minHold){const k=Math.floor(hs.length/2);hs[k]=cl.minHold}return hs}
 const RIDERS=['Аня Котова','Миша Дронов','Лиза Орлова','Дима Седов','Варя Белова','Костя Жуков','Соня Ларина','Егор Панин','Маша Гришина','Тимур Ахметов'];
 const trees=[];for(let i=0;i<24;i++)trees.push([i*48+rnd(-10,10),rnd(18,34),pick(['#3f7a46','#356b3c','#4a8a4f'])]);
-const clsList=()=>disc==='jump'?CLASSES:disc==='dress'?DRESS:ENDUR;
-const cond=h=>.82+.22*moodOf(h)/100-(h.energy<40?.05:0)-(hoofOf(h)<40?.06:0)-(S.weather==='rain'||S.weather==='snow'?.03:0);
+const clsList=()=>disc==='jump'?CLASSES:disc==='dress'?DRESS:disc==='event'?EVENT:disc==='volt'?VOLT:ENDUR;
+const cond=h=>.82+.22*moodOf(h)/100-(h.energy<40?.05:0)-(hoofOf(h)<40?.06:0)-((S.weather==='rain'||S.weather==='snow')&&!(S.build&&S.build.manege&&disc!=='end')?.03:0)-(isHot()&&disc!=='end'?.02:0)+((h.form==null?50:h.form)-50)/400;
 function rivals(n){return RIDERS.slice().sort(()=>Math.random()-.5).slice(0,n).map(r=>({rider:r,horse:pickReal().n}))}
 
-function resetArena(){if(disc==='jump')resetJump();else if(disc==='dress')resetDress();else resetEnd();
+function resetArena(){EV=null;if(disc==='jump')resetJump();else if(disc==='dress')resetDress();else if(disc==='event')resetEvent(0);else if(disc==='volt')resetVolt();else resetEnd();
   $('#jumpBtn').textContent='Старт';$('#jumpBtn').hidden=false;$('#drBtns').hidden=true;$('#enBtns').hidden=true;$('#resCard').hidden=true;
-  $('#arHint').textContent=disc==='end'?'Галоп быстрее, но пульс растёт. Пои лошадь на пунктах с водой. На ветконтроле пульс должен опуститься до 64 уд/мин за 20 минут.':disc==='jump'?'Жми «Прыжок», когда препятствие дойдёт до белого флажка. Сбитая жердь — 4 штрафных очка.':'Жми команду, когда её карточка войдёт в жёлтый круг. Судьи оценивают точность в процентах.'}
+  $('#arHint').textContent=disc==='end'?'Правила ФКСР: после каждого этапа ветконтроль, пульс ≤ 64 уд/мин. На предъявление 15 минут (на финише 20 и одна попытка). Хромота = FTQ-GA, пульс = FTQ-ME. Скорость не ниже 10 км/ч; в квалификационных пробегах не быстрее 16 км/ч, иначе пробег не идёт в допуск. После этапа обязательная остановка 30–60 минут.':disc==='event'?'Троеборье: выездка, потом кросс по полевым препятствиям, потом конкур. Считаются штрафные очки: выездка = 100 − %, на кросе ошибка у препятствия 20 и 0,4 за каждую секунду сверх нормы, в конкуре 4 за жердь. Побеждает наименьшая сумма.':disc==='volt'?'Вольтижировка: лошадь идёт галопом на корде, вольтижёр выполняет упражнения. Жми упражнение, когда карточка в жёлтом круге. Оценка от 0 до 10.':disc==='jump'?'Жми «Прыжок», когда препятствие дойдёт до белого флажка. Сбитая жердь — 4 штрафных очка.':'Жми команду, когда её карточка войдёт в жёлтый круг. Судьи оценивают точность в процентах.'}
 function resetJump(){const h=cur(),B=BREEDS[h.breed],cl=CLASSES[sel.jump];
   const fences=[];let x=560;for(let i=0;i<8;i++){const ox=cl.cm>=80&&Math.random()<.4;fences.push({x,h:cl.cm*.26,type:ox?'oxer':'vert',hit:false,passed:false,fall:0,col:pick(['#d9483b','#3f7fd0','#e2a23a','#3a9a5a'])});x+=rnd(300,400)}
-  ar={kind:'jump',running:false,done:false,dist:0,speed:250+B.speed,fences,finish:x+60,jy:0,vy:0,air:false,faults:0,t:0,phase:0,P:(36+h.level*1.4+(B.jump+(h.jumpBonus||0))*.6-(hasCh(h,'back')?3:0))*cond(h),msg:null,dust:[]};
+  ar={kind:'jump',running:false,done:false,dist:0,speed:262*(h.spd||1),fences,finish:x+60,jy:0,vy:0,air:false,faults:0,t:0,phase:0,P:(36+h.level*1.4+(B.jump+(h.jumpBonus||0))*.6-(hasCh(h,'back')?3:0))*cond(h)*specMul(h,'jump')+((h.sk&&h.sk.jump)||0)*.35+charOf(h).j,msg:null,dust:[]};
   ar.mark=HX+ar.speed*Math.sqrt(2*ar.P/G)}
 function resetDress(){const cl=DRESS[sel.dress];const cues=[];let t=2.4,prev='walk';
   for(let i=0;i<14;i++){let c;do c=pick(CMDS);while(c.k===prev);prev=c.k;cues.push({time:t,cmd:c.k,letter:pick(LETTERS),j:null});t+=cl.gap*rnd(.85,1.2)}
   ar={kind:'dress',running:false,done:false,t:0,cues,end:t+.6,gait:'walk',phase:0,dist:0,score:0,judged:0,msg:null,dust:[]}}
 
-function renderArenaUI(){const h=cur();$('#cupNote').hidden=!cupDay();$('#cupNote').textContent='Сегодня Кубок выходного дня: призы ×2, за 1 место — кубок на полку в деннике';
-  $('#disc').innerHTML=[['jump','Конкур'],['dress','Выездка'],['end','Пробег']].map(([k,n])=>`<button data-d="${k}" aria-pressed="${disc===k}">${n}</button>`).join('');
+
+/* ---- троеборье: три этапа подряд ---- */
+function resetEvent(phase){const cl=EVENT[sel.event];const sd=sel.dress,sj=sel.jump;
+  if(phase===0){EV={phase:0,cl,d:0,x:0,j:0};sel.dress=cl.d;resetDress();sel.dress=sd;ar.ev=true}
+  else{sel.jump=cl.j;resetJump();sel.jump=sj;ar.ev=true;
+    if(phase===1){ar.cross=true;ar.fences.forEach(f=>{f.col=pick(['#7a5230','#5b7d3a','#8a6a3e']);f.type='vert'});ar.opt=ar.finish/ar.speed*1.06}}
+  if(EV)EV.phase=phase}
+function evNext(kind){const h=cur();
+  if(kind==='dress'){let pct=ar.score/(ar.cues.length*10)*100;pct=clamp(pct*(.92+.08*cond(h))+(h.bond-50)*.04+((h.sk&&h.sk.dress)||0)*.25+charOf(h).d);EV.d=+(100-pct).toFixed(1);
+    toast(`Выездка: ${pct.toFixed(1)}% → ${EV.d} штрафа. Дальше кросс`);resetEvent(1);arToStart('Кросс');return}
+  if(kind==='cross'){const over=Math.max(0,ar.t-ar.opt);EV.x=+(ar.faults/4*20+over*.4).toFixed(1);h.energy=clamp(h.energy-10);
+    if(ar.faults>=12){toast('Три ошибки на кросе — снятие');EV.elim=true;return evFinish()}
+    toast(`Кросс: ${EV.x} штрафа. Дальше конкур`);resetEvent(2);arToStart('Конкур');return}
+  EV.j=ar.faults;evFinish()}
+function arToStart(n){ar.running=false;$('#jumpBtn').hidden=false;$('#drBtns').hidden=true;$('#jumpBtn').textContent=`Старт: ${n}`}
+function evFinish(){const h=cur(),cl=EV.cl,me={me:true,rider:'Ты',horse:h.name,d:EV.d,x:EV.x,j:EV.j,elim:EV.elim};me.v=EV.elim?999:+(me.d+me.x+me.j).toFixed(1);
+  const rows=rivals(5).map(r=>{const d=+rnd(26,42).toFixed(1),x=Math.random()<.6?0:+(rnd(0,1)<.5?20:rnd(2,12)).toFixed(1),j=Math.random()<.5?0:4*ri(1,2);return{...r,d,x,j,v:+(d+x+j).toFixed(1)}});
+  rows.push(me);rows.sort((a,b)=>a.v-b.v);EV=null;ar.ev=false;settle(rows,cl,'event',false)}
+/* ---- вольтижировка ---- */
+function resetVolt(){const cl=VOLT[sel.volt];const sd=sel.dress;DRESS.push(Object.assign({},DRESS[0],{gap:cl.gap,n:cl.n}));sel.dress=DRESS.length-1;resetDress();DRESS.pop();sel.dress=sd;ar.volt=true;ar.gait='walk'}
+function finishVolt(){const h=cur(),i=sel.volt;let sc=ar.score/ar.cues.length;sc=Math.max(0,Math.min(10,sc*(.92+.08*cond(h))+(h.bond-50)*.004+((h.sk&&h.sk.dress)||0)*.02+(charOf(h).d>0?.15:0)));
+  const rows=rivals(5).map(r=>({...r,v:+rnd(5.6,7.6).toFixed(3)+i*.15}));rows.push({me:true,rider:'Ты',horse:h.name,v:+sc.toFixed(3)});rows.sort((a,b)=>b.v-a.v);settle(rows,VOLT[i],'volt',sc>=6)}
+function renderArenaUI(){const h=cur();{const e=calEvent();const t=e&&!e.closed?`Сегодня ${e.n}: призы ×${e.m}, очки рейтинга сезона (у тебя ${seasonPts()})`:e&&e.closed?`Сегодня ${e.n} — нужно ${e.q} очков сезона, у тебя ${seasonPts()}`:cupDay()?'Сегодня Кубок выходного дня: призы ×2, за 1 место — кубок на полку в деннике':'';$('#cupNote').hidden=!t;$('#cupNote').textContent=t}
+  $('#disc').innerHTML=[['jump','Конкур'],['dress','Выездка'],['end','Пробег'],['event','Троеборье'],['volt','Вольтижир.']].map(([k,n])=>`<button data-d="${k}" aria-pressed="${disc===k}">${n}</button>`).join('');
   $('#disc').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(ar.running)return;disc=b.dataset.d;resetArena();renderArenaUI()});
-  $('#clsLabel').textContent=disc==='jump'?'Высота препятствий':disc==='dress'?'Уровень езды':'Дистанция пробега';
+  $('#clsLabel').textContent=disc==='jump'?'Высота препятствий':disc==='dress'?'Уровень езды':disc==='event'?'Уровень соревнований':disc==='volt'?'Категория':'Дистанция пробега';
   $('#arHorse').textContent=`${h.name} · ур. ${h.level} · энергия ${Math.round(h.energy)}`;
-  const L=clsList();const lock=c=>c.lvl>h.level?'с ур. '+c.lvl:(disc==='end'&&permitOf(h)<c.km?'нет допуска':null);if(lock(L[sel[disc]])){sel[disc]=0;resetArena()}
-  $('#classes').innerHTML=L.map((c,i)=>`<button class="cls" data-c="${i}" aria-pressed="${i===sel[disc]}" ${lock(c)?'disabled':''}>${disc==='jump'?c.cm+' см':disc==='dress'?c.short:c.km+' км'}<small>${lock(c)||'приз '+c.prize[0]}</small></button>`).join('');
+  const L=clsList();const lock=c=>c.lvl>h.level?'с ур. '+c.lvl:(disc==='end'&&permitOf(h)<c.km?'нет допуска':disc==='end'&&tooYoung(h,c)?'с '+c.age+' лет':null);if(lock(L[sel[disc]])){sel[disc]=0;resetArena()}
+  $('#classes').innerHTML=L.map((c,i)=>`<button class="cls" data-c="${i}" aria-pressed="${i===sel[disc]}" ${lock(c)?'disabled':''}>${c.short||(c.cm?c.cm+' см':c.km+' км')}<small>${lock(c)||'приз '+c.prize[0]}</small></button>`).join('');
   $('#classes').querySelectorAll('.cls').forEach(b=>b.onclick=()=>{if(ar.running)return;sel[disc]=+b.dataset.c;resetArena();renderArenaUI()});
   if(disc==='end')joinRide(ENDUR[sel.end].km);else leaveRide();
+  renderRace();
 }
 function canCompete(h){
   if(h.sick){toast(`${h.name} болеет. Вызови ветеринара`);return false}
@@ -5551,8 +5866,8 @@ function canCompete(h){
 function startOrJump(){
   if(ar.running){if(ar.kind==='jump'&&!ar.air){ar.air=true;ar.vy=Math.sqrt(2*G*ar.P)}return}
   if(ar.done)resetArena();const h=cur();if(!canCompete(h))return;
-  ar.running=true;$('#resCard').hidden=true;
-  if(ar.kind==='jump')$('#jumpBtn').textContent='Прыжок';else if(ar.kind==='end'){$('#jumpBtn').hidden=true;$('#enBtns').hidden=false;updEnBtns()}else{$('#jumpBtn').hidden=true;$('#drBtns').hidden=false}}
+  ar.running=true;$('#resCard').hidden=true;if(ar.race){S.raceDone=S.raceDone||{};S.raceDone[ar.race]=1;save()}
+  if(ar.kind==='jump')$('#jumpBtn').textContent='Прыжок';else if(ar.kind==='end'){$('#jumpBtn').hidden=true;$('#enBtns').hidden=false;updEnBtns()}else{$('#jumpBtn').hidden=true;$('#drBtns').hidden=false;$('#drBtns').querySelectorAll('button').forEach((b,i)=>b.firstChild.textContent=ar.volt?VNAME[b.dataset.cmd]:CMDS[i].n)}}
 function cmd(k){if(!ar.running||ar.kind!=='dress')return;ar.gait=k;
   const open=ar.cues.filter(q=>q.j==null);if(!open.length)return;
   const c=open.reduce((a,b)=>Math.abs(a.time-ar.t)<Math.abs(b.time-ar.t)?a:b);
@@ -5562,6 +5877,7 @@ function cmd(k){if(!ar.running||ar.kind!=='dress')return;ar.gait=k;
   if(c.cmd!==k){sc=3;txt='Не та команда';col='#e2604f'}else if(d<.09){sc=10;txt='Отлично';col='#7cc46b'}else if(d<.18){sc=8;txt='Хорошо';col='#a8d36b'}else{sc=6;txt='Неточно';col='#e8ad48'}
   c.j=sc;ar.score+=sc;ar.judged++;if(sc>=8)SFX.good();else if(sc<=3)SFX.bad();ar.msg={t:1,txt,col}}
 $('#jumpBtn').addEventListener('click',startOrJump);
+$('#chatForm').addEventListener('submit',e=>{e.preventDefault();const i=$('#chatIn');const t=i.value;i.value='';chatSend(t)});
 acv.addEventListener('pointerdown',e=>{e.preventDefault();if(ar.kind==='jump'||!ar.running)startOrJump()});
 $('#drBtns').querySelectorAll('button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();cmd(b.dataset.cmd)}));
 addEventListener('keydown',e=>{if(view!=='arena')return;
@@ -5569,40 +5885,34 @@ addEventListener('keydown',e=>{if(view!=='arena')return;
   if((e.code==='Space'||e.code==='ArrowUp')&&!(document.activeElement&&document.activeElement.tagName==='BUTTON')){e.preventDefault();if(ar.kind==='jump'||!ar.running)startOrJump()}});
 
 function settle(rows,cl,kind,extra){const h=cur();const place=rows.findIndex(r=>r.me);ar.running=false;ar.done=true;
-  h.load=clamp((h.load||0)+(kind==='jump'?10+sel.jump*5:6+sel.dress*3));h.workedToday=true;h.lastWork=kind;let injMsg='';
+  h.load=clamp((h.load||0)+(kind==='jump'?10+sel.jump*5:kind==='event'?16+sel.event*5:6+sel.dress*3));h.workedToday=true;h.lastWork=kind;let injMsg='';
   if(kind==='jump'){const k=Math.round(ar.faults/4);let hit=false;for(let j=0;j<k;j++)if(Math.random()<.05+sel.jump*.03+h.load/500+(h.prone||0)*.1+(hasCh(h,'tendon')?.03:0))hit=true;if(k>=3&&Math.random()<.25)hit=true;
     if(hit){const t=k>=3&&sel.jump>=2&&Math.random()<.25?'tendon':'bruise';injure(h,t,t==='tendon'?'неудачное приземление после сбитого барьера':`удары о жерди (${k} за заезд)`);injMsg=INJ[t].n}
     else if(sel.jump>=2&&h.load>60&&Math.random()<.08){injure(h,'back','высокие прыжки при большой нагрузке');injMsg=INJ.back.n}}
   else if(h.load>70&&Math.random()<.05){injure(h,'back','перегрузка на выездке');injMsg=INJ.back.n}
-  const coins=(place<3?cl.prize[place]:5)*(cupDay()?2:1),xp=place<3?cl.xp:Math.round(cl.xp/2);
+  const coins=Math.round((place<3?cl.prize[place]:5)*prizeMult()),xp=Math.round((place<3?cl.xp:cl.xp/2)*(S.staff&&S.staff.trainer?1.25:1));const cpts=calAward(place);
   S.coins+=coins;addXP(h,xp);h.energy=clamp(h.energy-(h.stamina?12:25));h.hunger=clamp(h.hunger-8);h.thirst=clamp(h.thirst-12);h.hooves=clamp(h.hooves-3);addDirt(h,kind==='jump'?3:2);addStones(h,1);
   task('show');if(place<3){h.ribbons.push({p:place,kind,day:S.day});task('ribbon')}if(extra)task('dress');
   const me=rows[place];
   if(kind==='jump'&&me.f===0)S.stats.clear=(S.stats.clear||0)+1;if(kind==='dress'&&me.v>=75)S.stats.d75=1;if(place===0&&cl===clsList()[3])S.stats.gp=1;
+  if(place===0&&(sel[kind]>=2||calEvent()))feed(`победа: ${h.name}, ${clsList()===CLASSES?CLASSES[sel.jump].cm+' см':(cl.n||cl.short||'')}${calEvent()?' · '+calEvent().n:''}`);
   if(cupDay()&&place===0){S.cups=(S.cups||0)+1;setTimeout(()=>toast('Кубок выходного дня твой!'),300)}
   if(place<3)SFX.win();else SFX.bad();const title=place<3?`${PLACE_NAME[place]} из ${rows.length}`:`${place+1} место из ${rows.length}`;
-  const sub=kind==='jump'?`${me.f} штрафных очков · ${me.t.toFixed(2)} с`:`Оценка судей: ${me.v.toFixed(3)}%`;
+  const sub=kind==='jump'?`${me.f} штрафных очков · ${me.t.toFixed(2)} с`:kind==='event'?(me.elim?'Снятие на кросе':`Сумма штрафа ${me.v} (выездка ${me.d}, кросс ${me.x}, конкур ${me.j})`):kind==='volt'?`Оценка: ${me.v.toFixed(3)} балла`:`Оценка судей: ${me.v.toFixed(3)}%`;
   const r=$('#resCard');r.hidden=false;
-  r.innerHTML=`<div class="result"><canvas width="144" height="144"></canvas><div><h3>${title}</h3><p>${sub}</p><p>+${coins} монет · +${xp} опыта${place<3?' · розетка висит в деннике':''}</p>${injMsg?`<p style="color:var(--bad)">Травма: ${injMsg.toLowerCase()}. Смотри лечение в деннике.</p>`:''}</div></div>
-  <div class="tablewrap"><table class="proto"><thead><tr><th>#</th><th>Всадник · лошадь</th>${kind==='jump'?'<th>Штраф</th><th>Время</th>':'<th>%</th>'}</tr></thead><tbody>${rows.map((x,i)=>`<tr class="${x.me?'me':''}"><td>${i+1}</td><td>${esc(x.rider)}<small> · ${esc(x.horse)}</small></td>${kind==='jump'?`<td>${x.f}</td><td>${x.t.toFixed(2)}</td>`:`<td>${x.v.toFixed(3)}</td>`}</tr>`).join('')}</tbody></table></div>`;
+  r.innerHTML=`<div class="result"><canvas width="144" height="144"></canvas><div><h3>${title}</h3><p>${sub}</p><p>+${coins} монет · +${xp} опыта${place<3?' · розетка висит в деннике':''}${cpts?` · +${cpts} очк. сезона`:''}</p>${injMsg?`<p style="color:var(--bad)">Травма: ${injMsg.toLowerCase()}. Смотри лечение в деннике.</p>`:''}</div></div>
+  <div class="tablewrap"><table class="proto"><thead><tr><th>#</th><th>Всадник · лошадь</th>${kind==='jump'?'<th>Штраф</th><th>Время</th>':kind==='event'?'<th>Выезд.</th><th>Кросс</th><th>Конк.</th><th>Итог</th>':kind==='volt'?'<th>Балл</th>':'<th>%</th>'}</tr></thead><tbody>${rows.map((x,i)=>`<tr class="${x.me?'me':''}"><td>${i+1}</td><td>${esc(x.rider)}<small> · ${esc(x.horse)}</small></td>${kind==='jump'?`<td>${x.f}</td><td>${x.t.toFixed(2)}</td>`:kind==='event'?`<td>${x.d}</td><td>${x.elim?'—':x.x}</td><td>${x.elim?'—':x.j}</td><td>${x.elim?'снят':x.v}</td>`:`<td>${x.v.toFixed(3)}</td>`}</tr>`).join('')}</tbody></table></div>`;
   const rc=r.querySelector('canvas').getContext('2d');rc.scale(2,2);
   if(place<3)drawRosette(rc,36,24,16,PLACE_COL[place]);else{rc.strokeStyle='#9fb3a3';rc.lineWidth=4;rc.beginPath();rc.arc(36,36,18,0,7);rc.stroke();rc.fillStyle='#9fb3a3';rc.font='800 16px Nunito';rc.textAlign='center';rc.textBaseline='middle';rc.fillText(place+1,36,37)}
   $('#jumpBtn').hidden=false;$('#drBtns').hidden=true;$('#jumpBtn').textContent='Ещё заезд';renderArenaUI();save();ui()}
-function finishJump(){const h=cur(),i=sel.jump;
+function finishJump(){if(ar.ev){evNext(ar.cross?'cross':'jump');return}const h=cur(),i=sel.jump;
   const on=onlineRows('jump',CLASSES[i].cm);const rows=rivals(5-on.length).map(r=>{let f=0;for(let k=0;k<8;k++)if(Math.random()<.05+i*.03)f+=4;return{...r,f,t:ar.finish/rnd(232,265)}});
-  rows.push(...on);rows.push({me:true,rider:'Ты',horse:h.name,f:ar.faults,t:ar.t});rows.sort((a,b)=>a.f-b.f||a.t-b.t);recordBest('jump',CLASSES[i].cm,{f:ar.faults,t:+ar.t.toFixed(2),horse:h.name});settle(rows,CLASSES[i],'jump',false)}
-function finishDress(){const h=cur(),i=sel.dress;
-  let pct=ar.score/(ar.cues.length*10)*100;pct=clamp(pct*(.92+.08*cond(h))+(h.bond-50)*.04+(h.dressBonus||0)-(hasCh(h,'back')?3:0));
-  const on=onlineRows('dress',DRESS[i].short);const rows=rivals(5-on.length).map(r=>({...r,v:rnd(56,72)+i*1.2}));rows.push(...on);rows.push({me:true,rider:'Ты',horse:h.name,v:pct});recordBest('dress',DRESS[i].short,{v:+pct.toFixed(3),horse:h.name});rows.sort((a,b)=>b.v-a.v);
+  rows.push(...on);rows.push({me:true,rider:'Ты',horse:h.name,f:ar.faults,t:ar.t});raceSubmit('jump',{f:ar.faults,t:+ar.t.toFixed(2)});rows.sort((a,b)=>a.f-b.f||a.t-b.t);recordBest('jump',CLASSES[i].cm,{f:ar.faults,t:+ar.t.toFixed(2),horse:h.name});settle(rows,CLASSES[i],'jump',false)}
+function finishDress(){if(ar.ev){evNext('dress');return}if(ar.volt){finishVolt();return}const h=cur(),i=sel.dress;
+  let pct=ar.score/(ar.cues.length*10)*100;pct=clamp(pct*(.92+.08*cond(h))+(h.bond-50)*.04+(h.dressBonus||0)-(hasCh(h,'back')?3:0)+(h.spec==='dress'?4:h.spec?-3:0)+((h.sk&&h.sk.dress)||0)*.25+charOf(h).d);
+  const on=onlineRows('dress',DRESS[i].short);const rows=rivals(5-on.length).map(r=>({...r,v:rnd(56,72)+i*1.2}));rows.push(...on);rows.push({me:true,rider:'Ты',horse:h.name,v:pct});raceSubmit('dress',{v:+pct.toFixed(3)});recordBest('dress',DRESS[i].short,{v:+pct.toFixed(3),horse:h.name});rows.sort((a,b)=>b.v-a.v);
   settle(rows,DRESS[i],'dress',pct>=60)}
 
-function drawRider(c,h,x,gy,air,bob){const k=.38*scaleOf(h);const bx=x-4*k,by=gy-150*k-bob*k;
-  c.save();c.translate(bx,by);c.scale(k,k);
-  c.strokeStyle='#2a2a33';c.lineWidth=9;c.lineCap='round';c.beginPath();c.moveTo(0,0);c.lineTo(14,22);c.lineTo(6,40);c.stroke();
-  c.rotate(air?.7:.12);c.strokeStyle='#2f5fa8';c.lineWidth=14;c.beginPath();c.moveTo(0,0);c.lineTo(0,-40);c.stroke();
-  c.lineWidth=7;c.beginPath();c.moveTo(0,-34);c.lineTo(16,-18);c.lineTo(30,-14);c.stroke();
-  c.fillStyle='#f1c9a5';c.beginPath();c.arc(2,-54,9,0,7);c.fill();c.fillStyle='#22222a';c.beginPath();c.arc(2,-57,10,Math.PI,0);c.fill();c.fillRect(2,-58,13,3);
-  c.restore()}
 function backdrop(c,dist,horizon){
   const sg=c.createLinearGradient(0,0,0,horizon);if(S.weather==='sun'){sg.addColorStop(0,'#86bde6');sg.addColorStop(1,'#d8ecf3')}else{sg.addColorStop(0,'#8f9ba6');sg.addColorStop(1,'#d6dce1')}c.fillStyle=sg;c.fillRect(0,0,AW,AH);
   trees.forEach(t=>{const x=((t[0]-dist*.15)%1152+1152)%1152-60;c.fillStyle=t[2];c.beginPath();c.arc(x,horizon-10-t[1]*.4,t[1],0,7);c.arc(x+t[1]*.8,horizon-4-t[1]*.3,t[1]*.8,0,7);c.fill()})}
@@ -5612,7 +5922,7 @@ function weatherFx(c){if(S.weather==='rain'){c.strokeStyle='rgba(225,235,250,.55
 function hud(c,l,m,r,mc){c.fillStyle='rgba(19,32,26,.8)';c.beginPath();c.roundRect(8,8,AW-16,26,8);c.fill();
   c.font='800 12px Nunito, sans-serif';c.textBaseline='middle';c.textAlign='left';c.fillStyle='#eef1e4';c.fillText(l,18,21);
   c.textAlign='center';c.fillStyle=mc;c.fillText(m,AW/2,21);c.textAlign='right';c.fillStyle='#eef1e4';c.fillText(r,AW-18,21)}
-function overlay(c,a,b){c.fillStyle='rgba(19,32,26,.75)';c.beginPath();c.roundRect(90,62,220,52,10);c.fill();c.fillStyle='#ecc35a';c.font='700 13px Unbounded, sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(a,200,80,200);c.fillStyle='#eef1e4';c.font='600 12px Nunito';c.fillText(b,200,99)}
+function overlay(c,a,b){c.fillStyle='rgba(19,32,26,.75)';c.beginPath();c.roundRect(50,62,300,52,10);c.fill();c.fillStyle='#ecc35a';c.font='700 13px Unbounded, sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(a,200,80,284);c.fillStyle='#eef1e4';c.font='600 12px Nunito';c.fillText(b,200,99,284)}
 
 /* ============ ENDURANCE (пробег) ============ */
 const ENDG={walk:{n:'Шаг',v:7,ph:4.5,p:72,hy:.35,fa:-1.4},trot:{n:'Рысь',v:14,ph:9,p:122,hy:.7,fa:.35},canter:{n:'Галоп',v:21,ph:12,p:158,hy:1.05,fa:1.9}};
@@ -5621,16 +5931,16 @@ const VENUES=['Гедуко','Добромысли'];
 const venue=()=>VENUES[S.day%2];
 function terr(x){return 22*Math.sin(x*.55)+11*Math.sin(x*1.7+1)+5*Math.sin(x*4.3+2)}
 function eslope(x){return (terr(x+.05)-terr(x-.05))/.1/30}
-function endFit(h){return Math.min(1,.35+h.level*.05+(h.stamina?.2:0)+(ENDUR_B[h.breed]||0)+(h.fitBonus||0))}
+function endFit(h){return Math.min(1,Math.max(.2,.35+h.level*.05+(h.stamina?.2:0)+(ENDUR_B[h.breed]||0)+(h.fitBonus||0)+(h.spec==='end'?.08:h.spec?-.06:0)+((h.sk&&h.sk.end)||0)*.008+charOf(h).f))}
 const fmtT=m=>{m=Math.round(m);return Math.floor(m/60)+':'+String(m%60).padStart(2,'0')};
 function resetEnd(){const h=cur(),cl=ENDUR[sel.end];
-  ar={kind:'end',running:false,done:false,stage:0,st:cl.st.slice(),km:0,tot:0,clock:0,rec:[],gait:'trot',pulse:64,hydr:100,fat:0,strain:0,phase:0,water:[],mode:'ride',vet:null,msg:null,fit:endFit(h),elim:null,injured:null,bt:0,ut:0,dust:[]};
+  ar={kind:'end',running:false,done:false,stage:0,st:cl.st.slice(),holds:holdsFor(cl),code:null,stT:0,fast:false,cri:null,km:0,tot:0,clock:0,rec:[],gait:'trot',pulse:64,hydr:100,fat:0,strain:0,phase:0,water:[],mode:'ride',vet:null,msg:null,fit:endFit(h),elim:null,injured:null,bt:0,ut:0,dust:[]};
   setupStage()}
-function setupStage(){const L=ar.st[ar.stage];ar.km=0;ar.water=[];for(let k=7;k<L-3;k+=7)ar.water.push({km:k,used:false});ar.mode='ride';ar.seed=ar.stage*13.7}
+function setupStage(){const L=ar.st[ar.stage];ar.km=0;ar.stT=ar.clock;ar.water=[];for(let k=7;k<L-3;k+=7)ar.water.push({km:k,used:false});ar.mode='ride';ar.seed=ar.stage*13.7}
 function nearWater(){return ar.water.find(w=>!w.used&&Math.abs(w.km-ar.km)<.45)}
 function updEnBtns(){const bs=[...document.querySelectorAll('#enBtns button')];if(!bs.length||ar.kind!=='end')return;
   if(ar.mode==='vet'){bs[0].hidden=false;bs[0].innerHTML=`Охладить<small>${ar.vet.cool}/10</small>`;bs[0].removeAttribute('aria-pressed');bs[1].hidden=true;bs[2].hidden=true;bs[3].hidden=false;bs[3].innerHTML='Предъявить<small>ветврачу</small>';bs[3].classList.remove('hot')}
-  else{['walk','trot','canter'].forEach((g,i)=>{bs[i].hidden=false;bs[i].innerHTML=`${ENDG[g].n}<small>${ENDG[g].v} км/ч</small>`;bs[i].setAttribute('aria-pressed',ar.gait===g)});
+  else{['walk','trot','canter'].forEach((g,i)=>{bs[i].hidden=false;bs[i].innerHTML=`${ENDG[g].n}<small>${Math.round(ENDG[g].v*(cur().spd||1))} км/ч</small>`;bs[i].setAttribute('aria-pressed',ar.gait===g)});
     const w=ar.water.find(w=>!w.used&&w.km>ar.km-.45);const near=w&&Math.abs(w.km-ar.km)<.45;bs[3].hidden=false;
     bs[3].innerHTML=near?'Напоить<small>сейчас!</small>':w?`Вода<small>через ${(w.km-ar.km).toFixed(1)} км</small>`:'Вода<small>до ветконтроля нет</small>';bs[3].classList.toggle('hot',!!near)}}
 function enPress(i){if(!ar.running||ar.kind!=='end')return;
@@ -5638,49 +5948,68 @@ function enPress(i){if(!ar.running||ar.kind!=='end')return;
   else if(ar.mode==='vet'){const v=ar.vet;
     if(i===0&&v.cool<10&&v.cd<=0){v.cool++;v.cd=.3;ar.pulse=Math.max(46,ar.pulse-3);SFX.splash();updEnBtns()}
     if(i===3)present()}}
+const vetLimit=()=>ar.stage>=ar.st.length-1?20:15;
+const vetTries=()=>ar.stage>=ar.st.length-1?1:2;
 function present(){const v=ar.vet,p=Math.round(ar.pulse),h=cur();
   if(p<=64){ar.rec.push(Math.max(1,Math.round(v.t)));
     let lame=!!ar.injured;if(!lame&&Math.random()<Math.max(0,(60-hoofOf(h))/300)+h.stones.length*.02){lame=true;ar.injured='sole'}
-    if(lame){endElim('Хромота на ветконтроле');return}
+    if(lame){endElim(ar.injured==='rupture'?'FTQ-SI-MUSCU':'FTQ-GA',ar.injured==='rupture'?'Тяжёлая травма сухожилия':'Хромота на ветконтроле');return}
     SFX.good();
     if(ar.stage>=ar.st.length-1){finishEnd();return}
-    ar.mode='hold';ar.hold=1.8;ar.msg={t:1.4,txt:`Пульс ${p} · прошли`,col:'#7cc46b'};ar.fat=Math.max(0,ar.fat-45);ar.hydr=Math.min(100,ar.hydr+30);ar.strain*=.6;ar.pulse=60;updEnBtns()}
-  else{v.att++;SFX.bad();ar.msg={t:1.2,txt:`Пульс ${p} > 64`,col:'#e2604f'};if(v.att>=2)endElim('Пульс выше 64 на повторном предъявлении')}}
-function endElim(r){if(ar.elim)return;ar.elim=r;finishEnd()}
+    const last=ar.stage+1===ar.st.length-1;ar.cri=(v.t>10?'Восстановление дольше 10 мин — ':'')+((v.t>10||(last&&ar.st.reduce((a,b)=>a+b,0)>=80))?'повторная инспекция (CRI) перед стартом':'');
+    if(ar.cri&&Math.random()<ar.strain*.35+ar.fat/600){endElim('FTQ-GA','Неровный аллюр на повторной инспекции');return}
+    ar.mode='hold';ar.hold=2.6;ar.msg={t:1.4,txt:`Пульс ${p} · прошли`,col:'#7cc46b'};ar.fat=Math.max(0,ar.fat-45);ar.hydr=Math.min(100,ar.hydr+30);ar.strain*=.6;ar.pulse=60;updEnBtns()}
+  else{v.att++;SFX.bad();ar.msg={t:1.2,txt:`Пульс ${p} > 64`,col:'#e2604f'};if(v.att>=vetTries())endElim('FTQ-ME',v.att>1?'Пульс выше 64 на повторном предъявлении':'Пульс выше 64 на финишном ветконтроле')}}
+function endElim(code,r){if(ar.elim)return;ar.code=code;ar.elim=r;finishEnd()}
 function rivalsEnd(n,cl){const pool=REG.filter(r=>r.t>0&&permitFrom(r.d)>=cl.km);const src=pool.length>20?pool:REG.filter(r=>r.t>0);
   const riders=RIDERS.slice().sort(()=>Math.random()-.5);const out=[];const used=new Set();let guard=0;
   while(out.length<n&&guard++<500){const r=src[Math.floor(Math.random()*src.length)];if(used.has(r))continue;used.add(r);
     const rate=r.t?r.c/r.t:.7;const pE=clamp((1-rate)*.8+cl.km/800,.06,.6);
-    const sp=rnd(12.5,17)+Math.min(1.5,r.c*.06)-cl.km/120;const recov=cl.st.reduce(a=>a+rnd(3,11),0);
-    const el=Math.random()<pE;out.push({rider:riders[out.length%riders.length],horse:r.n,t:cl.km/sp*60+recov,v:sp,elim:el?pick(['пульс','хромота','метаболизм']):null,km:el?Math.round(cl.km*rnd(.3,.9)):cl.km})}
+    const sp=cl.q?rnd(11.5,15.8):rnd(12.5,17)+Math.min(1.5,r.c*.06)-cl.km/120;const recov=cl.st.slice(0,-1).reduce(a=>a+rnd(3,11),0);
+    const el=Math.random()<pE;out.push({rider:riders[out.length%riders.length],horse:r.n,t:cl.km/sp*60+recov,v:sp,elim:el?(Math.random()<.6?'FTQ-GA':Math.random()<.8?'FTQ-ME':pick(['FTQ-OT','FTQ-SI-META','RET'])):null,rec:Math.round(recov/cl.st.length),km:el?Math.round(cl.km*rnd(.3,.9)):cl.km})}
   return out}
 function finishEnd(){const h=cur(),cl=ENDUR[sel.end];ar.running=false;ar.done=true;
-  const myT=ar.clock+ar.rec.reduce((a,b)=>a+b,0);
+  const myT=ar.clock+ar.rec.slice(0,ar.st.length-1).reduce((a,b)=>a+b,0);
   const on=onlineRows('end',cl.km);const rows=rivalsEnd(6-on.length,cl).concat(on);if(!ar.elim)recordBest('end',cl.km,{t:Math.round(myT),v:+(ar.tot/Math.max(.01,ar.clock/60)).toFixed(1),horse:h.name});
-  rows.push({me:true,rider:'Ты',horse:h.name,t:myT,v:ar.tot/Math.max(.01,ar.clock/60),elim:ar.elim,km:ar.tot});
+  rows.push({me:true,rider:'Ты',horse:h.name,t:myT,v:ar.tot/Math.max(.01,ar.clock/60),elim:ar.elim?ar.code:null,why:ar.elim,km:ar.tot,rec:ar.rec.length?Math.round(ar.rec.reduce((a,b)=>a+b,0)/ar.rec.length):0});
   rows.sort((a,b)=>(!!a.elim-!!b.elim)||(a.elim?b.km-a.km:a.t-b.t));
+  raceSubmit('end',{t:Math.round(myT),v:+(ar.tot/Math.max(.01,ar.clock/60)).toFixed(1),elim:ar.elim?ar.code:null,km:+ar.tot.toFixed(1)});
   settleEnd(rows,cl)}
 function settleEnd(rows,cl){const h=cur();const place=rows.findIndex(r=>r.me);const me=rows[place];const fin=!me.elim;const cup=cupDay();
-  const coins=fin?(place<3?cl.prize[place]:15)*(cup?2:1):0;const xp=fin?cl.xp:Math.round(cl.xp/3);
+  const coins=fin?Math.round((place<3?cl.prize[place]:15)*prizeMult()):0;const xp=Math.round((fin?cl.xp:cl.xp/3)*(S.staff&&S.staff.trainer?1.25:1));const cpts=fin?calAward(place):0;if(cpts)setTimeout(()=>toast(`+${cpts} очков рейтинга сезона`),1200);
   S.coins+=coins;addXP(h,xp);h.energy=clamp(h.energy-(h.stamina?18:35));h.hunger=clamp(h.hunger-15);h.thirst=clamp(h.thirst-(100-ar.hydr)*.4-10);h.hooves=clamp(h.hooves-6);addStones(h,ri(1,2));addDirt(h,4);
   task('show');S.stats.endKm=(S.stats.endKm||0)+Math.round(me.km||0);
   h.load=clamp((h.load||0)+15+cl.km/5);h.workedToday=true;h.lastWork='end';
-  let it=ar.injured,injMsg='';if(!it&&me.elim&&/Метабол/.test(me.elim))it='tying';
+  let it=ar.injured,injMsg='';if(!it&&me.elim==='FTQ-SI-META')it='tying';
   if(!it&&fin&&cl.km>=80&&me.v>17&&Math.random()<.25)it='tendon';
   if(it){injure(h,it,it==='tying'?'перегрузка на пробеге':it==='sole'?'камень в копыте на дистанции':me.v>17?'слишком высокая скорость на пробеге':'травма на дистанции');injMsg=INJ[it].n}
-  h.rest=Math.max(h.rest||0,({40:2,80:4,120:6,160:8})[cl.km]+(me.elim?3:0));
+    // обязательный отдых и штрафные очки по правилам
+  h.ftq=h.ftq||{ME:0,GA:0};let rest=restByKm(me.km||0),why=[`${Math.round(me.km||0)} км — ${rest} дн.`];
+  if(fin&&me.v>21){rest+=7;why.push('скорость выше 21 км/ч +7')}
+  const pts={'FTQ-ME':10,'FTQ-SI-META':25,'FTQ-SI-MUSCU':80}[me.elim]||0;
+  if(me.elim==='FTQ-ME'||me.elim==='FTQ-SI-META'){h.ftq.ME++;if(me.elim==='FTQ-SI-META'){rest+=60;why.push('серьёзная метаболика +60')}else if(h.ftq.ME===2){rest+=14;why.push('2-й FTQ-ME подряд +14')}else if(h.ftq.ME>=3){rest+=60;why.push('3-й FTQ-ME подряд +60')}}
+  else if(me.elim==='FTQ-GA'||me.elim==='FTQ-SI-MUSCU'){h.ftq.GA++;if(me.elim==='FTQ-SI-MUSCU'){rest+=180;why.push('серьёзная травма +180')}else if(h.ftq.GA>=3){rest+=180;why.push('3-й FTQ-GA подряд +180')}}
+  if(fin)h.ftq={ME:0,GA:0};
+  h.pen=Math.max(0,(h.pen||0)+pts-(fin?5:0));if(h.pen>=100){rest+=60;why.push('100 штрафных очков — дисквалификация 2 месяца');h.pen=0}
+  h.rest=Math.max(h.rest||0,rest);const restWhy=why.join(' · ');
   let pm='';
   if(fin){task('endrun');S.stats.endFin=(S.stats.endFin||0)+1;if(cl.km>=160)S.stats.end160=1;
-    const nx=ENDUR.find(e=>e.km>cl.km);if(nx&&(h.permit||40)<nx.km){h.permit=nx.km;pm=` · допуск повышен до ${nx.km} км`}}
+    h.qual=h.qual||{};const ok=!(cl.q&&ar.fast);if(ok)h.qual[cl.km]=(h.qual[cl.km]||0)+1;
+    const nx=ENDUR.find(e=>e.km>cl.km);
+    if(!ok)pm=' · этап быстрее 16 км/ч — в квалификацию не идёт';
+    else if(nx&&(h.permit||40)<nx.km){if(h.qual[cl.km]>=2){h.permit=nx.km;pm=` · допуск повышен до ${nx.km} км`}else pm=` · для допуска на ${nx.km} км нужен ещё ${2-h.qual[cl.km]} такой пробег`}}
+  let bc='';if(cl.km>=80){const top=rows.filter(x=>!x.elim).slice(0,10);if(top.length){
+    const sc=top.map((x,i)=>({x,v:(10-i)*10+Math.max(0,60-(x.rec||8)*4)+(x.me?100-ar.fat*.5-ar.strain*50:rnd(55,95))}));sc.sort((a,b)=>b.v-a.v);
+    const w=sc[0].x;bc=`Лучшее состояние лошади: ${esc(w.horse)}${w.me?' — это твоя! +40 монет':''}`;if(w.me){S.coins+=40;setTimeout(()=>toast('Приз «Лучшее состояние лошади»!'),400)}}}
   if(fin&&place<3){h.ribbons.push({p:place,kind:'end',day:S.day});task('ribbon')}
   if(fin&&cup&&place===0){S.cups=(S.cups||0)+1;setTimeout(()=>toast('Кубок выходного дня твой!'),300)}
   if(fin&&place<3)SFX.win();else SFX.bad();
-  const title=fin?(place<3?PLACE_NAME[place]:(place+1)+' место')+` из ${rows.length}`:'Снятие с дистанции';
-  const sub=fin?`${cl.km} км за ${fmtT(me.t)} · средняя скорость ${me.v.toFixed(1)} км/ч`:`${me.elim} · пройдено ${me.km.toFixed(1)} км`;
+  const title=fin?(place<3?PLACE_NAME[place]:(place+1)+' место')+` из ${rows.length}`:'Не прошли квалификацию';
+  const sub=fin?`${cl.km} км за ${fmtT(me.t)} (езда + восстановление, кроме финишного) · ${me.v.toFixed(1)} км/ч`:`${me.elim}: ${me.why} · пройдено ${me.km.toFixed(1)} км`;
   let n=0;
   const r=$('#resCard');r.hidden=false;
-  r.innerHTML=`<div class="result"><canvas width="144" height="144"></canvas><div><h3>${title}</h3><p>${sub}</p><p>+${coins} монет · +${xp} опыта${fin&&place<3?' · розетка в деннике':''}${pm}</p><p>Обязательный отдых: ${h.rest} ${dn(h.rest)}</p>${injMsg?`<p style="color:var(--bad)">Травма: ${injMsg.toLowerCase()}. Смотри лечение в деннике.</p>`:''}</div></div>
-  <div class="tablewrap"><table class="proto"><thead><tr><th>#</th><th>Всадник · лошадь</th><th>Время</th><th>км/ч</th></tr></thead><tbody>${rows.map(x=>{const pl=x.elim?'—':++n;return`<tr class="${x.me?'me':''}"><td>${pl}</td><td>${esc(x.rider)}<small> · ${esc(x.horse)}</small></td>${x.elim?`<td colspan="2"><small>снятие: ${esc(x.elim)}</small></td>`:`<td>${fmtT(x.t)}</td><td>${x.v.toFixed(1)}</td>`}</tr>`}).join('')}</tbody></table></div>`;
+  r.innerHTML=`<div class="result"><canvas width="144" height="144"></canvas><div><h3>${title}</h3><p>${sub}</p><p>+${coins} монет · +${xp} опыта${fin&&place<3?' · розетка в деннике':''}${pm}</p><p>Обязательный отдых: ${h.rest} ${dn(h.rest)} <small>(${restWhy})</small></p>${bc?`<p>${bc}</p>`:''}${h.pen?`<p><small>Штрафные очки лошади: ${h.pen} из 100</small></p>`:''}${injMsg?`<p style="color:var(--bad)">Травма: ${injMsg.toLowerCase()}. Смотри лечение в деннике.</p>`:''}</div></div>
+  <div class="tablewrap"><table class="proto"><thead><tr><th>#</th><th>Всадник · лошадь</th><th>Время</th><th>км/ч</th></tr></thead><tbody>${rows.map(x=>{const pl=x.elim?'—':++n;return`<tr class="${x.me?'me':''}"><td>${pl}</td><td>${esc(x.rider)}<small> · ${esc(x.horse)}</small></td>${x.elim?`<td colspan="2"><small>${esc(x.elim)} · ${esc(FTQ[x.elim]||'')}</small></td>`:`<td>${fmtT(x.t)}</td><td>${x.v.toFixed(1)}</td>`}</tr>`}).join('')}</tbody></table></div>`;
   const rc=r.querySelector('canvas').getContext('2d');rc.scale(2,2);
   if(fin&&place<3)drawRosette(rc,36,24,16,PLACE_COL[place]);else{rc.strokeStyle='#9fb3a3';rc.lineWidth=4;rc.beginPath();rc.arc(36,36,18,0,7);rc.stroke();rc.fillStyle='#9fb3a3';rc.font='800 14px Nunito';rc.textAlign='center';rc.textBaseline='middle';rc.fillText(fin?place+1:'—',36,37)}
   $('#jumpBtn').hidden=false;$('#enBtns').hidden=true;$('#jumpBtn').textContent='Ещё пробег';renderArenaUI();save();ui()}
@@ -5688,13 +6017,13 @@ function stepEnd(dt){const c=ax,h=cur(),g=ENDG[ar.gait],L=ar.st[ar.stage];ridePr
   if(ar.running){
     if(ar.mode==='ride'){
       const sl=eslope(ar.seed+ar.km);
-      const v=g.v*(ar.fat>85&&ar.gait==='canter'?.8:1)*(1-Math.max(0,sl)*.15);
+      const v=g.v*(h.spd||1)*(ar.fat>85&&ar.gait==='canter'?.8:1)*(1-Math.max(0,sl)*.15);
       const dk=v*KMS*dt;ar.km+=dk;ar.tot+=dk;ar.clock+=dk/v*60;ar.phase+=dt*g.ph;
       {const bt=Math.floor(ar.phase/Math.PI);if(bt!==ar.bt){ar.bt=bt;if(ar.gait!=='walk'||bt%2===0)SFX.hoof()}}
       const tgt=g.p*(1.08-ar.fit*.18)+sl*28+ar.fat*.15+(ar.hydr<30?14:0)+(ar.injured?12:0);
       ar.pulse+=(tgt-ar.pulse)*Math.min(1,dt*.7);
       if(ar.pulse>172)ar.strain=Math.min(1,ar.strain+dt*.015*(hasCh(h,'tying')?1.5:1));else if(ar.gait==='walk')ar.strain=Math.max(0,ar.strain-dt*.004);
-      ar.hydr=Math.max(0,ar.hydr-dt*g.hy*(1.2-ar.fit*.4)*(S.weather==='sun'?1.15:1));
+      ar.hydr=Math.max(0,ar.hydr-dt*g.hy*(1.2-ar.fit*.4)*(isHot()?1.4:S.weather==='sun'?1.15:1));
       if(ar.hydr<10)ar.strain=Math.min(1,ar.strain+dt*.01);
       ar.fat=clamp(ar.fat+dt*g.fa*(1.2-ar.fit*.5));
       if(!ar.injured&&ar.gait!=='walk'){let pr=dt*.0022*(ar.gait==='canter'?1:.2)*(ar.fat>70?2.5:1)*(1+(h.load||0)/100)*(1+(h.prone||0)*2)*(hasCh(h,'tendon')?2:1);
@@ -5702,16 +6031,19 @@ function stepEnd(dt){const c=ax,h=cur(),g=ENDG[ar.gait],L=ar.st[ar.stage];ridePr
         if(Math.random()<pr){ar.injured=ar.gait==='canter'&&ar.fat>90&&Math.random()<.35?'rupture':Math.random()<.7?'tendon':'bruise';ar.msg={t:2,txt:'Лошадь захромала!',col:'#e2604f'};SFX.bad()}}
       else if(ar.injured==='tendon'&&ar.gait==='canter'&&Math.random()<dt*.05){ar.injured='rupture';ar.msg={t:2,txt:'Травма усугубилась',col:'#e2604f'};SFX.bad()}
       ar.water.forEach(w=>{if(!w.used&&ar.km>w.km+.45)w.used=true});
-      if(ar.strain>=1){endElim('Метаболические нарушения: лошадь перегружена');return}
-      if(ar.km>=L){ar.km=L;ar.mode='vet';ar.vet={t:0,att:0,cool:0,cd:0};ar.msg={t:1.4,txt:'Ветконтроль',col:'#ecc35a'};updEnBtns()}
+      if(ar.strain>=1){endElim('FTQ-SI-META','Метаболические нарушения: лошадь перегружена');return}
+      if(ar.km>=L){ar.km=L;const sv=L/Math.max(.01,(ar.clock-ar.stT)/60);if(sv>16)ar.fast=true;
+        if(sv<10){endElim('FTQ-OT',`Этап пройден со скоростью ${sv.toFixed(1)} км/ч — ниже 10 км/ч`);return}
+        ar.mode='vet';ar.vet={t:0,att:0,cool:0,cd:0};ar.msg={t:1.4,txt:'Ветконтроль',col:'#ecc35a'};updEnBtns()}
     }else if(ar.mode==='vet'){const v=ar.vet;v.t+=dt;v.cd-=dt;
-      const rate=(2.6+ar.fit*4)*(ar.hydr<30?.6:1)*(1-ar.strain*.6);
+      const rate=(2.6+ar.fit*4)*(ar.hydr<30?.6:1)*(1-ar.strain*.6)*(isHot()?.85:1);
       ar.pulse=Math.max(46,ar.pulse-rate*dt);
-      if(v.t>=20){endElim('Пульс не опустился до 64 за 20 минут');return}
+      if(v.t>=vetLimit()){endElim('FTQ-ME',`Пульс не опустился до 64 за ${vetLimit()} минут`);return}
     }else if(ar.mode==='hold'){ar.hold-=dt;if(ar.hold<=0){ar.stage++;setupStage();updEnBtns()}}
     ar.ut+=dt;if(ar.ut>.2){ar.ut=0;updEnBtns()}
   }
   const moving=ar.running&&ar.mode==='ride';
+  c.save();arZoom(c,EHX,166,1.26);
   // sky + mountains
   const sg=c.createLinearGradient(0,0,0,140);
   if(S.weather==='sun'){sg.addColorStop(0,'#7fb5e2');sg.addColorStop(1,'#dbeef6')}else{sg.addColorStop(0,'#8f9ba6');sg.addColorStop(1,'#d6dce1')}
@@ -5742,10 +6074,9 @@ function stepEnd(dt){const c=ax,h=cur(),g=ENDG[ar.gait],L=ar.st[ar.stage];ridePr
   {const hy=gy(EHX);const ang=Math.atan((gy(EHX+6)-gy(EHX-6))/12);
     c.save();c.translate(EHX,hy);c.rotate(ang);
     c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(0,2,30,3.5,0,0,7);c.fill();
-    drawHorse(c,h,{x:0,y:0,s:.38,t:T,gallop:moving?ar.phase:null,dirt:false,saddle:true,neck:ar.gait==='walk'||!moving?.12:-.08});
-    drawRider(c,h,0,0,false,moving?Math.abs(Math.sin(ar.phase))*(ar.gait==='trot'?5:3):0);
+    drawHorse(c,h,{x:0,y:0,s:.38,t:T,dist:(ar.tot||0)*EPX,gallop:moving?ar.phase:null,gait:ar.gait,dirt:false,saddle:true,rider:true,neck:ar.gait==='walk'||!moving?.1:-.04});
     c.restore()}
-  weatherFx(c);
+  c.restore();weatherFx(c);
   // bottom strip
   c.fillStyle='rgba(19,32,26,.92)';c.fillRect(0,198,AW,42);
   const p=Math.round(ar.pulse),pc=p<=64?'#7cc46b':p<130?'#ecc35a':p<165?'#e8874a':'#e2604f';
@@ -5757,18 +6088,18 @@ function stepEnd(dt){const c=ax,h=cur(),g=ENDG[ar.gait],L=ar.st[ar.stage];ridePr
   bar(100,'ВОДА',ar.hydr,ar.hydr<30?'#e2604f':'#4aa3df');bar(230,'СИЛЫ',100-ar.fat,ar.fat>80?'#e2604f':'#7cc46b');
   // top hud
   const done=ar.rec.reduce((a,b)=>a+b,0);
-  hud(c,`Этап ${ar.stage+1}/${ar.st.length} · ${ar.km.toFixed(1)}/${L} км`,`Время ${fmtT(ar.clock+done)}`,`${ar.clock>1?(ar.tot/(ar.clock/60)).toFixed(1):'—'} км/ч`,'#ecc35a');
+  hud(c,`Этап ${ar.stage+1}/${ar.st.length} · ${ar.km.toFixed(1)}/${L} км`,`Время ${fmtT(ar.clock+done)}`,`${ar.clock>1?(ar.tot/(ar.clock/60)).toFixed(1):'—'} км/ч${ENDUR[sel.end].q?' · макс 16':''}`,ENDUR[sel.end].q&&ar.clock>1&&ar.tot/(ar.clock/60)>16?'#e2604f':'#ecc35a');
   if(ar.mode==='vet'&&ar.running){const v=ar.vet;
     c.fillStyle='rgba(19,32,26,.85)';c.beginPath();c.roundRect(214,42,176,104,10);c.fill();
     c.textAlign='center';c.fillStyle='#ecc35a';c.font='700 11px Unbounded, sans-serif';c.fillText('ВЕТКОНТРОЛЬ',302,58);
     c.fillStyle=pc;c.font='700 30px Unbounded, sans-serif';c.fillText(p,302,86);
     c.fillStyle='#eef1e4';c.font='700 11px Nunito, sans-serif';c.fillText('норма ≤ 64 уд/мин',302,106);
-    c.fillStyle='#22392e';c.fillRect(226,116,152,6);c.fillStyle=v.t>15?'#e2604f':'#ecc35a';c.fillRect(226,116,152*Math.min(1,v.t/20),6);
-    c.fillStyle='#9fb3a3';c.font='700 10px Nunito, sans-serif';c.fillText(`${Math.floor(v.t)} из 20 мин · предъявлений ${v.att}/2`,302,136)}
-  if(ar.mode==='hold'&&ar.running)overlay(c,`Этап ${ar.stage+1} пройден`,`Обязательный отдых 40 мин`);
+    c.fillStyle='#22392e';c.fillRect(226,116,152,6);c.fillStyle=v.t>vetLimit()-4?'#e2604f':'#ecc35a';c.fillRect(226,116,152*Math.min(1,v.t/vetLimit()),6);
+    c.fillStyle='#9fb3a3';c.font='700 10px Nunito, sans-serif';c.fillText(`${Math.floor(v.t)} из ${vetLimit()} мин · попыток ${v.att}/${vetTries()}`,302,136)}
+  if(ar.mode==='hold'&&ar.running)overlay(c,`Этап ${ar.stage+1} пройден · отдых ${ar.holds[ar.stage]} мин`,ar.cri||`Время восстановления ${ar.rec[ar.rec.length-1]} мин идёт в зачёт`);
   floatMsg(c,dt,EHX+60,70);
   drawStandings(c);
-  if(!ar.running&&!ar.done){const cl=ENDUR[sel.end];const n=cl.st.length;overlay(c,`Пробег ${cl.km} км · ${venue()}`,`${n} ${n<5?'этапа':'этапов'}${ON.peers.length?' · онлайн '+ON.peers.length:''} · нажми «Старт»`)}
+  if(!ar.running&&!ar.done){const cl=ENDUR[sel.end];const n=cl.st.length;overlay(c,`${cl.n} · ${venue()}`,`${n} ${n<5?'этапа':'этапов'} (${cl.st.join('+')} км)${ON.peers.length?' · онлайн '+ON.peers.length:''} · «Старт»`)}
 }
 
 $('#enBtns').querySelectorAll('button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();enPress(+b.dataset.i)}));
@@ -5781,14 +6112,14 @@ function stepJump(dt){const c=ax;
       if(!f.passed&&sx<HX-50){f.passed=true;if(!f.hit){ar.msg={t:1,txt:'Чисто',col:'#7cc46b'};SFX.good()}}
       if(f.hit)f.fall=Math.min(1,f.fall+dt*3)});
     if(ar.dist>ar.finish){finishJump();return}}
-  backdrop(c,ar.dist,150);
+  c.save();arZoom(c,HX,GY);backdrop(c,ar.dist,150);
   c.fillStyle='#5f9a4f';c.fillRect(0,150,AW,30);
   const bo=-(ar.dist*.5)%60;c.fillStyle='#f3efe4';c.fillRect(0,166,AW,4);c.fillRect(0,176,AW,3);for(let x=bo;x<AW;x+=60)c.fillRect(x,160,4,22);
   c.fillStyle='#d8b98a';c.fillRect(0,182,AW,AH-182);c.strokeStyle='rgba(120,90,50,.25)';c.lineWidth=1;
   for(let i=0;i<20;i++){const x=((i*37-ar.dist)%AW+AW)%AW;c.beginPath();c.moveTo(x,190+(i*13)%40);c.lineTo(x+14,190+(i*13)%40);c.stroke()}
   if(!ar.done&&ar.fences.some(f=>!f.passed)){c.strokeStyle='#fff';c.lineWidth=2;c.beginPath();c.moveTo(ar.mark,GY+4);c.lineTo(ar.mark,GY-16);c.stroke();c.fillStyle='#fff';c.beginPath();c.moveTo(ar.mark,GY-16);c.lineTo(ar.mark+10,GY-12);c.lineTo(ar.mark,GY-8);c.fill()}
   const fx=ar.finish-ar.dist;if(fx<AW+20){c.fillStyle='#fff';c.fillRect(fx,GY-40,4,44);c.fillStyle='#222';for(let i=0;i<5;i++)c.fillRect(fx,GY-40+i*9,4,4);c.fillStyle='#e2604f';c.fillRect(fx+4,GY-40,16,10)}
-  ar.fences.forEach(f=>{const sx=f.x-ar.dist;if(sx<-60||sx>AW+60)return;
+  ar.fences.forEach(F=>{const sx=F.x-ar.dist;if(sx<-60||sx>AW+60)return;const f=Object.assign({},F,{h:F.h*1.35});
     const units=f.type==='oxer'?[sx-10,sx+10]:[sx];
     units.forEach((ux,u)=>{
       [ux-13,ux+11].forEach(px=>{c.fillStyle='#f3efe4';c.fillRect(px,GY-f.h-10,3,f.h+10);c.fillStyle=f.col;for(let y=GY-f.h-10;y<GY;y+=8)c.fillRect(px,y,3,4)});
@@ -5798,20 +6129,19 @@ function stepJump(dt){const c=ax;
       c.fillStyle='#f3efe4';c.fillRect(-12,0,24,4);c.fillStyle=f.col;for(let k=-12;k<12;k+=8)c.fillRect(k,0,4,4);c.restore()})});
   const h=cur();
   c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(HX,GY+2,Math.max(8,34*(1-ar.jy/120)),4,0,0,7);c.fill();
-  drawHorse(c,h,{x:HX,y:GY-ar.jy,s:.38,t:T,gallop:ar.running||ar.done?ar.phase:null,air:ar.air,dirt:false,neck:ar.air?-.15:0,saddle:true});
-  drawRider(c,h,HX,GY-ar.jy,ar.air,ar.running?Math.abs(Math.sin(ar.phase))*5:0);
+  drawHorse(c,h,{x:HX,y:GY-ar.jy*1.35,s:.38,t:T,dist:ar.dist,gallop:ar.running?ar.phase:null,gait:'canter',air:ar.air,pitch:ar.air?-Math.max(-1,Math.min(1,ar.vy/Math.sqrt(2*G*ar.P)))*.28:0,dirt:false,neck:ar.air?.12:-.05,saddle:true,rider:true});
   ar.dust=ar.dust.filter(d=>(d.l-=dt*2)>0);ar.dust.forEach(d=>{d.x+=d.vx*dt;d.y+=d.vy*dt;c.globalAlpha=d.l*.6;c.fillStyle='#c4a274';c.beginPath();c.arc(d.x,d.y,3,0,7);c.fill()});c.globalAlpha=1;
-  const done=ar.fences.filter(f=>f.passed).length;
+  c.restore();const done=ar.fences.filter(f=>f.passed).length;
   weatherFx(c);hud(c,`Препятствие ${Math.min(8,done+1)}/8`,`Штраф: ${ar.faults}`,`${ar.t.toFixed(1)} с`,ar.faults?'#e2604f':'#7cc46b');
   floatMsg(c,dt,HX+40,90);
   if(!ar.running&&!ar.done)overlay(c,`Конкур · ${CLASSES[sel.jump].cm} см`,'8 препятствий · нажми «Старт»');
 }
-function stepDress(dt){const c=ax,h=cur();const g=CMDS.find(x=>x.k===ar.gait);
+function stepDress(dt){const c=ax,h=cur();const g=CMDS.find(x=>x.k===(ar.volt?'canter':ar.gait));
   if(ar.running){ar.t+=dt;
     ar.cues.forEach(q=>{if(q.j==null&&ar.t>q.time+.4){q.j=2;ar.score+=2;ar.judged++;SFX.bad();ar.msg={t:1,txt:'Пропуск',col:'#e2604f'}}});
     if(ar.t>ar.end){finishDress();return}}
   const moving=ar.running&&g.v>0;if(moving){ar.dist+=g.v*dt;ar.phase+=dt*g.ph;const bt=Math.floor(ar.phase/Math.PI);if(bt!==ar.bt){ar.bt=bt;SFX.hoof()}}
-  backdrop(c,ar.dist,124);
+  c.save();arZoom(c,150,168);backdrop(c,ar.dist,124);
   c.fillStyle='#5f9a4f';c.fillRect(0,122,AW,20);
   c.fillStyle='#e0c79c';c.fillRect(0,142,AW,32);
   c.fillStyle='#f3efe4';c.fillRect(0,138,AW,5);
@@ -5820,19 +6150,18 @@ function stepDress(dt){const c=ax,h=cur();const g=CMDS.find(x=>x.k===ar.gait);
     c.fillStyle='#fff';c.fillRect(x-9,120,18,18);c.strokeStyle='#22333a';c.lineWidth=1;c.strokeRect(x-9.5,119.5,19,19);
     c.fillStyle='#22333a';c.font='800 11px Nunito, sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(L,x,129.5)}
   const hx=150,gy=168;c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(hx,gy+2,32,3.5,0,0,7);c.fill();
-  drawHorse(c,h,{x:hx,y:gy,s:.38,t:T,gallop:moving?ar.phase:null,dirt:false,neck:-.12,saddle:true});
-  drawRider(c,h,hx,gy,false,moving?Math.abs(Math.sin(ar.phase))*(ar.gait==='trot'?5:3):0);
+  drawHorse(c,h,{x:hx,y:gy,s:.38,t:T,gallop:moving?ar.phase:null,gait:ar.volt?'canter':ar.gait,dirt:false,neck:-.1,saddle:!ar.volt,surcingle:ar.volt,rider:true,dist:ar.dist,vpose:ar.volt?(ar.running?ar.gait:'walk'):null});c.restore();
   // cue lane
   const HIT=64,LY=207;c.fillStyle='#16251e';c.fillRect(0,176,AW,AH-176);
   c.fillStyle='rgba(236,195,90,.12)';c.beginPath();c.arc(HIT,LY,26,0,7);c.fill();
   ar.cues.forEach(q=>{const x=HIT+(q.time-ar.t)*110;if(x<-50||x>AW+50)return;const cm=CMDS.find(z=>z.k===q.cmd);
     c.globalAlpha=q.j!=null?.28:1;c.fillStyle=cm.col;c.beginPath();c.roundRect(x-32,LY-16,64,32,10);c.fill();
-    c.fillStyle='#13201a';c.textAlign='center';c.textBaseline='middle';c.font='800 13px Nunito, sans-serif';c.fillText(cm.n,x,LY-4);c.font='700 10px Nunito, sans-serif';c.fillText('у '+q.letter,x,LY+9);c.globalAlpha=1});
+    c.fillStyle='#13201a';c.textAlign='center';c.textBaseline='middle';c.font='800 13px Nunito, sans-serif';c.fillText(ar.volt?VNAME[q.cmd]:cm.n,x,LY-4,60);c.font='700 10px Nunito, sans-serif';c.fillText('у '+q.letter,x,LY+9);c.globalAlpha=1});
   c.strokeStyle='#ecc35a';c.lineWidth=3;c.beginPath();c.arc(HIT,LY,26,0,7);c.stroke();
   const pct=ar.judged?(ar.score/(ar.judged*10)*100).toFixed(1)+'%':'—';
-  weatherFx(c);hud(c,`Команда ${Math.min(14,ar.judged+1)}/14`,`Оценка: ${pct}`,g.n,'#ecc35a');
+  weatherFx(c);hud(c,`${ar.volt?'Упражнение':'Команда'} ${Math.min(14,ar.judged+1)}/14`,ar.volt?`Балл: ${ar.judged?(ar.score/ar.judged).toFixed(2):'—'}`:`Оценка: ${pct}`,ar.volt?VNAME[ar.gait]||'':g.n,'#ecc35a');
   floatMsg(c,dt,hx,72);
-  if(!ar.running&&!ar.done)overlay(c,`Выездка · ${DRESS[sel.dress].n}`,'14 команд · нажми «Старт»');
+  if(!ar.running&&!ar.done)overlay(c,ar.ev?`Троеборье · 1/3 выездка`:ar.volt?`Вольтижировка · ${VOLT[sel.volt].n}`:`Выездка · ${DRESS[sel.dress].n}`,ar.ev?'14 команд, потом кросс и конкур · «Старт»':ar.volt?'14 упражнений · нажми «Старт»':'14 команд · нажми «Старт»');
 }
 
 /* ============ REGISTRY ============ */
@@ -5862,12 +6191,12 @@ function toggleReg(d,r){const ex=d.querySelector('.regx');if(ex){ex.remove();ret
   let html=r.par?'':'<canvas width="360" height="240"></canvas>';
   html+=`<dl>${rows.map(([a,b])=>`<dt>${a}</dt><dd>${typeof b==='string'&&b.startsWith('<')?b:esc(String(b))}</dd>`).join('')}</dl>`;
   if(!r.par){const owned=S.horses.some(h=>h.real&&h.name===r.n&&h.real.f===r.f&&h.real.y===r.y);const price=realPrice(r);
-    html+=owned?'<p class="note">Эта лошадь уже живёт в твоей конюшне.</p>':`<div class="row"><p class="note">Можно забрать в конюшню. Характеристики зависят от её реальных пробегов.</p><button class="btn" data-buy ${S.coins<price||S.horses.length>=6?'disabled':''}><span class="price">${price}</span> мон.</button></div>`}
+    html+=owned?'<p class="note">Эта лошадь уже живёт в твоей конюшне.</p>':`<div class="row"><p class="note">Можно забрать в конюшню. Характеристики зависят от её реальных пробегов.</p><button class="btn" data-buy ${S.coins<price||S.horses.length>=S.stalls?'disabled':''}><span class="price">${price}</span> мон.</button></div>`}
   else html+='<p class="note">Лошадь из родословных: известна по потомкам, своих данных о пробегах нет.</p>';
   x.innerHTML=html;d.appendChild(x);
   const cv=x.querySelector('canvas');if(cv){const c=cv.getContext('2d');c.scale(2,2);drawHorse(c,r._h,{x:88,y:110,s:.42,t:0,dirt:false})}
   x.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{$('#regQ').value=b.dataset.q;regF='all';regN=40;renderReg();$('#regQ').scrollIntoView({block:'center'})});
-  const bb=x.querySelector('[data-buy]');if(bb)bb.onclick=()=>{const price=realPrice(r);if(S.horses.length>=6){toast('Все 6 денников заняты');return}if(S.coins<price){toast('Не хватает монет');return}
+  const bb=x.querySelector('[data-buy]');if(bb)bb.onclick=()=>{const price=realPrice(r);if(S.horses.length>=S.stalls){toast(`Все ${S.stalls} денников заняты. Купи ещё денник в Деннике`);return}if(S.coins<price){toast('Не хватает монет');return}
     S.coins-=price;const h=r._h;r._h=null;S.horses.push(h);S.cur=h.id;herdKey='';SFX.neigh();toast(`${h.name} переезжает в твою конюшню`);save();setView('stable')};
 }
 $('#regQ').addEventListener('input',()=>{clearTimeout(regT);regT=setTimeout(()=>{regN=40;renderReg()},150)});
@@ -5878,7 +6207,7 @@ $('#regF').querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>
 const SUPA={url:'https://vhbclxdhkdaspqnxutkp.supabase.co',key:'sb_publishable_OX511vIaTwiLb4dY0qxsOw_SVhdeOBp'};
 const supaOn=()=>/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(SUPA.url)&&SUPA.key.length>20;
 /* own server for the standalone site and the Android app; the claude.ai version keeps using Claude */
-const ON={be:null,db:null,user:null,room:null,sb:null,uid:null,nick:'',ok:false,ro:false,tried:false,needLogin:false,names:{},players:[],trades:[],cloud:null,peers:[],ride:null,rideName:null,pw:Promise.resolve(),lastSaved:'',lastPush:0,cs:0,poll:0};
+const ON={be:null,db:null,user:null,room:null,sb:null,uid:null,nick:'',ok:false,ro:false,tried:false,needLogin:false,names:{},players:[],trades:[],cloud:null,peers:[],ride:null,rideName:null,chat:[],auctions:[],studs:[],v2:null,pw:Promise.resolve(),lastSaved:'',lastPush:0,cs:0,poll:0};
 let LOOP_ON=false;
 const pname=id=>id===ON.uid?'Ты':(ON.names[id]||'Игрок');
 const cleanNick=s=>String(s||'').replace(/[\u0000-\u001f<>]/g,'').trim().slice(0,24);
@@ -5903,6 +6232,10 @@ async function initClaude(){
   if(!ON.db)return;
   try{ON.db.collection('players').orderBy('score','desc').limit(50).onSnapshot(s=>{ON.players=s.docs.map(d=>Object.assign({id:d.id},d.data()));resolveNames(ON.players.map(p=>p.id));renderClub()},()=>{})}catch(e){}
   try{ON.db.collection('trades').where('status','in',['open','sold']).limit(200).onSnapshot(s=>{ON.trades=s.docs.map(d=>Object.assign({id:d.id},d.data()));payouts();renderClub()},()=>{})}catch(e){}
+  try{ON.db.collection('chat').orderBy('at','desc').limit(40).onSnapshot(s=>{ON.chat=s.docs.map(d=>Object.assign({id:d.id},d.data()));resolveNames(ON.chat.map(m=>m.uid));renderChat()},()=>{})}catch(e){}
+  try{ON.db.collection('auctions').orderBy('at','desc').limit(60).onSnapshot(s=>{ON.auctions=s.docs.map(d=>Object.assign({id:d.id},d.data()));aucSettle();renderClub()},()=>{})}catch(e){}
+  try{ON.db.collection('studs').orderBy('at','desc').limit(60).onSnapshot(s=>{ON.studs=s.docs.map(d=>Object.assign({id:d.id},d.data()));renderClub()},()=>{})}catch(e){}
+  if(ON.uid){try{ON.db.collection('stud_uses').where('owner','==',ON.uid).limit(50).onSnapshot(s=>{ON.myUses=s.docs.map(d=>Object.assign({id:d.id},d.data()));studPayouts()},()=>{})}catch(e){}}
   if(ON.uid){try{const sv=await ON.db.doc(`data/users/${ON.uid}/save`).get();ON.cloud=sv.exists?sv.data():null}catch(e){}renderClub();setTimeout(()=>pushPlayer(true),1500)}
   if(view==='arena'&&disc==='end')joinRide(ENDUR[sel.end].km);
 }
@@ -5918,7 +6251,7 @@ async function supaRefresh(){if(ON.be!=='supa'||!ON.ok)return;ON.poll=0;
     if(data){ON.players=data.map(p=>({id:p.id,score:p.score,ribbons:p.ribbons,cups:p.cups,endKm:p.end_km,top:p.top,best:p.best||{}}));data.forEach(p=>{ON.names[p.id]=cleanNick(p.nick)||'Игрок'})}}catch(e){}
   try{const {data}=await ON.sb.from('trades').select('id,seller,seller_nick,horse,name,breed,level,price,status').eq('status','open').order('created_at',{ascending:false}).limit(100);
     if(data){ON.trades=data;data.forEach(t=>{ON.names[t.seller]=cleanNick(t.seller_nick)||'Игрок'})}}catch(e){}
-  await payouts();renderClub()}
+  await supaV2();await payouts();renderClub()}
 async function supaAuth(mode){const em=$('#suEmail').value.trim(),pw=$('#suPass').value,nk=cleanNick($('#suNick')?$('#suNick').value:'');const msg=$('#suMsg');
   if(!em||pw.length<6){msg.textContent='Введи почту и пароль от 6 символов';return}
   if(mode==='up'&&nk.length<2){msg.textContent='Придумай ник для рейтинга (от 2 символов)';return}
@@ -5933,7 +6266,7 @@ async function supaLogout(){try{await ON.sb.auth.signOut()}catch(e){}leaveRide()
 function topHorse(){const b=S.horses.slice().sort((a,b)=>b.level-a.level)[0];return b?`${b.name}, ур. ${b.level}`:''}
 function pushPlayer(force){if(!ON.ok||ON.ro)return;const now=Date.now();if(!force&&now-ON.lastPush<20000)return;ON.lastPush=now;
   const rib=S.horses.reduce((a,h)=>a+h.ribbons.length,0),ach=Object.keys(S.ach||{}).length;
-  const body={score:Math.round(rib*10+(S.cups||0)*50+(S.stats.endKm||0)/5+ach*5+S.horses.reduce((a,h)=>a+h.level,0)*3),ribbons:rib,cups:S.cups||0,endKm:Math.round(S.stats.endKm||0),ach,day:S.day,horses:S.horses.length,top:topHorse().slice(0,60),best:S.best||{},at:now};
+  const body={score:Math.round(rib*10+(S.cups||0)*50+(S.stats.endKm||0)/5+ach*5+S.horses.reduce((a,h)=>a+h.level,0)*3),ribbons:rib,cups:S.cups||0,endKm:Math.round(S.stats.endKm||0),ach,day:S.day,horses:S.horses.length,top:topHorse().slice(0,60),best:Object.assign({},S.best||{},S.lastRace?{race:S.lastRace}:{},S.team?{team:S.team}:{}),at:now};
   if(ON.be==='claude')writeQ(()=>ON.db.doc('players/'+ON.uid).set(body));
   else writeQ(()=>ON.sb.from('players').upsert({id:ON.uid,nick:ON.nick||'Игрок',score:body.score,ribbons:rib,cups:body.cups,end_km:body.endKm,ach,day:S.day,horses:body.horses,top:body.top,best:body.best,updated_at:new Date().toISOString()}).then(()=>{}))}
 function cloudSave(manual){if(!ON.ok||ON.ro)return;const txt=JSON.stringify(S);if(!manual&&txt===ON.lastSaved)return;ON.lastSaved=txt;
@@ -5953,8 +6286,147 @@ function onlineRows(kind,key){if(!ON.ok)return[];
     .sort((a,b)=>kind==='jump'?(a.b.f-b.b.f||a.b.t-b.b.t):kind==='dress'?b.b.v-a.b.v:a.b.t-b.b.t).slice(0,2)
     .map(({p,b})=>{const rider=pname(p.id)+' · онлайн',horse=String(b.horse||'').slice(0,40);
       return kind==='jump'?{rider,horse,f:+b.f||0,t:+b.t||0}:kind==='dress'?{rider,horse,v:+b.v||0}:{rider,horse,t:+b.t||0,v:+b.v||0,elim:null,km:+key}})}
+
+/* ---- онлайн-заезды по расписанию (время МСК). Офлайн можно ездить всегда, а в эти полчаса все игроки едут один и тот же маршрут ---- */
+const RACE_SLOTS=[{h:13,d:'jump'},{h:16,d:'dress'},{h:19,d:'end'},{h:21,d:'cup'}],RACE_MIN=30,RACE_CLS={jump:1,dress:1,end:0},RACE_PRIZE=[150,90,50];
+const DNAME={jump:'Конкур',dress:'Выездка',end:'Пробег'};
+function racesOn(t){const m=new Date(t+3*3600e3),day=m.toISOString().slice(0,10),wd=m.getUTCDay();
+  return RACE_SLOTS.map(sl=>{const st=Date.UTC(m.getUTCFullYear(),m.getUTCMonth(),m.getUTCDate(),sl.h)-3*3600e3;let d=sl.d,cls;
+    if(d==='cup'){d=['jump','dress','end'][wd%3];cls=d==='end'?1:2}else cls=RACE_CLS[d];
+    return{id:day+'-'+sl.h,disc:d,cls,cup:sl.d==='cup',start:st,end:st+RACE_MIN*60e3,h:sl.h}})}
+const raceById=id=>{const [y,mo,d,h]=id.split('-').map(Number);return racesOn(Date.UTC(y,mo-1,d,12)-3*3600e3).find(r=>r.h===h)};
+const curRace=()=>{const n=Date.now();return racesOn(n).find(r=>n>=r.start&&n<r.end)||null};
+const nextRace=()=>{const n=Date.now();return racesOn(n).concat(racesOn(n+864e5)).find(r=>r.start>n)};
+const raceName=r=>(r.cup?'Кубок вечера: ':'')+DNAME[r.disc]+' '+(r.disc==='jump'?CLASSES[r.cls].cm+' см':r.disc==='dress'?DRESS[r.cls].n:ENDUR[r.cls].km+' км');
+const mins=ms=>{const m=Math.max(0,Math.ceil(ms/60e3));return m>=60?Math.floor(m/60)+' ч '+(m%60)+' мин':m+' мин'};
+function withSeed(seed,fn){const R0=Math.random;let x=seed>>>0||1;Math.random=()=>{x=(x*1664525+1013904223)>>>0;return x/4294967296};try{fn()}finally{Math.random=R0}}
+const hashStr=t=>{let x=2166136261;for(const ch of t)x=Math.imul(x^ch.charCodeAt(0),16777619);return x>>>0};
+function raceKey(r){return r.disc==='jump'?r.f*1000+r.t:r.disc==='dress'?1000-r.v:(r.elim?1e7-(r.km||0):r.t)}
+function raceRows(id){const rows=[];const seen=new Set();
+  (ON.players||[]).forEach(p=>{const r=p.best&&p.best.race;if(r&&r.id===id){seen.add(p.id);rows.push({...r,who:pname(p.id),me:p.id===ON.uid})}});
+  if(S.lastRace&&S.lastRace.id===id&&!seen.has(ON.uid))rows.push({...S.lastRace,who:'Ты',me:true});
+  rows.forEach(r=>r.k=raceKey(r));return rows.sort((a,b)=>a.k-b.k)}
+const raceRes=r=>r.disc==='jump'?`${r.f} шт. · ${(+r.t).toFixed(2)} с`:r.disc==='dress'?`${(+r.v).toFixed(2)}%`:r.elim?`${r.elim} · ${Math.round(r.km||0)} км`:`${fmtT(r.t)} · ${(+r.v).toFixed(1)} км/ч`;
+function joinRace(){const r=curRace();if(!r)return;
+  if(!ON.ok||ON.ro){toast('Онлайн-заезды — для игроков онлайн-клуба. Войди во вкладке «Клуб»');return}
+  if(S.raceDone&&S.raceDone[r.id]){toast('В этом заезде у тебя уже была попытка');return}
+  if(ar.running)return;const h=cur();const L=r.disc==='jump'?CLASSES:r.disc==='dress'?DRESS:ENDUR;const c=L[r.cls];
+  if(c.lvl>h.level){toast(`Нужен уровень ${c.lvl}. Выбери другую лошадь`);return}
+  if(r.disc==='end'&&(permitOf(h)<c.km||tooYoung(h,c))){toast(`У ${h.name} нет допуска к ${c.km} км`);return}
+  disc=r.disc;sel[disc]=r.cls;withSeed(hashStr(r.id),()=>resetArena());ar.race=r.id;renderArenaUI();
+  toast('Маршрут онлайн-заезда загружен. Одна попытка — жми «Старт»')}
+function raceSubmit(kind,val){if(!ar.race)return;const r={id:ar.race,disc:kind,horse:cur().name.slice(0,30),...val,at:Date.now()};
+  S.lastRace=r;save();pushPlayer(true);setTimeout(()=>toast('Результат отправлен в онлайн-заезд'),900)}
+function raceTick(){const r=curRace();
+  if(r&&S.raceToast!==r.id){S.raceToast=r.id;toast(`Начался онлайн-заезд: ${raceName(r)}. Арена → «Участвовать»`)}
+  const L=S.lastRace;if(L&&!L.claimed){const R2=raceById(L.id);if(R2&&Date.now()>R2.end+60e3){const rows=raceRows(L.id);const pl=rows.findIndex(x=>x.me);L.claimed=1;
+    if(pl>=0&&pl<3&&rows.length>=2){const c=RACE_PRIZE[pl]*(R2.cup?2:1);S.coins+=c;const h=S.horses.find(x=>x.name===L.horse)||cur();h.ribbons.push({p:pl,kind:L.disc,day:S.day,online:1});if(R2.cup&&pl===0)S.cups=(S.cups||0)+1;SFX.win();toast(`Онлайн-заезд: ${pl+1} место из ${rows.length}! +${c} монет`)}
+    else if(pl>=0){S.coins+=20;toast(`Онлайн-заезд: ${pl+1} место из ${rows.length}. +20 монет за участие`)}
+    save();ui()}}
+  if(view==='arena')renderRace()}
+const raceHot=()=>!!curRace()||!!(S.lastRace&&!S.lastRace.claimed);
+function renderRace(){const el=$('#raceCard');if(!el)return;const r=curRace();let html='';
+  if(r){const done=S.raceDone&&S.raceDone[r.id];const rows=raceRows(r.id);
+    html=`<div class="row"><b><span class="live"></span>Онлайн-заезд идёт · ${raceName(r)}</b><span>ещё ${mins(r.end-Date.now())}</span></div>`;
+    html+=done?`<p class="note" style="margin:0">Попытка использована. Итоги и призы — после ${String(r.h).padStart(2,'0')}:30 МСК.</p>`:ar.race===r.id?'<p class="note" style="margin:0">Маршрут загружен, жми «Старт». Попытка одна.</p>':`<div class="row" style="justify-content:flex-start"><button class="btn" id="raceGo">Участвовать</button><small>одна попытка · одинаковый маршрут у всех · призы ${RACE_PRIZE.map(x=>x*(r.cup?2:1)).join('/')}</small></div>`;
+    if(rows.length)html+=`<ol>${rows.slice(0,5).map(x=>`<li${x.me?' style="font-weight:800"':''}>${esc(x.who)} · ${esc(x.horse)} — ${raceRes(x)}</li>`).join('')}</ol>`}
+  else{const n=nextRace();const L=S.lastRace;
+    html=`<div class="row"><b>Онлайн-заезд в ${String(n.h).padStart(2,'0')}:00 МСК</b><span>через ${mins(n.start-Date.now())}</span></div><small>${raceName(n)} · расписание: 13:00 конкур, 16:00 выездка, 19:00 пробег, 21:00 Кубок вечера. В остальное время — обычные офлайн-старты.</small>`;
+    if(L){const rows=raceRows(L.id);const pl=rows.findIndex(x=>x.me);if(rows.length)html+=`<small>Прошлый заезд: ${pl>=0?`ты ${pl+1}-й из ${rows.length}`:''}${L.claimed?'':' · итоги подводятся'}</small><ol>${rows.slice(0,3).map(x=>`<li${x.me?' style="font-weight:800"':''}>${esc(x.who)} · ${esc(x.horse)} — ${raceRes(x)}</li>`).join('')}</ol>`}}
+  if(el.dataset.h!==html){el.dataset.h=html;el.innerHTML=html;const b=$('#raceGo');if(b)b.onclick=joinRace}}
+
+/* ---- чат, лента событий, команды ---- */
+const cleanText=t=>String(t||'').replace(/[\u0000-\u001f<>]/g,' ').trim().slice(0,300);
+async function chatSend(text,kind){kind=kind||'msg';if(!ON.ok||ON.ro)return;text=cleanText(text);if(!text)return;
+  try{if(ON.be==='claude')await ON.db.collection('chat').add({uid:ON.uid,text,kind,team:S.team||'',at:Date.now()});
+    else{const r=await ON.sb.from('chat').insert({uid:ON.uid,nick:ON.nick||'Игрок',text,kind,team:S.team||''});if(r.error)throw r.error;supaV2()}}
+  catch(e){if(kind==='msg')toast(ON.v2===false?'Чат заработает после шага с SQL на сервере':'Сообщение не отправилось')}}
+function feed(text){if(!ON.ok||ON.ro)return;const n=Date.now();if(n-(ON.lastFeed||0)<30000)return;ON.lastFeed=n;chatSend(text,'feed')}
+async function supaV2(){if(ON.be!=='supa'||!ON.ok)return;
+  try{const c=await ON.sb.from('chat').select('id,uid,nick,text,kind,team,created_at').order('created_at',{ascending:false}).limit(40);
+    if(c.error){ON.v2=false;return}ON.v2=true;ON.chat=(c.data||[]).map(m=>({id:m.id,uid:m.uid,text:m.text,kind:m.kind,team:m.team,at:Date.parse(m.created_at)}));(c.data||[]).forEach(m=>ON.names[m.uid]=cleanNick(m.nick)||'Игрок');
+    const a=await ON.sb.from('auctions').select('*').in('status',['open','won']).order('ends_at',{ascending:true}).limit(60);
+    if(!a.error){ON.auctions=(a.data||[]).map(x=>({id:x.id,seller:x.seller,horse:x.horse,name:x.name,start:x.start_price,bid:x.bid,bidder:x.bidder,ends:Date.parse(x.ends_at),status:x.status}));(a.data||[]).forEach(x=>{ON.names[x.seller]=cleanNick(x.seller_nick)||'Игрок';if(x.bidder)ON.names[x.bidder]=cleanNick(x.bidder_nick)||'Игрок'})}
+    const st=await ON.sb.from('studs').select('*').order('created_at',{ascending:false}).limit(60);
+    if(!st.error){ON.studs=(st.data||[]).map(x=>({id:x.id,owner:x.owner,horse:x.horse,name:x.name,fee:x.fee}));(st.data||[]).forEach(x=>ON.names[x.owner]=cleanNick(x.owner_nick)||'Игрок')}
+    await aucSettle();await studPayouts();renderChat()}catch(e){}}
+function renderChat(){const el=$('#chatList');if(!el)return;
+  el.innerHTML=ON.chat.length?ON.chat.slice().reverse().map(m=>`<div class="msg${m.kind==='feed'?' feed':''}${m.uid===ON.uid?' mine':''}"><b>${esc(pname(m.uid))}${m.team?` <small>[${esc(String(m.team).slice(0,20))}]</small>`:''}</b> ${esc(String(m.text||'').slice(0,300))}</div>`).join(''):'<p class="note">Пока тихо. Напиши первым!</p>';
+  el.scrollTop=el.scrollHeight}
+/* ---- аукцион ---- */
+async function listAuction(h,start,hours){if(!ON.ok||ON.ro)return;start=Math.max(10,Math.min(99999,Math.round(start)||0));hours=[1,6,24].includes(hours)?hours:24;
+  if(S.horses.length<=1){toast('Последнюю лошадь выставить нельзя');return}
+  const horse=JSON.parse(JSON.stringify(h)),name=h.name,ends=Date.now()+hours*3600e3;
+  try{if(ON.be==='claude')await ON.db.collection('auctions').add({seller:ON.uid,horse,name,start,bid:null,bidder:null,ends,status:'open',at:Date.now()});
+    else{const r=await ON.sb.from('auctions').insert({seller:ON.uid,seller_nick:ON.nick,horse,name,start_price:start,ends_at:new Date(ends).toISOString()});if(r.error)throw r.error}}
+  catch(e){toast(ON.v2===false?'Аукцион заработает после шага с SQL на сервере':'Не удалось выставить на аукцион');return}
+  S.horses=S.horses.filter(x=>x.id!==h.id);S.cur=S.horses[0].id;herdKey='';$('#sellBox').hidden=true;toast(`${name} на аукционе, старт ${start}`);feed(`выставил(а) на аукцион ${name}, старт ${start}`);ui();save();cloudSave();if(ON.be==='supa')supaV2()}
+async function placeBid(a,amount){if(!ON.ok||ON.ro)return;amount=Math.round(amount);const min=a.bid?a.bid+10:a.start;
+  if(amount<min){toast(`Минимальная ставка ${min}`);return}if(S.coins<amount){toast('Не хватает монет на такую ставку');return}
+  try{if(ON.be==='claude'){const ref=ON.db.doc('auctions/'+a.id);const l=await ref.acquire({holder:ON.uid,ttlMs:5000});if(!l.acquired){toast('Кто-то ставит прямо сейчас, попробуй ещё');return}
+      const sn=await ref.get();const d=sn.exists&&sn.data();if(!d||d.status!=='open'||Date.now()>=d.ends){toast('Аукцион уже закрыт');return}if(amount<(d.bid?d.bid+10:d.start)){toast('Ставку перебили');return}
+      await ref.update({bid:amount,bidder:ON.uid})}
+    else{const r=await ON.sb.rpc('place_bid',{aid:a.id,amount,nick:ON.nick||'Игрок'});if(r.error)throw r.error;if(!r.data||!r.data.length){toast('Ставку перебили или аукцион закрыт');supaV2();return}}
+    SFX.coin();toast(`Ставка ${amount} принята`);if(ON.be==='supa')supaV2()}
+  catch(e){toast('Не получилось сделать ставку')}}
+let aucBusy=false;
+async function aucSettle(){if(!ON.ok||aucBusy)return;aucBusy=true;S.paid=S.paid||{};const now=Date.now();
+  try{for(const a of ON.auctions){
+    if(a.status==='open'&&now>=a.ends&&a.bidder===ON.uid&&!S.paid['w'+a.id]){let d=null;
+      if(ON.be==='claude'){const ref=ON.db.doc('auctions/'+a.id);const sn=await ref.get();const x=sn.exists&&sn.data();if(x&&x.status==='open'&&x.bidder===ON.uid){await ref.update({status:'won'});d=x}}
+      else{const r=await ON.sb.rpc('claim_auction',{aid:a.id});d=r.data&&r.data[0];if(d)d.bid=d.bid}
+      if(d){S.paid['w'+a.id]=1;const h=adoptHorse(d.horse);S.coins-=+d.bid||0;if(S.horses.length>=S.stalls)S.stalls++;S.horses.push(h);herdKey='';SFX.win();toast(`Аукцион выигран: ${h.name} за ${d.bid}`);feed(`выиграл(а) аукцион: ${h.name} за ${d.bid}`)}}
+    if(a.status==='open'&&now>=a.ends&&a.seller===ON.uid&&!a.bidder&&!S.paid['b'+a.id]){let d=null;
+      if(ON.be==='claude'){const ref=ON.db.doc('auctions/'+a.id);const sn=await ref.get();const x=sn.exists&&sn.data();if(x&&x.status==='open'&&!x.bidder){await ref.delete();d=x}}
+      else{const r=await ON.sb.rpc('close_auction',{aid:a.id});d=r.data&&r.data[0]}
+      if(d){S.paid['b'+a.id]=1;const h=adoptHorse(d.horse);if(S.horses.length>=S.stalls)S.stalls++;S.horses.push(h);herdKey='';toast(`${h.name}: ставок не было, лошадь вернулась`)}}
+    if(ON.be==='claude'&&a.status==='won'&&a.seller===ON.uid&&!S.paid['s'+a.id]){S.paid['s'+a.id]=1;S.coins+=+a.bid||0;SFX.coin();toast(`${a.name} продана на аукционе: +${a.bid}`);writeQ(()=>ON.db.doc('auctions/'+a.id).update({status:'paid'}))}}
+    if(ON.be==='supa'){const r=await ON.sb.rpc('claim_auction_pay');(r.data||[]).forEach(a=>{if(S.paid['s'+a.id])return;S.paid['s'+a.id]=1;S.coins+=+a.bid||0;SFX.coin();toast(`${a.name} продана на аукционе: +${a.bid}`)})}
+  }catch(e){}aucBusy=false;save();ui()}
+/* ---- случка с жеребцами других игроков ---- */
+async function listStud(h,fee){if(!ON.ok||ON.ro)return;fee=Math.max(10,Math.min(9999,Math.round(fee)||0));fixHorse(h);
+  const horse=JSON.parse(JSON.stringify(Object.assign({},h,{dirt:[],manure:[],stones:[],ribbons:[]})));
+  try{if(ON.be==='claude')await ON.db.collection('studs').add({owner:ON.uid,horse,name:h.name,fee,at:Date.now()});
+    else{const r=await ON.sb.from('studs').insert({owner:ON.uid,owner_nick:ON.nick,horse,name:h.name,fee});if(r.error)throw r.error}}
+  catch(e){toast(ON.v2===false?'Случка заработает после шага с SQL на сервере':'Не удалось разместить жеребца');return}
+  $('#sellBox').hidden=true;toast(`${h.name} в каталоге жеребцов за ${fee}`);feed(`предлагает жеребца ${h.name} для случки`);if(ON.be==='supa')supaV2()}
+async function unlistStud(st){try{if(ON.be==='claude')await ON.db.doc('studs/'+st.id).delete();else await ON.sb.from('studs').delete().eq('id',st.id);toast('Жеребец снят из каталога');if(ON.be==='supa')supaV2()}catch(e){}}
+async function useStud(st){const m=cur();
+  if(m.sex!=='f'||isFoal(m)){toast('Выбери в деннике взрослую кобылу');return}if(m.preg){toast(`${m.name} уже ждёт жеребёнка`);return}
+  if(m.level<2){toast('Кобыле нужен уровень 2');return}if(S.coins<st.fee){toast('Не хватает монет');return}if(S.horses.length>=S.stalls){toast('Для жеребёнка нужен свободный денник');return}
+  try{if(ON.be==='claude')await ON.db.collection('stud_uses').add({stud:st.id,owner:st.owner,user:ON.uid,fee:st.fee,paid:false,at:Date.now()});
+    else{const r=await ON.sb.from('stud_uses').insert({stud:st.id,owner:st.owner,fee:st.fee});if(r.error)throw r.error}}
+  catch(e){toast('Не получилось, нет связи с сервером');return}
+  const d=adoptHorse(st.horse);S.coins-=st.fee;m.preg={days:2,breed:d.breed,coat:d.coat,gen:d.gen,spd:d.spd,spec:d.spec,char:d.char,cm:heightCm(d.hands||BREEDS[d.breed].hands),sire:d.name};
+  SFX.neigh();toast(`${m.name} ждёт жеребёнка от ${d.name}`);ui();save()}
+async function studPayouts(){if(!ON.ok)return;S.paid=S.paid||{};
+  if(ON.be==='claude'){(ON.myUses||[]).filter(u=>!u.paid&&!S.paid['u'+u.id]).forEach(u=>{S.paid['u'+u.id]=1;S.coins+=+u.fee||0;toast(`Случка с твоим жеребцом: +${u.fee}`);SFX.coin();writeQ(()=>ON.db.doc('stud_uses/'+u.id).update({paid:true}))});return}
+  try{const r=await ON.sb.rpc('claim_stud');(r.data||[]).forEach(u=>{if(S.paid['u'+u.id])return;S.paid['u'+u.id]=1;S.coins+=+u.fee||0;toast(`Случка с твоим жеребцом: +${u.fee}`);SFX.coin()});if(r.data&&r.data.length){save();ui()}}catch(e){}}
+function renderOnline2(){if(!ON.ok)return;
+  // команды
+  const tl=$('#teamBox');if(tl){const teams={};ON.players.forEach(p=>{const t=p.best&&p.best.team;if(!t)return;const k=String(t).slice(0,20);teams[k]=teams[k]||{n:k,score:0,m:0};teams[k].score+=+p.score||0;teams[k].m++});
+    const list=Object.values(teams).sort((a,b)=>b.score-a.score).slice(0,10);
+    tl.innerHTML=`<div class="row"><input id="teamIn" class="search" style="flex:1;min-width:0" maxlength="20" placeholder="Название команды" value="${esc(S.team||'')}"><button class="btn ghost" id="teamGo">${S.team?'Сменить':'Вступить'}</button></div>
+      ${list.length?`<div class="tablewrap"><table class="proto"><thead><tr><th>#</th><th>Команда</th><th>Игроков</th><th>Очки</th></tr></thead><tbody>${list.map((t,i)=>`<tr class="${t.n===S.team?'me':''}"><td>${i+1}</td><td>${esc(t.n)}</td><td>${t.m}</td><td>${t.score}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Команд пока нет. Впиши название — друзья с тем же названием попадут в одну команду.</p>'}`;
+    $('#teamGo').onclick=()=>{S.team=cleanNick($('#teamIn').value).slice(0,20);save();pushPlayer(true);toast(S.team?`Ты в команде «${S.team}»`:'Ты вышел из команды');renderClub()}}
+  // аукцион
+  const al=$('#aucList');if(al){const now=Date.now();const open=ON.auctions.filter(a=>a.status==='open'&&a.horse);al.innerHTML='';
+    if(!open.length)al.innerHTML='<p class="note">Сейчас торгов нет. Выставить лошадь можно в деннике: «Продать» → «На аукцион».</p>';
+    open.forEach(a=>{const d=document.createElement('div');d.className='item';const cv=document.createElement('canvas');cv.width=192;cv.height=128;d.appendChild(cv);const left=a.ends-now;const mine=a.seller===ON.uid;
+      const inf=document.createElement('div');inf.innerHTML=`<b>${esc(String(a.name||'Лошадь').slice(0,24))}</b><small>${left>0?'ещё '+mins(left):'торги закрыты'} · ${a.bid?`ставка ${a.bid} (${a.bidder===ON.uid?'твоя':esc(pname(a.bidder))})`:`старт ${a.start}`}<br>${mine?'твой лот':'продаёт '+esc(pname(a.seller))}</small>`;d.appendChild(inf);
+      if(!mine&&left>0&&!ON.ro){const min=a.bid?a.bid+10:a.start;const b=document.createElement('button');b.className='btn';b.innerHTML=`Ставка <span class="price">${min}</span>`;b.disabled=S.coins<min||a.bidder===ON.uid;b.onclick=()=>placeBid(a,min);d.appendChild(b)}
+      al.appendChild(d);try{if(BREEDS[a.horse.breed]&&COATS[a.horse.coat])miniHorse(cv,Object.assign(ghostHorse({}),a.horse,{dirt:[],inj:null}))}catch(e){}})}
+  // жеребцы
+  const sl=$('#studList');if(sl){sl.innerHTML='';const m=cur();
+    if(!ON.studs.length)sl.innerHTML='<p class="note">В каталоге пока нет жеребцов. Свой можно предложить в деннике: «Продать» → «Предложить для случки».</p>';
+    ON.studs.forEach(st=>{if(!st.horse)return;const d=document.createElement('div');d.className='item';const cv=document.createElement('canvas');cv.width=192;cv.height=128;d.appendChild(cv);const mine=st.owner===ON.uid;const H=st.horse;
+      const inf=document.createElement('div');inf.innerHTML=`<b>${esc(String(st.name||'Жеребец').slice(0,24))}</b><small>${esc(String(H.breedName||(BREEDS[H.breed]||{}).name||''))}, ур. ${+H.level||1}${SPEC[H.spec]?' · '+SPEC[H.spec].n.toLowerCase():''}<br>${mine?'твой жеребец':'хозяин '+esc(pname(st.owner))}</small>`;d.appendChild(inf);
+      const b=document.createElement('button');if(mine){b.className='btn ghost';b.textContent='Убрать';b.onclick=()=>unlistStud(st)}else{b.className='btn';b.innerHTML=`Свести с ${esc(m.name)} <span class="price">${+st.fee||0}</span>`;b.disabled=ON.ro||m.sex!=='f'||!!m.preg||S.coins<st.fee;b.onclick=()=>useStud(st)}
+      d.appendChild(b);sl.appendChild(d);try{if(BREEDS[H.breed]&&COATS[H.coat])miniHorse(cv,Object.assign(ghostHorse({}),H,{dirt:[],inj:null}))}catch(e){}})}
+  if(ON.be==='supa'&&ON.v2===false){const n=$('#v2note');if(n)n.hidden=false}
+  renderChat()}
 /* ---- horse trading ---- */
-function adoptHorse(raw){const h=makeHorse(BREEDS[raw&&raw.breed]?raw.breed:'arab');Object.assign(h,JSON.parse(JSON.stringify(raw||{})));h.id=Math.random().toString(36).slice(2,9);if(!COATS[h.coat])h.coat='bay';
+function adoptHorse(raw){const h=makeHorse(BREEDS[raw&&raw.breed]?raw.breed:'arab');Object.assign(h,JSON.parse(JSON.stringify(raw||{})));fixHorse(h);h.id=Math.random().toString(36).slice(2,9);if(!COATS[h.coat])h.coat='bay';
   ['dirt','manure','stones','ribbons','patches','spotDots'].forEach(k=>{if(!Array.isArray(h[k]))h[k]=[]});h.name=String(h.name||'Лошадь').slice(0,24);return h}
 async function listTrade(h,price){if(!ON.ok||ON.ro)return;price=Math.max(10,Math.min(99999,Math.round(price)||0));
   if(S.horses.length<=1){toast('Последнюю лошадь выставить нельзя');return}
@@ -5963,7 +6435,7 @@ async function listTrade(h,price){if(!ON.ok||ON.ro)return;price=Math.max(10,Math
     else{const r=await ON.sb.from('trades').insert({seller:ON.uid,seller_nick:ON.nick,horse,name,breed,level:h.level,price});if(r.error)throw r.error}}
   catch(e){toast('Не удалось выставить лошадь: нет связи с сервером');return}
   S.horses=S.horses.filter(x=>x.id!==h.id);S.cur=S.horses[0].id;herdKey='';$('#sellBox').hidden=true;toast(`${name} выставлена на онлайн-рынок за ${price}`);ui();save();cloudSave();if(ON.be==='supa')supaRefresh()}
-async function buyTrade(t){if(!ON.ok||ON.ro)return;if(S.horses.length>=6){toast('Все 6 денников заняты');return}if(S.coins<t.price){toast('Не хватает монет');return}
+async function buyTrade(t){if(!ON.ok||ON.ro)return;if(S.horses.length>=S.stalls){toast(`Все ${S.stalls} денников заняты. Купи ещё денник в Деннике`);return}if(S.coins<t.price){toast('Не хватает монет');return}
   try{let d;
     if(ON.be==='claude'){const ref=ON.db.doc('trades/'+t.id);const l=await ref.acquire({holder:ON.uid,ttlMs:5000});if(!l.acquired){toast('Эту лошадь сейчас покупает кто-то другой');return}
       const snap=await ref.get();d=snap.exists&&snap.data();if(!d||d.status!=='open'||!d.horse){toast('Лошадь уже продана');return}
@@ -5971,7 +6443,7 @@ async function buyTrade(t){if(!ON.ok||ON.ro)return;if(S.horses.length>=6){toast(
     else{const r=await ON.sb.rpc('buy_trade',{trade_id:t.id});if(r.error)throw r.error;d=r.data&&r.data[0];if(!d){toast('Лошадь уже продана');supaRefresh();return}}
     const h=adoptHorse(d.horse);S.coins-=d.price;S.horses.push(h);S.cur=h.id;herdKey='';SFX.neigh();toast(`${h.name} теперь твоя`);save();cloudSave();if(ON.be==='supa')supaRefresh();setView('stable')}
   catch(e){toast('Не получилось купить, попробуй ещё раз')}}
-async function cancelTrade(t){if(S.horses.length>=6){toast('Освободи денник, чтобы вернуть лошадь');return}
+async function cancelTrade(t){if(S.horses.length>=S.stalls){toast('Освободи денник, чтобы вернуть лошадь');return}
   try{let d;
     if(ON.be==='claude'){const ref=ON.db.doc('trades/'+t.id);const l=await ref.acquire({holder:ON.uid,ttlMs:5000});if(!l.acquired){toast('Лошадь сейчас покупают');return}
       const snap=await ref.get();d=snap.exists&&snap.data();if(!d||d.status!=='open'){toast('Лошадь уже продана');return}await ref.delete()}
@@ -5999,7 +6471,7 @@ function ridePresence(force){if(!ON.ride)return;const now=performance.now();if(!
   try{if(ON.ride.kind==='claude')ON.ride.r.presence(p).catch(()=>{});else ON.ride.ch.track(p).catch(()=>{})}catch(e2){}}
 function ghostHorse(pr){return{breed:BREEDS[pr.hb]?pr.hb:'arab',coat:COATS[pr.hc]?pr.hc:'bay',blaze:!!pr.bl,socks:Math.min(4,pr.so|0),pinto:false,spots:false,patches:[],spotDots:[],dirt:[],stones:[],ribbons:[]}}
 function drawGhosts(c,gy){ON.peers.forEach(p=>{const pr=p.presence||{};if(pr.st!==ar.stage||!['ride','vet','hold'].includes(pr.mode))return;const sx=EHX+((+pr.km||0)-ar.km)*EPX;if(sx<-60||sx>AW+60)return;const y=gy(sx);
-  c.save();c.globalAlpha=.55;const ph=pr.mode==='ride'&&pr.g!=='walk'?T*(ENDG[pr.g]||ENDG.trot).ph:null;drawHorse(c,ghostHorse(pr),{x:sx,y,s:.38,t:T,gallop:ph,dirt:false,saddle:true});
+  c.save();c.globalAlpha=.55;const ph=pr.mode==='ride'&&pr.g!=='walk'?T*(ENDG[pr.g]||ENDG.trot).ph:null;drawHorse(c,ghostHorse(pr),{x:sx,y,s:.38,t:T,gallop:ph,gait:pr.g,dirt:false,saddle:true,rider:true});
   c.globalAlpha=.95;c.font='800 10px Nunito, sans-serif';const nm=pname(pr.uid).slice(0,16);const w=c.measureText(nm).width+10;c.fillStyle='rgba(19,32,26,.8)';c.beginPath();c.roundRect(sx-w/2,y-108,w,15,6);c.fill();
   c.fillStyle='#eef1e4';c.textAlign='center';c.textBaseline='middle';c.fillText(nm,sx,y-100.5);c.restore()})}
 function drawStandings(c){const ps=ON.peers.filter(p=>p.presence&&p.presence.mode&&p.presence.mode!=='lobby');if(!ps.length)return;
@@ -6017,8 +6489,8 @@ function renderClub(){if(view!=='trophy')return;const el=$('#onCard');if(!el)ret
       <div class="row" style="justify-content:flex-start"><button class="btn" type="submit">Войти</button><button class="btn ghost" type="button" id="suUp">Создать аккаунт</button></div>
       <p class="note" id="suMsg" role="status"></p></form>`;
     $('#suForm').addEventListener('submit',e=>{e.preventDefault();supaAuth('in')});$('#suUp').onclick=()=>supaAuth('up');
-    $('#lbCard').hidden=true;$('#trCard').hidden=true;return}
-  if(!ON.ok){el.innerHTML=`<span class="label">Онлайн-клуб</span><p class="note">${!ON.tried?'Подключаемся…':ON.netErr?'Нет связи с сервером игры. Проверь интернет и открой игру заново.':ON.be==='claude'?'Онлайн работает, когда ты вошёл в аккаунт claude.ai и у тебя есть доступ к игре.':'Онлайн-сервер для этой версии ещё не подключён.'}</p>`;$('#lbCard').hidden=true;$('#trCard').hidden=true;return}
+    $('#lbCard').hidden=true;$('#trCard').hidden=true;['chatCard','teamCard','aucCard','studCard'].forEach(k=>{const e=$('#'+k);if(e)e.hidden=true});return}
+  if(!ON.ok){el.innerHTML=`<span class="label">Онлайн-клуб</span><p class="note">${!ON.tried?'Подключаемся…':ON.netErr?'Нет связи с сервером игры. Проверь интернет и открой игру заново.':ON.be==='claude'?'Онлайн работает, когда ты вошёл в аккаунт claude.ai и у тебя есть доступ к игре.':'Онлайн-сервер для этой версии ещё не подключён.'}</p>`;$('#lbCard').hidden=true;$('#trCard').hidden=true;['chatCard','teamCard','aucCard','studCard'].forEach(k=>{const e=$('#'+k);if(e)e.hidden=true});return}
   const c=ON.cloud;const when=c?new Date(c.at).toLocaleString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
   el.innerHTML=`<div class="row"><span class="label">Онлайн-клуб${ON.be==='supa'&&ON.nick?' · '+esc(ON.nick):''}</span>${ON.be==='supa'?'<button class="linkbtn" id="suOut">Выйти</button>':''}</div>
     <p class="note">${ON.ro?'У тебя доступ только на просмотр. Чтобы играть онлайн, попроси владельца игры дать тебе доступ «Участник».':'Прогресс сам сохраняется на сервер каждые 2 минуты и в конце дня, а твои лучшие результаты попадают в протоколы других игроков.'}</p>
@@ -6034,9 +6506,10 @@ function renderClub(){if(view!=='trophy')return;const el=$('#onCard');if(!el)ret
   if(!open.length)list.innerHTML='<p class="note">На рынке пока пусто. Выставить свою лошадь можно в деннике: кнопка «Продать» под кличкой.</p>';
   open.sort((a,b)=>(a.seller===ON.uid)-(b.seller===ON.uid)).forEach(t=>{const d=document.createElement('div');d.className='item';const cv=document.createElement('canvas');cv.width=192;cv.height=128;d.appendChild(cv);
     const mine=t.seller===ON.uid;const inf=document.createElement('div');inf.innerHTML=`<b>${esc(String(t.name||'Лошадь').slice(0,24))}</b><small>${esc(String(t.breed||'').slice(0,30))} · ур. ${+t.level||1}<br>${mine?'твоё объявление':'продаёт '+esc(pname(t.seller))}</small>`;d.appendChild(inf);
-    const b=document.createElement('button');b.className=mine?'btn ghost':'btn';b.innerHTML=mine?'Снять':`<span class="price">${+t.price||0}</span>`;b.disabled=ON.ro||(!mine&&(S.coins<t.price||S.horses.length>=6));b.onclick=()=>mine?cancelTrade(t):buyTrade(t);d.appendChild(b);list.appendChild(d);
+    const b=document.createElement('button');b.className=mine?'btn ghost':'btn';b.innerHTML=mine?'Снять':`<span class="price">${+t.price||0}</span>`;b.disabled=ON.ro||(!mine&&(S.coins<t.price||S.horses.length>=S.stalls));b.onclick=()=>mine?cancelTrade(t):buyTrade(t);d.appendChild(b);list.appendChild(d);
     try{if(BREEDS[t.horse.breed]&&COATS[t.horse.coat])miniHorse(cv,Object.assign(ghostHorse({}),t.horse,{dirt:[],inj:null}))}catch(e){}});
-  resolveNames(open.map(t=>t.seller))}
+  resolveNames(open.map(t=>t.seller));
+  ['chatCard','teamCard','aucCard','studCard'].forEach(k=>{const e=$('#'+k);if(e)e.hidden=false});renderOnline2()}
 
 /* ============ LOOP ============ */
 function tick(dt){S.horses.forEach(h=>{h.hunger=clamp(h.hunger-dt/60*1.2);h.thirst=clamp(h.thirst-dt/60*1.6);h.joy=Math.max(0,h.joy-dt*.08)});patCd-=dt}
@@ -6045,23 +6518,21 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
   if(S){tick(dt);
     if(view==='stable')drawStall(dt);else if(view==='arena')stepArena(dt);
     lastUI+=dt;if(lastUI>.5){lastUI=0;if(view==='stable')liteUI()}
-    lastSave+=dt;if(lastSave>5){lastSave=0;save();ON.cs+=5;if(ON.cs>=120){ON.cs=0;cloudSave();pushPlayer()}ON.poll+=5;if(ON.be==='supa'&&ON.poll>=45)supaRefresh();}}
+    lastSave+=dt;if(lastSave>5){lastSave=0;save();ON.cs+=5;if(ON.cs>=120){ON.cs=0;cloudSave();pushPlayer()}ON.poll+=5;if(ON.be==='supa'&&ON.poll>=(raceHot()||view==='trophy'?15:45))supaRefresh();raceTick();}}
   requestAnimationFrame(loop)}
 
 function start(data){
   S=(data&&data.state)||load()||fresh();
   if(!data||!data.state){const mins=Math.min(180,(Date.now()-(S.seen||Date.now()))/60000);
     if(mins>1)S.horses.forEach(h=>{h.hunger=clamp(h.hunger-mins*.5);h.thirst=clamp(h.thirst-mins*.7)})}
-  S.horses.forEach(h=>{h.mangerHay=h.mangerHay||0;if(!h.sex)h.sex=h.name==='Звёздочка'?'f':(Math.random()<.5?'f':'m');if(h.hooves==null)h.hooves=85;if(!h.permit)h.permit=h.stamina?160:40;if(h.prone==null)h.prone=.12;if(h.load==null)h.load=0;if(!h.stones)h.stones=[]});
+  S.horses.forEach(h=>{h.mangerHay=h.mangerHay||0;if(!h.sex)h.sex=h.name==='Звёздочка'?'f':(Math.random()<.5?'f':'m');if(h.hooves==null)h.hooves=85;if(!h.permit)h.permit=40;if(h.prone==null)h.prone=.12;if(h.load==null)h.load=0;if(!h.stones)h.stones=[]});
   if(S.offers&&S.offers[0]&&!S.offers[0].sex)S.offers=genOffers();
   if(!S.tasks)S.tasks=genTasks();
   if(!S.stats)S.stats={};if(!S.ach)S.ach={};if(!S.weather)S.weather=genWeather();if(S.sound==null)S.sound=true;S.cups=S.cups||0;updSnd();
-  S.gifts=S.gifts||{};
-  if(!S.gifts.mansur){const m=makeHorse('kabard','Аль Мансурка Лучший');
-    Object.assign(m,{coat:'darkbay',sex:'m',blaze:false,socks:0,grey2:true,thickMane:true,thinTail:true,hands:'18.0',sz:1.1,level:8,xp:0,bond:95,
-      jumpBonus:14,dressBonus:8,stamina:true,permit:160,prone:.05,hunger:90,thirst:90,energy:100,dirt:[],manure:[],stones:[],
-      bio:'Кабардинский чемпион, внук Виноградика, 10 лет. Шпринт 175 см, пробег 200 км, выездка почти как у Тотиласа. Самый сладкий и хороший.'});
-    S.horses.push(m);S.cur=m.id;S.gifts.mansur=1;setTimeout(()=>{toast('Аль Мансурка Лучший приехал в конюшню!');SFX.neigh()},900)}
+  S.gifts=S.gifts||{};S.horses.forEach(fixHorse);S.build=S.build||{};S.staff=S.staff||{};if(S.tut==null)S.tut=data&&data.state?6:(S.day>1?6:0);setTimeout(showTut,1200);S.stalls=Math.max(10,S.stalls||0,S.horses.length);
+  if(!S.gifts.noMansur){S.horses=S.horses.filter(h=>h.name!=='Аль Мансурка Лучший');S.gifts.noMansur=1;S.gifts.mansur=1;
+    if(!S.horses.length){const st=fresh().horses[0];S.horses.push(st)}
+    if(!S.horses.find(h=>h.id===S.cur))S.cur=S.horses[0].id}
   if(!S.offers)S.offers=genOffers();
   herdKey='';ui();resetArena();
   try{window.claude?.hot?.snapshot?.(()=>({state:S}))}catch(e){}

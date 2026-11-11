@@ -5911,7 +5911,7 @@ let view='stable';
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.v)));
 function setView(v){if(ar.running)return;if(v!=='arena')leaveRide();view=v;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===v));
   ['stable','arena','market','base','reg','trophy'].forEach(k=>{const s=$('#v-'+k);s.hidden=k!==v;if(k===v)s.style.display='flex'});
-  if(v==='arena'){resetArena();renderArenaUI()}if(v==='market')renderMarket();if(v==='trophy'){renderTrophy();renderClub()}if(v==='reg')renderReg();if(v==='base')renderBase();ui()}
+  if(v==='arena'){resetArena();renderArenaUI()}if(v==='market')renderMarket();if(v==='trophy'){renderTrophy();renderClub()}if(v==='reg'){renderReg();if(ON.ok&&ON.be==='supa'&&Date.now()-(ON.lastRef||0)>15000)supaRefresh().then(()=>{if(view==='reg')renderReg()})}if(v==='base')renderBase();ui()}
 
 
 /* ============ BASE: сезон, тренировки, постройки, персонал, ежедневное ============ */
@@ -6394,6 +6394,7 @@ function regItem(r){const d=document.createElement('div');d.className='item regi
   d.querySelector('.regh').onclick=()=>toggleReg(d,r);return d}
 function pedLink(n){return n?`<button class="linkbtn" data-q="${esc(n)}">${esc(n)}</button>`:'не указан'}
 function toggleReg(d,r){const ex=d.querySelector('.regx');if(ex){ex.remove();return}
+  if(!r.par&&ON.ok&&!r._chk){r._chk=1;checkOwner(realKey(r)).then(ow=>{if(ow&&d.querySelector('.regx')&&!d.querySelector('[data-offer]')){d.querySelector('.regx').remove();toggleReg(d,r)}setTimeout(()=>{r._chk=0},20000)})}
   const x=document.createElement('div');x.className='regx';const kids=kidsOf(r.n);
   const rows=[];
   if(!r.par){if(!r._h)r._h=realHorse(r);
@@ -6407,14 +6408,15 @@ function toggleReg(d,r){const ex=d.querySelector('.regx');if(ex){ex.remove();ret
   html+=`<dl>${rows.map(([a,b])=>`<dt>${a}</dt><dd>${typeof b==='string'&&b.startsWith('<')?b:esc(String(b))}</dd>`).join('')}</dl>`;
   if(!r.par){const owned=S.horses.some(h=>h.real&&h.name===r.n&&h.real.f===r.f&&h.real.y===r.y);const price=realPrice(r);const ow=ownerOf(realKey(r));
     if(!owned&&ow){const oh=(ow.best.herd||[]).find(x=>x.k===realKey(r));html+=`<p class="note">Хозяин: <b>${esc(pname(ow.id))}</b>. Реальная лошадь может быть только у одного игрока. Предложи ему цену:</p><div class="row"><input class="search" data-offp style="flex:1;min-width:0;max-width:130px" inputmode="numeric" value="${price}" aria-label="Цена"><button class="btn" data-offer ${ON.ro?'disabled':''}>Предложить покупку</button></div>`}
-    else html+=owned?'<p class="note">Эта лошадь уже живёт в твоей конюшне.</p>':`<div class="row"><p class="note">Можно забрать в конюшню. Характеристики зависят от её реальных пробегов.</p><button class="btn" data-buy><span class="price">${price}</span> мон.</button></div>${S.coins<price?`<p class="note">Не хватает ${price-S.coins} монет.</p>`:''}`}
+    else html+=owned?'<p class="note">Эта лошадь уже живёт в твоей конюшне.</p>':`<div class="row"><p class="note">Можно забрать в конюшню. Характеристики зависят от её реальных ${r.sport?'результатов':'пробегов'}.</p><button class="btn" data-buy><span class="price">${price}</span> мон.</button></div>${S.coins<price?`<p class="note">Не хватает ${price-S.coins} монет.</p>`:''}`}
   else html+='<p class="note">Лошадь из родословных: известна по потомкам, своих данных о пробегах нет.</p>';
   x.innerHTML=html;d.appendChild(x);
   const cv=x.querySelector('canvas');if(cv){const c=cv.getContext('2d');c.scale(2,2);drawHorse(c,r._h,{x:88,y:110,s:.42,t:0,dirt:false,saddle:!!r.sport})}
   x.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{$('#regQ').value=b.dataset.q;regF='all';regN=40;renderReg();$('#regQ').scrollIntoView({block:'center'})});
   const ob=x.querySelector('[data-offer]');if(ob)ob.onclick=()=>{const ow=ownerOf(realKey(r));if(!ow)return;const oh=(ow.best.herd||[]).find(z=>z.k===realKey(r));makeOffer(ow.id,oh?oh.id:'',r.n,+x.querySelector('[data-offp]').value,realKey(r))};
   const bb=x.querySelector('[data-buy]');if(bb)bb.onclick=()=>{const price=realPrice(r);if(ownerOf(realKey(r))){toast('Эту лошадь уже забрал другой игрок');renderReg();return}if(S.horses.length>=S.stalls){toast(`Все ${S.stalls} денников заняты. Купи ещё денник в Деннике`);return}if(S.coins<price){toast('Не хватает монет');return}
-    S.coins-=price;const h=r._h;r._h=null;S.horses.push(h);S.cur=h.id;herdKey='';SFX.neigh();toast(`${h.name} переезжает в твою конюшню`);save();setView('stable')};
+    bb.disabled=true;checkOwner(realKey(r)).then(ow=>{bb.disabled=false;if(ow){toast(`${r.n} уже у игрока ${pname(ow.id)}. Можно предложить ему цену`);x.remove();toggleReg(d,r);return}
+    if(S.coins<price||S.horses.length>=S.stalls)return;S.coins-=price;const h=r._h||realHorse(r);r._h=null;S.horses.push(h);S.cur=h.id;herdKey='';SFX.neigh();toast(`${h.name} переезжает в твою конюшню`);save();pushPlayer(true);cloudSave();setView('stable')})};
 }
 $('#regQ').addEventListener('input',()=>{clearTimeout(regT);regT=setTimeout(()=>{regN=40;renderReg()},150)});
 $('#regMore').addEventListener('click',()=>{regN+=40;renderReg()});
@@ -6459,7 +6461,7 @@ async function supaSignedIn(u){ON.uid=u.id;ON.needLogin=false;ON.ok=true;
   try{const {data}=await ON.sb.from('saves').select('day,coins,horses,updated_at,state').eq('id',ON.uid).maybeSingle();ON.cloud=data?{day:data.day,coins:data.coins,horses:data.horses,at:Date.parse(data.updated_at),state:data.state}:null}catch(e){}
   await supaRefresh();pushPlayer(true);
   if(view==='arena'&&disc==='end')joinRide(ENDUR[sel.end].km)}
-async function supaRefresh(){if(ON.be!=='supa'||!ON.ok)return;ON.poll=0;
+async function supaRefresh(){if(ON.be!=='supa'||!ON.ok)return;ON.poll=0;ON.lastRef=Date.now();
   try{const {data}=await ON.sb.from('players').select('id,nick,score,ribbons,cups,end_km,top,best').order('score',{ascending:false}).limit(300);
     if(data){ON.players=data.map(p=>({id:p.id,score:p.score,ribbons:p.ribbons,cups:p.cups,endKm:p.end_km,top:p.top,best:p.best||{}}));data.forEach(p=>{ON.names[p.id]=cleanNick(p.nick)||'Игрок'})}}catch(e){}
   try{const {data}=await ON.sb.from('trades').select('id,seller,seller_nick,horse,name,breed,level,price,status').eq('status','open').order('created_at',{ascending:false}).limit(100);
@@ -6641,8 +6643,16 @@ function renderOnline2(){if(!ON.ok)return;
 
 /* ---- реальные лошади уникальны; игроки отправляют друг другу запросы на покупку ---- */
 function hKey(h){if(!h.real)return'';if(!h.real.key)h.real.key=(h.name+'|'+(h.real.y||'')).toLowerCase();return h.real.key}
+let herdSig='';setInterval(()=>{try{if(!ON.ok||ON.ro||!S)return;const sig=S.horses.map(h=>h.id).join(',');if(sig!==herdSig){herdSig=sig;pushPlayer(true)}}catch(e){}},5000);
 const herdSnap=()=>S.horses.slice(0,30).map(h=>({id:h.id,n:String(h.name).slice(0,30),b:h.breed,c:h.coat,l:h.level,sx:h.sex,k:hKey(h)}));
 function ownerOf(key){if(!key||!ON.ok)return null;return ON.players.find(p=>p.id!==ON.uid&&p.best&&Array.isArray(p.best.herd)&&p.best.herd.some(x=>x&&x.k===key))||null}
+
+/* хозяин реальной лошади: сначала из загруженного рейтинга, потом прямой запрос к серверу */
+async function checkOwner(key){if(!ON.ok||!key)return null;let ow=ownerOf(key);if(ow)return ow;
+  if(ON.be!=='supa')return null;
+  try{const r=await ON.sb.from('players').select('id,nick,score,best').contains('best',{herd:[{k:key}]}).neq('id',ON.uid).limit(3);if(r.error)throw r.error;
+    (r.data||[]).forEach(p=>{ON.names[p.id]=cleanNick(p.nick)||ON.names[p.id]||'Игрок';const i=ON.players.findIndex(x=>x.id===p.id);const row={id:p.id,score:p.score,best:p.best||{}};if(i>=0)ON.players[i]=Object.assign(ON.players[i],row);else ON.players.push(row)});
+    return ownerOf(key)}catch(e){noteErr('Проверка хозяина: '+(e&&e.message||e));return null}}
 function makeOffer(to,hid,name,price,key){if(!ON.ok||ON.ro)return;price=Math.max(10,Math.min(99999,Math.round(price)||0));if(S.coins<price){toast('Не хватает монет на такую цену');return}
   S.myOffers=(S.myOffers||[]).filter(o=>Date.now()-o.at<3*864e5&&!(o.to===to&&o.hid===hid));if(S.myOffers.length>=6){toast('Можно держать не больше 6 запросов сразу');return}
   S.myOffers.push({id:Math.random().toString(36).slice(2,10),to,hid,name:String(name).slice(0,30),key:key||'',price,at:Date.now()});save();pushPlayer(true);
@@ -6757,14 +6767,14 @@ async function listTrade(h,price){if(!ON.ok||ON.ro)return;price=Math.max(10,Math
   try{if(ON.be==='claude')await ON.db.collection('trades').add({seller:ON.uid,horse,price,status:'open',at:Date.now(),name,breed,level:h.level});
     else{const r=await ON.sb.from('trades').insert({seller:ON.uid,seller_nick:ON.nick,horse,name,breed,level:h.level,price});if(r.error)throw r.error}}
   catch(e){toast('Не удалось выставить лошадь: нет связи с сервером');return}
-  S.horses=S.horses.filter(x=>x.id!==h.id);S.cur=S.horses[0].id;herdKey='';$('#sellBox').hidden=true;toast(`${name} выставлена на онлайн-рынок за ${price}`);ui();save();cloudSave();if(ON.be==='supa')supaRefresh()}
+  S.horses=S.horses.filter(x=>x.id!==h.id);S.cur=S.horses[0].id;herdKey='';$('#sellBox').hidden=true;toast(`${name} выставлена на онлайн-рынок за ${price}`);ui();save();cloudSave();pushPlayer(true);if(ON.be==='supa')supaRefresh()}
 async function buyTrade(t){if(!ON.ok||ON.ro)return;if(S.horses.length>=S.stalls){toast(`Все ${S.stalls} денников заняты. Купи ещё денник в Деннике`);return}if(S.coins<t.price){toast('Не хватает монет');return}
   try{let d;
     if(ON.be==='claude'){const ref=ON.db.doc('trades/'+t.id);const l=await ref.acquire({holder:ON.uid,ttlMs:5000});if(!l.acquired){toast('Эту лошадь сейчас покупает кто-то другой');return}
       const snap=await ref.get();d=snap.exists&&snap.data();if(!d||d.status!=='open'||!d.horse){toast('Лошадь уже продана');return}
       await ref.update({status:'sold',buyer:ON.uid,soldAt:Date.now()})}
     else{const r=await ON.sb.rpc('buy_trade',{trade_id:t.id});if(r.error)throw r.error;d=r.data&&r.data[0];if(!d){toast('Лошадь уже продана');supaRefresh();return}}
-    const h=adoptHorse(d.horse);S.coins-=d.price;S.horses.push(h);S.cur=h.id;herdKey='';SFX.neigh();toast(`${h.name} теперь твоя`);save();cloudSave();if(ON.be==='supa')supaRefresh();setView('stable')}
+    const h=adoptHorse(d.horse);S.coins-=d.price;S.horses.push(h);S.cur=h.id;herdKey='';SFX.neigh();toast(`${h.name} теперь твоя`);save();cloudSave();pushPlayer(true);if(ON.be==='supa')supaRefresh();setView('stable')}
   catch(e){toast('Не получилось купить, попробуй ещё раз')}}
 async function cancelTrade(t){if(S.horses.length>=S.stalls){toast('Освободи денник, чтобы вернуть лошадь');return}
   try{let d;

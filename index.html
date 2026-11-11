@@ -5307,7 +5307,7 @@ const TRAIN={lunge:{n:'Корда',e:12,f:8,sk:null,l:3,d:'форма'},interval
 function doTrain(k){const h=cur(),t=TRAIN[k];if(isFoal(h)){toast(`${h.name} ещё жеребёнок`);return}if(h.sick){toast(`${h.name} болеет, сначала вылечи`);return}if(h.inj){toast(`${h.name} лечит травму`);return}if(h.preg&&k!=='hack'){toast(`${h.name} ждёт жеребёнка — только прогулки шагом`);return}if(h.trainedDay===S.day){toast(`${h.name} сегодня уже тренировалась`);return}
   if(h.energy<t.e+5){toast(`${h.name} устала. Тренировка завтра`);return}
   h.trainedDay=S.day;h.energy=clamp(h.energy-t.e);h.form=clamp((h.form==null?50:h.form)+t.f*(S.build&&S.build.manege&&k!=='interval'?1.2:1));h.load=clamp((h.load||0)+t.l);
-  if(t.sk){h.sk=h.sk||{jump:0,dress:0,end:0};h.sk[t.sk]=Math.min(20,+(h.sk[t.sk]+.8*(S.staff&&S.staff.trainer?1.3:1)).toFixed(1))}
+  if(t.sk){h.sk=h.sk||{jump:0,dress:0,end:0};h.sk[t.sk]=Math.min(20,+(h.sk[t.sk]+.8*(1+.3*stf('trainer'))).toFixed(1))}
   addXP(h,8);addDirt(h,k==='interval'?3:1);h.workedToday=true;dq('train');SFX.good();toast(`${t.n}: форма ${Math.round(h.form)}${t.sk?`, ${t.d} ${h.sk[t.sk]}`:''}`);ui();save()}
 function genOffers(){const keys=Object.keys(BREEDS);const out=[];const used=new Set();
   while(out.length<3){const k=pick(keys);if(used.has(k))continue;used.add(k);const h=makeHorse(k);h.price=Math.round(BREEDS[k].price*rnd(.9,1.15)/10)*10;out.push(h)}for(let i=0;i<2&&REG.length;i++){const h=realHorse(pickReal());h.price=realPrice({b:'',c:h.real.c,d:h.permit>=160?160:h.permit>=120?139:h.permit>=80?99:79,y:h.real.y});h.price=Math.round((h.price+BREEDS[h.breed].price*.2)/10)*10;out.push(h)}return out}
@@ -5315,8 +5315,19 @@ const BUILD={manege:{n:'Крытый манеж',d:'нет штрафа пого
   paddock:{n:'Левады',d:'ночью лошади гуляют: +энергия, меньше нагрузки',c:[250,450,700]},
   clinic:{n:'Ветклиника',d:'травмы заживают быстрее',c:[500,800,1200]},
   barn:{n:'Сенник',d:'каждую ночь +2 сена за уровень',c:[200,350,550]}};
-const STAFF={groom:{n:'Конюх',d:'ночью убирает навоз, половину грязи, кормит и поит',w:25},farrier:{n:'Коваль',d:'вынимает камни и подравнивает копыта',w:20},vet:{n:'Ветврач',d:'лечит болезни ночью',w:30},trainer:{n:'Тренер',d:'+25% опыта, тренировки дают больше умения',w:35}};
-const staffWage=()=>Object.keys(S.staff||{}).reduce((a,k)=>a+(S.staff[k]?STAFF[k].w:0),0);
+/* персонал: каждого можно нанять до 3 человек; один работник обслуживает ограниченное число лошадей */
+const STAFF={
+  groom:{n:'Конюх',d:'ночью убирает навоз и грязь, кормит и поит',per:5,w:25,max:3,u:'5 лошадей на одного'},
+  feeder:{n:'Кормач',d:'привозит сено: +3 сена каждую ночь',w:15,max:3,u:'+3 сена за каждого'},
+  farrier:{n:'Коваль',d:'вынимает камни и подравнивает копыта',per:6,w:20,max:3,u:'6 лошадей на одного'},
+  vet:{n:'Ветврач',d:'лечит болезни и ускоряет заживление травм',w:30,max:3,u:'каждый следующий лечит быстрее'},
+  physio:{n:'Физиотерапевт',d:'массаж и растяжка: снимает накопленную нагрузку, меньше травм',per:5,w:30,max:3,u:'−10 нагрузки, 5 лошадей на одного'},
+  rider:{n:'Берейтор',d:'ночью работает лошадей: форма держится и растёт',per:4,w:30,max:3,u:'+4 формы, 4 лошади на одного'},
+  trainer:{n:'Тренер',d:'больше опыта на стартах и умений на тренировках',w:35,max:2,u:'+25% опыта за каждого'},
+  breeder:{n:'Коневод',d:'ухаживает за жерёбыми кобылами и жеребятами: роды раньше, жеребята растут быстрее',w:25,max:2,u:'на 1 ночь быстрее за каждого'},
+  manager:{n:'Менеджер',d:'находит спонсоров: больше призовых',w:40,max:2,u:'+10% призовых за каждого'}};
+const stf=k=>Math.max(0,Math.min((STAFF[k]||{}).max||0,+((S.staff||{})[k])||0));
+const staffWage=()=>Object.keys(STAFF).reduce((a,k)=>a+stf(k)*STAFF[k].w,0);
 const stallPrice=()=>300+Math.max(0,S.stalls-10)*50;
 function buyStall(){const p=stallPrice();if(S.coins<p){toast(`Новый денник стоит ${p} монет`);return}S.coins-=p;S.stalls++;SFX.coin();toast(`Построен денник №${S.stalls}`);ui();save()}
 function fresh(){const h=makeHorse('arab','Звёздочка');h.coat='grey';h.blaze=false;h.socks=0;h.hunger=60;h.thirst=55;h.sex='f';
@@ -5801,7 +5812,8 @@ function makeFoal(m){const bk=Math.random()<.5?m.breed:m.preg.breed;const f=make
 $('#nightBtn').addEventListener('click',()=>{if(night)return;const oldDay=S.day;S.day++;const news=[];
   if(seasonOf(oldDay)!==seasonOf(S.day))seasonEnd(news,oldDay);
   {const w=staffWage();if(w){if(S.coins>=w){S.coins-=w;news.push(`Зарплата персоналу: −${w} монет`)}else{Object.keys(S.staff).forEach(k=>S.staff[k]=0);news.push('Не хватило денег на зарплату — персонал уволился')}}}
-  const bl=S.build||{};if(bl.barn){S.food.hay+=bl.barn*2}
+  const bl=S.build||{};if(bl.barn){S.food.hay+=bl.barn*2}if(stf('feeder'))S.food.hay+=3*stf('feeder');
+  {const n=S.horses.length,need=[['groom',5],['farrier',6]].filter(([k,c])=>stf(k)&&stf(k)*c<n);if(need.length)news.push(`Персоналу не хватает рук: ${need.map(([k,c])=>`${STAFF[k].n.toLowerCase()} обслуживает ${stf(k)*c} из ${n} лошадей`).join(', ')}`)}
   S.horses.slice().forEach(h=>{h.energy=clamp(h.energy+65);h.hunger=clamp(h.hunger-18);h.thirst=clamp(h.thirst-22);h.hooves=clamp(h.hooves-(hasCh(h,'hoof')?10:5));h.joy=0;
     addManure(h,ri(1,3));addDirt(h,h.rug?ri(0,1):ri(2,4)+(S.weather==='rain'?2:0));addStones(h,ri(0,2));h.mangerHay=0;
     h.load=clamp((h.load||0)-(h.workedToday?4:16));h.workedToday=false;if(h.rest>0)h.rest--;
@@ -5815,9 +5827,13 @@ $('#nightBtn').addEventListener('click',()=>{if(night)return;const oldDay=S.day;
     if(seasonOf()===3&&!h.rug){h.energy=clamp(h.energy-8);addDirt(h,1)}
     h.form=clamp((h.form==null?50:h.form)-(h.trainedDay===oldDay||h.workedToday?1:4));
     if(bl.clinic&&h.inj&&Math.random()<.35*bl.clinic)h.inj.left=Math.max(1,h.inj.left-1);
-    const st=S.staff||{};if(st.groom){h.manure=[];h.dirt=h.dirt.slice(0,Math.floor(h.dirt.length/2));h.hunger=clamp(h.hunger+20);h.thirst=clamp(h.thirst+30)}
-    if(st.farrier){h.stones=[];h.hooves=clamp(h.hooves+6)}
-    if(st.vet&&h.sick&&Math.random()<.8){news.push(`Ветврач вылечил: ${h.name}`);h.sick=null}
+    const hi=S.horses.indexOf(h);
+    if(hi<stf('groom')*5){h.manure=[];h.dirt=h.dirt.slice(0,Math.floor(h.dirt.length/3));h.hunger=clamp(h.hunger+25);h.thirst=clamp(h.thirst+35)}
+    if(hi<stf('farrier')*6){h.stones=[];h.hooves=clamp(h.hooves+6)}
+    if(hi<stf('physio')*5)h.load=clamp((h.load||0)-10);
+    if(hi<stf('rider')*4&&!isFoal(h)&&!h.inj&&!h.sick){h.form=clamp((h.form==null?50:h.form)+4)}
+    if(stf('vet')){if(h.sick&&Math.random()<1-Math.pow(.2,stf('vet'))){news.push(`Ветврач вылечил: ${h.name}`);h.sick=null}if(h.inj&&Math.random()<.25*stf('vet'))h.inj.left=Math.max(1,h.inj.left-1)}
+    if(stf('breeder')){if(h.preg&&h.preg.days>1)h.preg.days=Math.max(1,h.preg.days-stf('breeder'));if(h.age!=null&&h.age<4)h.age=Math.min(4,h.age+stf('breeder'))}
     if(h.age!=null){h.age++;if(h.age===5)news.push(`${h.name} ${h.sex==='f'?'выросла':'вырос'} и может выступать`)}
     if(h.preg){h.preg.days--;if(h.preg.days<=0){if(S.horses.length<S.stalls){const f=makeFoal(h);S.horses.push(f);S.stats.foals=(S.stats.foals||0)+1;h.preg=null;news.unshift(`Родился жеребёнок: ${f.name}!`);feed(`в конюшне родился жеребёнок ${f.name} (${COATS[f.coat].name})`)}else{h.preg.days=1;news.push('Для жеребёнка нужен свободный денник')}}}});
   S.offers=genOffers();S.tasks=genTasks();S.weather=genWeather();if(cupDay())news.push('Сегодня Кубок выходного дня: призы ×2');night={t:0,news};anim=null;herdKey='';ui();save();pushPlayer(true);cloudSave();
@@ -5941,8 +5957,9 @@ function renderBase(){const h=cur();dqInit();S.build=S.build||{};S.staff=S.staff
   $('#buildList').innerHTML=Object.entries(BUILD).map(([k,b])=>{const lv=S.build[k]||0,pr=b.c[lv];return`<div class="task"><span><b>${b.n}</b>${lv?' · ур. '+lv:''}<br><small>${b.d}</small></span>${pr?`<button class="btn" data-b="${k}" ${S.coins<pr?'disabled':''}><span class="price">${pr}</span></button>`:'<b>макс.</b>'}</div>`}).join('');
   $('#buildList').querySelectorAll('[data-b]').forEach(x=>x.onclick=()=>{const k=x.dataset.b,lv=S.build[k]||0,pr=BUILD[k].c[lv];if(!pr||S.coins<pr)return;S.coins-=pr;S.build[k]=lv+1;SFX.coin();toast(`${BUILD[k].n}: уровень ${lv+1}`);save();ui();renderBase()});
   // персонал
-  $('#staffList').innerHTML=Object.entries(STAFF).map(([k,st])=>`<div class="task"><span><b>${st.n}</b> · ${st.w} в день<br><small>${st.d}</small></span><button class="btn ${S.staff[k]?'ghost':''}" data-s="${k}">${S.staff[k]?'Уволить':'Нанять'}</button></div>`).join('');
-  $('#staffList').querySelectorAll('[data-s]').forEach(x=>x.onclick=()=>{const k=x.dataset.s;S.staff[k]=S.staff[k]?0:1;toast(S.staff[k]?`${STAFF[k].n} нанят`:`${STAFF[k].n} уволен`);save();renderBase()})}
+  $('#staffList').innerHTML=`<p class="note">Сейчас работают ${Object.keys(STAFF).reduce((a,k)=>a+stf(k),0)} человек · зарплата ${staffWage()} монет за ночь · лошадей ${S.horses.length}</p>`+Object.entries(STAFF).map(([k,st])=>{const n=stf(k);return`<div class="task"><span><b>${st.n}</b>${n?` × ${n}`:''} · ${st.w} в день за каждого<br><small>${st.d}. ${st.u}${st.per&&n?` · сейчас обслуживает ${Math.min(S.horses.length,n*st.per)} из ${S.horses.length}`:''}</small></span><span class="row" style="gap:6px;flex-wrap:nowrap">${n?`<button class="btn ghost" data-sm="${k}" aria-label="Уволить одного">−</button>`:''}<b>${n}/${st.max}</b>${n<st.max?`<button class="btn" data-sp="${k}" aria-label="Нанять ещё">+</button>`:''}</span></div>`}).join('');
+  $('#staffList').querySelectorAll('[data-sp]').forEach(x=>x.onclick=()=>{const k=x.dataset.sp;S.staff[k]=Math.min(STAFF[k].max,stf(k)+1);toast(`Нанят: ${STAFF[k].n.toLowerCase()} (${stf(k)} из ${STAFF[k].max})`);save();renderBase()});
+  $('#staffList').querySelectorAll('[data-sm]').forEach(x=>x.onclick=()=>{const k=x.dataset.sm;S.staff[k]=Math.max(0,stf(k)-1);toast(`${STAFF[k].n}: осталось ${stf(k)}`);save();renderBase()})}
 const dailyAmt=()=>Math.min(150,30+((S.daily&&S.daily.streak)||0)*10);
 function claimDaily(){const d=S.daily||{};if(d.date===today())return;const y=new Date(Date.now()-864e5).toISOString().slice(0,10);
   const streak=d.date===y?(d.streak||0)+1:1;S.daily={date:today(),streak};const a=dailyAmt();S.coins+=a;S.food.hay+=3;SFX.coin();toast(`Ежедневная награда: +${a} монет, +3 сена`);save();ui();renderBase()}
@@ -6102,7 +6119,7 @@ function settle(rows,cl,kind,extra){const h=cur();const place=rows.findIndex(r=>
     if(hit){const t=k>=3&&sel.jump>=2&&Math.random()<.25?'tendon':'bruise';injure(h,t,t==='tendon'?'неудачное приземление после сбитого барьера':`удары о жерди (${k} за заезд)`);injMsg=INJ[t].n}
     else if(sel.jump>=2&&h.load>60&&Math.random()<.08){injure(h,'back','высокие прыжки при большой нагрузке');injMsg=INJ.back.n}}
   else if(h.load>70&&Math.random()<.05){injure(h,'back','перегрузка на выездке');injMsg=INJ.back.n}
-  const coins=Math.round((place<3?cl.prize[place]:5)*prizeMult()),xp=Math.round((place<3?cl.xp:cl.xp/2)*(S.staff&&S.staff.trainer?1.25:1));const cpts=calAward(place);
+  const coins=Math.round((place<3?cl.prize[place]:5)*prizeMult()*(1+.1*stf('manager'))),xp=Math.round((place<3?cl.xp:cl.xp/2)*(1+.25*stf('trainer')));const cpts=calAward(place);
   S.coins+=coins;addXP(h,xp);h.energy=clamp(h.energy-(h.stamina?12:25));h.hunger=clamp(h.hunger-8);h.thirst=clamp(h.thirst-12);h.hooves=clamp(h.hooves-3);addDirt(h,kind==='jump'?3:2);addStones(h,1);
   task('show');if(place<3){h.ribbons.push({p:place,kind,day:S.day});task('ribbon')}if(extra)task('dress');
   const me=rows[place];
@@ -6190,7 +6207,7 @@ function finishEnd(){const h=cur(),cl=ENDUR[sel.end];ar.running=false;ar.done=tr
   raceSubmit('end',{t:Math.round(myT),v:+(ar.tot/Math.max(.01,ar.clock/60)).toFixed(1),elim:ar.elim?ar.code:null,km:+ar.tot.toFixed(1)});
   settleEnd(rows,cl)}
 function settleEnd(rows,cl){const h=cur();const place=rows.findIndex(r=>r.me);const me=rows[place];const fin=!me.elim;const cup=cupDay();
-  const coins=fin?Math.round((place<3?cl.prize[place]:15)*prizeMult()):0;const xp=Math.round((fin?cl.xp:cl.xp/3)*(S.staff&&S.staff.trainer?1.25:1));const cpts=fin?calAward(place):0;if(cpts)setTimeout(()=>toast(`+${cpts} очков рейтинга сезона`),1200);
+  const coins=fin?Math.round((place<3?cl.prize[place]:15)*prizeMult()*(1+.1*stf('manager'))):0;const xp=Math.round((fin?cl.xp:cl.xp/3)*(1+.25*stf('trainer')));const cpts=fin?calAward(place):0;if(cpts)setTimeout(()=>toast(`+${cpts} очков рейтинга сезона`),1200);
   S.coins+=coins;addXP(h,xp);h.energy=clamp(h.energy-(h.stamina?18:35));h.hunger=clamp(h.hunger-15);h.thirst=clamp(h.thirst-(100-ar.hydr)*.4-10);h.hooves=clamp(h.hooves-6);addStones(h,ri(1,2));addDirt(h,4);
   task('show');S.stats.endKm=(S.stats.endKm||0)+Math.round(me.km||0);
   h.load=clamp((h.load||0)+15+cl.km/5);h.workedToday=true;h.lastWork='end';

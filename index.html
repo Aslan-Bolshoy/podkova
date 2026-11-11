@@ -288,6 +288,7 @@ details summary{cursor:pointer}
   <!-- TROPHIES -->
   <section id="v-trophy" hidden style="flex-direction:column;gap:12px">
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
+    <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
     <div class="card" id="lbCard" hidden><span class="label">Рейтинг игроков</span><div id="lb"></div></div>
     <div class="card" id="teamCard" hidden><span class="label">Команды</span><div id="teamBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card shop" id="peekBox" hidden></div>
@@ -5211,7 +5212,7 @@ function realHorse(r){const bk=baseBreed(r.b);const h=makeHorse(bk,r.n);const cs
 function sportize(h,r){h.spec=r.disc==='dress'?'dress':'jump';h.level=Math.max(1,Math.min(10,r.lvl));h.permit=40;h.fitBonus=r.disc==='event'?.08:0;h.prone=.12;
   const k=Math.max(0,r.lvl-4);if(r.disc==='dress')h.dressBonus=+(k*1.6).toFixed(1);else{h.jumpBonus=+(k*2.4).toFixed(1);if(r.disc==='event')h.dressBonus=+(k*.8).toFixed(1)}
   h.real.sport=1;h.real.disc=r.disc;h.real.rider=r.rider;h.bio=`${DISCN[r.disc]}${r.rider?', всадник: '+r.rider:''}. ${r.src}.`}
-function realPrice(r){if(r.sport)return Math.round((120+r.lvl*r.lvl*12)/10)*10;const age=r.y?new Date().getFullYear()-r.y:10;return Math.max(80,Math.round((BREEDS[baseBreed(r.b)].price*.8+r.c*20+(permitFrom(r.d)-40)*2)*(age>18?.6:1)/10)*10)}
+function realPrice(r){if(r.sport)return Math.round((100+r.lvl*r.lvl*8)/10)*10;const age=r.y?new Date().getFullYear()-r.y:10;return Math.max(80,Math.round((BREEDS[baseBreed(r.b)].price*.8+r.c*20+(permitFrom(r.d)-40)*2)*(age>18?.6:1)/10)*10)}
 
 const INJ={
   bruise:{n:'Ушиб пясти',days:[2,4],full:.97,retire:0,chronic:null,vet:30,serious:false,leg:true},
@@ -5900,7 +5901,10 @@ function renderTrophy(){const got=ACH.filter(a=>S.ach[a.id]).length;$('#achHead'
   $('#fameHead').textContent=`кубков ${S.cups||0} · чистых кругов ${S.stats.clear||0}`;
   $('#fame').innerHTML=S.horses.map(h=>{const n=[0,0,0];h.ribbons.forEach(r=>n[r.p]++);return`<div class="task"><span>${esc(h.name)} <small style="color:var(--muted)">ур. ${h.level}</small></span><span class="dots">${n.map((v,i)=>`<span><i class="dot" style="background:${PLACE_COL[i]}"></i>${v}</span>`).join('')}</span><small></small></div>`}).join('')}
 function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2200)}
+let toastT;const ERRS=[];function noteErr(m){m=String(m||'').slice(0,160);if(!m||ERRS[ERRS.length-1]===m)return;ERRS.push(m);if(ERRS.length>8)ERRS.shift();try{const e=document.getElementById('errBox');if(e){e.hidden=false;e.textContent='Ошибки: '+ERRS.slice(-3).join(' | ')}}catch(x){}}
+window.addEventListener('error',e=>noteErr((e.message||'ошибка')+(e.lineno?' (стр. '+e.lineno+')':'')));
+window.addEventListener('unhandledrejection',e=>noteErr('Сеть/сервер: '+((e.reason&&e.reason.message)||e.reason||'')));
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),2200)}
 
 /* tabs */
 let view='stable';
@@ -6403,7 +6407,7 @@ function toggleReg(d,r){const ex=d.querySelector('.regx');if(ex){ex.remove();ret
   html+=`<dl>${rows.map(([a,b])=>`<dt>${a}</dt><dd>${typeof b==='string'&&b.startsWith('<')?b:esc(String(b))}</dd>`).join('')}</dl>`;
   if(!r.par){const owned=S.horses.some(h=>h.real&&h.name===r.n&&h.real.f===r.f&&h.real.y===r.y);const price=realPrice(r);const ow=ownerOf(realKey(r));
     if(!owned&&ow){const oh=(ow.best.herd||[]).find(x=>x.k===realKey(r));html+=`<p class="note">Хозяин: <b>${esc(pname(ow.id))}</b>. Реальная лошадь может быть только у одного игрока. Предложи ему цену:</p><div class="row"><input class="search" data-offp style="flex:1;min-width:0;max-width:130px" inputmode="numeric" value="${price}" aria-label="Цена"><button class="btn" data-offer ${ON.ro?'disabled':''}>Предложить покупку</button></div>`}
-    else html+=owned?'<p class="note">Эта лошадь уже живёт в твоей конюшне.</p>':`<div class="row"><p class="note">Можно забрать в конюшню. Характеристики зависят от её реальных пробегов.</p><button class="btn" data-buy ${S.coins<price||S.horses.length>=S.stalls?'disabled':''}><span class="price">${price}</span> мон.</button></div>`}
+    else html+=owned?'<p class="note">Эта лошадь уже живёт в твоей конюшне.</p>':`<div class="row"><p class="note">Можно забрать в конюшню. Характеристики зависят от её реальных пробегов.</p><button class="btn" data-buy><span class="price">${price}</span> мон.</button></div>${S.coins<price?`<p class="note">Не хватает ${price-S.coins} монет.</p>`:''}`}
   else html+='<p class="note">Лошадь из родословных: известна по потомкам, своих данных о пробегах нет.</p>';
   x.innerHTML=html;d.appendChild(x);
   const cv=x.querySelector('canvas');if(cv){const c=cv.getContext('2d');c.scale(2,2);drawHorse(c,r._h,{x:88,y:110,s:.42,t:0,dirt:false,saddle:!!r.sport})}
@@ -6443,7 +6447,7 @@ async function initClaude(){
   if(ON.user){try{ON.uid=await ON.user.id()}catch(e){}try{ON.ro=(await ON.user.can('data.write'))===false}catch(e){}}
   ON.ok=!!(ON.db&&ON.uid);ON.tried=true;renderClub();
   if(!ON.db)return;
-  try{ON.db.collection('players').orderBy('score','desc').limit(200).onSnapshot(s=>{ON.players=s.docs.map(d=>Object.assign({id:d.id},d.data()));resolveNames(ON.players.map(p=>p.id));renderClub()},()=>{})}catch(e){}
+  try{ON.db.collection('players').orderBy('score','desc').limit(200).onSnapshot(s=>{ON.players=s.docs.map(d=>Object.assign({id:d.id},d.data()));setTimeout(offersTick,300);resolveNames(ON.players.map(p=>p.id));renderClub()},()=>{})}catch(e){}
   try{ON.db.collection('trades').where('status','in',['open','sold']).limit(200).onSnapshot(s=>{ON.trades=s.docs.map(d=>Object.assign({id:d.id},d.data()));payouts();renderClub()},()=>{})}catch(e){}
   if(ON.uid){try{const sv=await ON.db.doc(`data/users/${ON.uid}/save`).get();ON.cloud=sv.exists?sv.data():null}catch(e){}renderClub();setTimeout(()=>pushPlayer(true),1500)}
   if(view==='arena'&&disc==='end')joinRide(ENDUR[sel.end].km);
@@ -6475,7 +6479,7 @@ async function supaLogout(){try{await ON.sb.auth.signOut()}catch(e){}leaveRide()
 function topHorse(){const b=S.horses.slice().sort((a,b)=>b.level-a.level)[0];return b?`${b.name}, ур. ${b.level}`:''}
 function pushPlayer(force){if(!ON.ok||ON.ro)return;const now=Date.now();if(!force&&now-ON.lastPush<20000)return;ON.lastPush=now;
   const rib=S.horses.reduce((a,h)=>a+h.ribbons.length,0),ach=Object.keys(S.ach||{}).length;
-  const body={score:Math.round(rib*10+(S.cups||0)*50+(S.stats.endKm||0)/5+ach*5+S.horses.reduce((a,h)=>a+h.level,0)*3),ribbons:rib,cups:S.cups||0,endKm:Math.round(S.stats.endKm||0),ach,day:S.day,horses:S.horses.length,top:topHorse().slice(0,60),best:Object.assign({},S.best||{},S.lastRace?{race:S.lastRace}:{},S.team?{team:S.team}:{},{herd:herdSnap(),offers:(S.myOffers||[]).slice(-6),dec:(S.declined||[]).slice(-20)}),at:now};
+  const body={score:Math.round(rib*10+(S.cups||0)*50+(S.stats.endKm||0)/5+ach*5+S.horses.reduce((a,h)=>a+h.level,0)*3),ribbons:rib,cups:S.cups||0,endKm:Math.round(S.stats.endKm||0),ach,day:S.day,horses:S.horses.length,top:topHorse().slice(0,60),best:Object.assign({},S.best||{},S.lastRace?{race:S.lastRace}:{},S.team?{team:S.team}:{},{herd:herdSnap(),offers:(S.myOffers||[]).slice(-6),dec:(S.declined||[]).slice(-20),duel:duelState()}),at:now};
   if(ON.be==='claude')writeQ(()=>ON.db.doc('players/'+ON.uid).set(body));
   else writeQ(()=>ON.sb.from('players').upsert({id:ON.uid,nick:ON.nick||'Игрок',score:body.score,ribbons:rib,cups:body.cups,end_km:body.endKm,ach,day:S.day,horses:body.horses,top:body.top,best:body.best,updated_at:new Date().toISOString()}).then(()=>{}))}
 function cloudSave(manual){if(!ON.ok||ON.ro)return;const txt=JSON.stringify(S);if(!manual&&txt===ON.lastSaved)return;ON.lastSaved=txt;
@@ -6642,7 +6646,7 @@ function ownerOf(key){if(!key||!ON.ok)return null;return ON.players.find(p=>p.id
 function makeOffer(to,hid,name,price,key){if(!ON.ok||ON.ro)return;price=Math.max(10,Math.min(99999,Math.round(price)||0));if(S.coins<price){toast('Не хватает монет на такую цену');return}
   S.myOffers=(S.myOffers||[]).filter(o=>Date.now()-o.at<3*864e5&&!(o.to===to&&o.hid===hid));if(S.myOffers.length>=6){toast('Можно держать не больше 6 запросов сразу');return}
   S.myOffers.push({id:Math.random().toString(36).slice(2,10),to,hid,name:String(name).slice(0,30),key:key||'',price,at:Date.now()});save();pushPlayer(true);
-  toast(`Запрос отправлен: ${name} за ${price}. Когда хозяин согласится, лошадь придёт сама`);renderClub()}
+  toast(`Запрос отправлен: ${name} за ${price}. Хозяин увидит его во вкладке «Клуб»`);if(ON.be==='supa')setTimeout(supaRefresh,1500);renderClub()}
 function incomingOffers(){S.declined=S.declined||[];S.accepted=S.accepted||{};const out=[];
   ON.players.forEach(p=>{if(p.id===ON.uid||!p.best||!Array.isArray(p.best.offers))return;p.best.offers.forEach(o=>{if(!o||o.to!==ON.uid||S.declined.includes(o.id)||S.accepted[o.id])return;if(Date.now()-(+o.at||0)>3*864e5)return;
     const h=S.horses.find(x=>x.id===o.hid)||(o.key&&S.horses.find(x=>hKey(x)===o.key));if(!h)return;out.push({o,from:p.id,h})})});return out}
@@ -6656,75 +6660,90 @@ async function acceptOffer(x){if(!ON.ok||ON.ro)return;const {o,from,h}=x;if(S.ho
   toast(`${name} продана ${pname(from)} за ${price}. Деньги придут, когда покупатель её заберёт`);SFX.coin();save();cloudSave();pushPlayer(true);ui();if(ON.be==='supa')supaRefresh();else renderClub()}
 let offerBusy=false;
 async function offersTick(){if(!ON.ok||ON.ro||offerBusy)return;offerBusy=true;const mine=S.myOffers||[];
+  {S.seenOff=S.seenOff||[];const inc=incomingOffers().filter(x=>!S.seenOff.includes(x.o.id));if(inc.length){inc.forEach(x=>S.seenOff.push(x.o.id));S.seenOff=S.seenOff.slice(-60);toast(`${pname(inc[0].from)} хочет купить ${inc[0].h.name} за ${inc[0].o.price}. Ответь во вкладке «Клуб»`);save()}}
   try{for(const o of mine.slice()){const owner=ON.players.find(p=>p.id===o.to);
       if(owner&&owner.best&&Array.isArray(owner.best.dec)&&owner.best.dec.includes(o.id)){S.myOffers=S.myOffers.filter(z=>z.id!==o.id);toast(`${pname(o.to)} отказался продавать ${o.name}`);save();pushPlayer(true);continue}
       const t=ON.trades.find(t=>t.status==='open'&&t.horse&&t.horse.offerId===o.id&&t.horse.reservedFor===ON.uid);
       if(t){if(S.coins<t.price){if(!o.warned){o.warned=1;toast(`${o.name} ждёт тебя: нужно ${t.price} монет`)}continue}
         if(S.horses.length>=S.stalls)S.stalls++;S.myOffers=S.myOffers.filter(z=>z.id!==o.id);save();await buyTrade(t);pushPlayer(true)}}}
   catch(e){}offerBusy=false}
-function renderOffers(){const el=$('#offerBox');if(!el)return;const inc=incomingOffers();const mine=(S.myOffers||[]);
+function renderOffers(){const el=$('#offerBox');if(!el)return;const inc=incomingOffers();const mine=(S.myOffers||[]);S.seenOff=S.seenOff||[];
   el.innerHTML=(inc.length?inc.map((x,i)=>`<div class="task"><span><b>${esc(pname(x.from))}</b> хочет купить <b>${esc(x.h.name)}</b> за ${+x.o.price||0}</span><span class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn" data-acc="${i}">Продать</button><button class="btn ghost" data-dec="${i}">Нет</button></span></div>`).join(''):'<p class="note">Тебе пока никто не предлагал купить лошадь.</p>')
     +(mine.length?`<p class="note">Твои запросы: ${mine.map(o=>`${esc(o.name)} за ${o.price} (${esc(pname(o.to))})`).join(', ')}</p>`:'')
-    +'<p class="note">Чтобы купить чужую лошадь, нажми на игрока в рейтинге и выбери лошадь из его конюшни, или найди реальную лошадь в Реестре.</p>';
+    +'<p class="note">Как купить чужую лошадь: в «Рейтинге игроков» нажми на ник — откроется его конюшня. Впиши цену и нажми «Предложить». Хозяину придёт запрос сюда же. Реальных лошадей можно найти и в Реестре.</p><div class="row" style="justify-content:flex-start"><button class="btn ghost" id="offRef">Обновить</button></div>';
+  {const rf=$('#offRef');if(rf)rf.onclick=()=>{if(ON.be==='supa')supaRefresh();toast('Обновляю…')}}
   el.querySelectorAll('[data-acc]').forEach(b=>b.onclick=()=>acceptOffer(inc[+b.dataset.acc]));el.querySelectorAll('[data-dec]').forEach(b=>b.onclick=()=>declineOffer(inc[+b.dataset.dec].o))}
 const p_peek=pid=>pid===ON.uid?toast('Это ты'):showStable(pid);
 function showStable(pid){const p=ON.players.find(x=>x.id===pid);const el=$('#peekBox');if(!p||!el)return;const herd=(p.best&&Array.isArray(p.best.herd))?p.best.herd:[];
-  el.hidden=false;el.innerHTML=`<div class="row"><span class="label">Конюшня игрока ${esc(pname(pid))}</span><button class="linkbtn" id="peekX">Закрыть</button></div>`+(herd.length?'':'<p class="note">Игрок ещё не обновил игру — лошади появятся, когда он зайдёт в новую версию.</p>');
+  el.hidden=false;el.innerHTML=`<div class="row"><span class="label">Конюшня игрока ${esc(pname(pid))}</span><button class="linkbtn" id="peekX">Закрыть</button></div>`+(herd.length?'<p class="note">Впиши свою цену и нажми «Предложить» — хозяину придёт запрос.</p>':'<p class="note">Этот игрок ещё не заходил в новую версию игры, поэтому его лошадей пока не видно.</p>');
   herd.forEach(x=>{if(!x||!BREEDS[x.b])return;const d=document.createElement('div');d.className='item';const cv=document.createElement('canvas');cv.width=192;cv.height=128;d.appendChild(cv);
     const inf=document.createElement('div');inf.innerHTML=`<b>${esc(String(x.n))}</b><small>${esc(BREEDS[x.b].name)} · ур. ${+x.l||1}</small><div class="row" style="flex-wrap:nowrap;gap:6px"><input class="search" style="width:90px" inputmode="numeric" value="${150+(+x.l||1)*60}" aria-label="Цена"><button class="btn">Предложить</button></div>`;d.appendChild(inf);
     inf.querySelector('button').onclick=()=>makeOffer(pid,x.id,x.n,+inf.querySelector('input').value,x.k);el.appendChild(d);
     try{miniHorse(cv,Object.assign(ghostHorse({}),{breed:x.b,coat:COATS[x.c]?x.c:'bay',sex:x.sx},{dirt:[],inj:null}))}catch(e){}});
   $('#peekX').onclick=()=>{el.hidden=true};el.scrollIntoView({block:'nearest'})}
 
-/* ---- дуэль один на один: общий код, одинаковый маршрут, соперник виден на манеже ---- */
+/* ---- дуэль один на один ----
+   Состояние дуэли (код, готовность, время старта, результат) хранится в строке игрока на сервере и читается опросом:
+   это работает всегда. Живой канал нужен только чтобы видеть лошадь соперника во время заезда. */
 const DUELS={jump:{n:'Конкур 100 см',cls:1},dress:{n:'Выездка, Малый приз',cls:1},end:{n:'Пробег 40 км',cls:0}};
 let DU=null;
-function duelSend(force){if(!DU||!DU.chan)return;const n=performance.now();if(!force&&n-(DU.t||0)<300)return;DU.t=n;const h=cur();
-  const e=ar.kind==='end',me=ar.duel&&ar.running;
-  const p={uid:ON.uid,n:ON.nick||'',role:DU.role,disc:DU.disc,ready:!!DU.ready,go:DU.go||0,round:DU.round,hb:h.breed,hc:h.coat,bl:!!h.blaze,so:h.socks||0,
-    d:me&&ar.kind==='jump'?Math.round(ar.dist):0,jy:me&&ar.kind==='jump'?Math.round(ar.jy):0,air:me&&!!ar.air,f:ar.duel?ar.faults||0:0,
-    sc:ar.duel&&ar.kind==='dress'?+(ar.score||0).toFixed(1):0,jd:ar.duel&&ar.kind==='dress'?ar.judged||0:0,
-    st:e?ar.stage:0,km:e?+ar.km.toFixed(2):0,tot:e?+ar.tot.toFixed(2):0,mode:e&&ar.duel?(ar.done?(ar.elim?'out':'fin'):ar.mode):'lobby',g:e?ar.gait:'canter',res:DU.res||null};
-  try{if(DU.chan.kind==='claude')DU.chan.r.presence(p).catch(()=>{});else DU.chan.ch.track(p).catch(()=>{})}catch(e2){}}
-function duelPeers(list){DU.op=list[0]||null;if(DU.op){ON.names[DU.op.uid]=cleanNick(DU.op.n)||ON.names[DU.op.uid]||'Игрок';if(DU.role==='guest'&&DU.op.role==='host'){DU.disc=DU.op.disc||DU.disc}}duelLogic();renderDuel()}
-async function duelJoin(code,role,disc){if(!ON.ok){toast('Сначала войди в онлайн-клуб');return}duelLeave();code=String(code).replace(/\D/g,'').slice(0,6);if(code.length<4){toast('Код — 4 цифры');return}
-  DU={code,role,disc:disc||'jump',ready:false,round:1,op:null,go:0};const name='duel-'+code;
-  try{if(ON.be==='claude'){if(!ON.room){toast('Онлайн-комнаты недоступны');DU=null;return}const r=await ON.room.join(name);DU.chan={kind:'claude',r};
-      r.onPeers(ch=>{duelPeers(ch.peers.filter(p=>!p.isMe&&p.presence&&p.presence.uid&&p.presence.uid!==ON.uid).map(p=>p.presence))},()=>{})}
-    else{const ch=ON.sb.channel('podkova-'+name,{config:{presence:{key:ON.uid}}});DU.chan={kind:'supa',ch};
-      ch.on('presence',{event:'sync'},()=>{const st=ch.presenceState();duelPeers(Object.entries(st).filter(([k])=>k!==ON.uid).map(([k,arr])=>Object.assign({},arr[arr.length-1],{uid:k})))});
-      ch.subscribe(st=>{if(st==='SUBSCRIBED')duelSend(true)})}
-    duelSend(true);renderDuel();toast(role==='host'?`Дуэль создана. Код ${code} — скажи его сопернику`:'Ты в дуэли. Жми «Готов»')}
-  catch(e){DU=null;toast('Не удалось подключиться к дуэли')}}
-function duelLeave(){if(DU&&DU.chan){try{if(DU.chan.kind==='claude')DU.chan.r.leave().catch(()=>{});else ON.sb.removeChannel(DU.chan.ch)}catch(e){}}if(ar&&ar.duel)ar.duel=false;DU=null;renderDuel()}
+const duelState=()=>DU?{code:DU.code,role:DU.role,disc:DU.disc,ready:!!DU.ready,go:DU.go||0,round:DU.round,res:DU.res||null,at:Date.now()}:null;
+function duelPush(){if(!DU)return;DU.pushedAt=Date.now();pushPlayer(true)}
+async function duelPoll(){if(!DU||!ON.ok||DU.polling)return;DU.polling=true;DU.pollAt=Date.now();let op=null,ok=true;
+  try{if(ON.be==='supa'){const r=await ON.sb.from('players').select('id,nick,best').eq('best->duel->>code',DU.code).neq('id',ON.uid).limit(5);
+      if(r.error)throw r.error;(r.data||[]).forEach(p=>{ON.names[p.id]=cleanNick(p.nick)||ON.names[p.id]||'Игрок'});
+      const p=(r.data||[]).filter(p=>p.best&&p.best.duel&&Date.now()-(+p.best.duel.at||0)<20*60e3).sort((x,y)=>(+y.best.duel.at)-(+x.best.duel.at))[0];if(p)op=Object.assign({uid:p.id},p.best.duel)}
+    else{const p=ON.players.find(p=>p.id!==ON.uid&&p.best&&p.best.duel&&p.best.duel.code===DU.code&&Date.now()-(+p.best.duel.at||0)<20*60e3);if(p)op=Object.assign({uid:p.id},p.best.duel)}}
+  catch(e){ok=false;noteErr('Дуэль: '+(e&&e.message||e))}
+  if(!DU){return}DU.polling=false;DU.net=ok;
+  if(op){if(DU.role==='guest'&&op.role==='host')DU.disc=op.disc||DU.disc;if(!DU.op||DU.op.uid!==op.uid)toast(`Соперник в дуэли: ${pname(op.uid)}`)}
+  DU.op=op;if(Date.now()-(DU.pushedAt||0)>4*60e3)duelPush();duelLogic();renderDuel()}
+function duelLive(){if(!DU||DU.chan||!ON.ok)return;const name='duel-'+DU.code;DU.sid=DU.sid||Math.random().toString(36).slice(2,9);
+  try{if(ON.be==='claude'){if(!ON.room)return;ON.room.join(name).then(r=>{if(!DU){r.leave().catch(()=>{});return}DU.chan={kind:'claude',r};
+        r.onPeers(ch=>{const o=ch.peers.map(p=>p.presence).find(pr=>pr&&pr.sid&&pr.sid!==DU.sid);if(DU)DU.live=o||null},()=>{})}).catch(()=>{})}
+    else{const ch=ON.sb.channel('podkova-'+name,{config:{presence:{key:DU.sid}}});DU.chan={kind:'supa',ch,ok:false};
+      ch.on('presence',{event:'sync'},()=>{const st=ch.presenceState();const o=Object.entries(st).filter(([k])=>k!==(DU&&DU.sid)).map(([k,arr])=>arr[arr.length-1])[0];if(DU)DU.live=o||null});
+      ch.subscribe(st=>{if(DU&&DU.chan)DU.chan.ok=st==='SUBSCRIBED'})}}catch(e){noteErr('Канал дуэли: '+(e&&e.message||e))}}
+function duelSend(force){if(!DU||!DU.chan||!ar.duel)return;const n=performance.now();if(!force&&n-(DU.t||0)<350)return;DU.t=n;const h=cur(),e=ar.kind==='end';
+  const p={sid:DU.sid,uid:ON.uid,n:ON.nick||'',hb:h.breed,hc:h.coat,bl:!!h.blaze,so:h.socks||0,d:ar.kind==='jump'?Math.round(ar.dist):0,jy:ar.kind==='jump'?Math.round(ar.jy):0,air:!!ar.air,f:ar.faults||0,
+    sc:ar.kind==='dress'?+(ar.score||0).toFixed(1):0,jd:ar.kind==='dress'?ar.judged||0:0,st:e?ar.stage:0,km:e?+ar.km.toFixed(2):0,tot:e?+ar.tot.toFixed(2):0,mode:e?(ar.done?(ar.elim?'out':'fin'):ar.mode):'ride',g:e?ar.gait:'canter'};
+  try{if(DU.chan.kind==='claude')DU.chan.r.presence(p).catch(()=>{});else if(DU.chan.ok)DU.chan.ch.track(p).catch(()=>{})}catch(e2){}}
+function duelJoin(code,role,disc){if(!ON.ok){toast('Сначала войди в онлайн-клуб');return}if(ON.ro)return;code=String(code||'').replace(/\D/g,'').slice(0,6);if(code.length!==4){toast('Код дуэли — 4 цифры');return}
+  duelLeave(true);DU={code,role,disc:disc||'jump',ready:false,round:1,op:null,go:0,net:true};duelPush();duelLive();duelPoll();renderDuel();
+  toast(role==='host'?`Дуэль создана. Скажи сопернику код ${code}`:`Ищем дуэль ${code}…`)}
+function duelLeave(silent){if(DU&&DU.chan){try{if(DU.chan.kind==='claude')DU.chan.r.leave().catch(()=>{});else ON.sb.removeChannel(DU.chan.ch)}catch(e){}}const had=!!DU;DU=null;if(ar)ar.duel=false;if(had&&!silent)pushPlayer(true);renderDuel()}
 function duelLogic(){if(!DU)return;const op=DU.op;
-  if(DU.role==='host'&&op&&DU.ready&&op.ready&&!DU.go&&!DU.res){DU.go=Date.now()+4000;duelSend(true)}
-  if(DU.role==='guest'&&op&&op.go&&op.round===DU.round&&!DU.go&&DU.ready)DU.go=op.go;
-  if(DU.go&&!DU.started&&Date.now()>=DU.go-3500){DU.started=true;duelStart()}
+  if(DU.role==='host'&&op&&DU.ready&&op.ready&&op.round===DU.round&&!DU.go&&!DU.res){DU.go=Date.now()+9000;duelPush()}
+  if(DU.role==='guest'&&op&&op.go&&op.round===DU.round&&!DU.go&&DU.ready){DU.go=op.go;duelPush()}
+  if(DU.go&&!DU.started&&Date.now()>=DU.go-6000){DU.started=true;duelStart()}
   if(DU.res&&op&&op.res&&op.res.round===DU.round&&!DU.done)duelFinish()}
-function duelStart(){const d=DU.disc,cl=DUELS[d].cls;setView('arena');disc=d;sel[d]=cl;renderArenaUI();withSeed(hashStr('duel'+DU.code+'r'+DU.round),()=>resetArena());ar.duel=true;
-  const h=cur();if(!canCompete(h)){DU.res={round:DU.round,k:1e9,txt:'не вышел на старт'};duelSend(true);return}
-  const wait=Math.max(0,DU.go-Date.now());toast(`Дуэль: старт через ${Math.ceil(wait/1000)} с`);setTimeout(()=>{if(DU&&ar.duel&&!ar.running&&!ar.done)startOrJump()},wait)}
+function duelStart(){const d=DU.disc,cl=DUELS[d].cls;setView('arena');disc=d;sel[d]=cl;renderArenaUI();withSeed(hashStr('duel'+DU.code+'r'+DU.round),()=>resetArena());ar.duel=true;renderArenaUI();
+  const h=cur();if(!canCompete(h)){DU.res={round:DU.round,k:1e9,txt:'не вышел на старт'};duelPush();renderDuel();return}
+  const wait=Math.max(0,DU.go-Date.now());toast(`Дуэль: старт через ${Math.ceil(wait/1000)} с. Не уходи с Манежа`);
+  setTimeout(()=>{if(DU&&ar.duel&&!ar.running&&!ar.done)startOrJump()},wait)}
 function duelResult(kind,val){if(!DU||!ar.duel)return;const k=kind==='jump'?val.f*1000+val.t:kind==='dress'?1000-val.v:(val.elim?1e7-(val.km||0):val.t);
   const txt=kind==='jump'?`${val.f} шт. · ${val.t.toFixed(2)} с`:kind==='dress'?`${val.v.toFixed(2)}%`:val.elim?`${val.elim} · ${(val.km||0).toFixed(1)} км`:`${fmtT(val.t)}`;
-  DU.res={round:DU.round,k,txt};duelSend(true);duelLogic();renderDuel()}
+  DU.res={round:DU.round,k,txt};duelPush();duelLogic();renderDuel();toast('Результат дуэли отправлен. Ждём соперника')}
 function duelFinish(){DU.done=true;const op=DU.op.res,me=DU.res;const win=me.k<op.k,draw=me.k===op.k;
   if(win){S.coins+=60;S.duelW=(S.duelW||0)+1;SFX.win()}else if(!draw)S.duelL=(S.duelL||0)+1;save();ui();
-  toast(win?`Победа в дуэли над ${pname(DU.op.uid)}! +60 монет`:draw?'Ничья в дуэли':`Дуэль проиграна: ${pname(DU.op.uid)} быстрее`);renderDuel()}
-function duelAgain(){if(!DU)return;DU.round++;DU.ready=false;DU.go=0;DU.started=false;DU.res=null;DU.done=false;if(ar)ar.duel=false;duelSend(true);renderDuel()}
+  toast(win?`Победа в дуэли над ${pname(DU.op.uid)}! +60 монет`:draw?'Ничья в дуэли':`Дуэль проиграна: ${pname(DU.op.uid)} оказался быстрее`);renderDuel()}
+function duelAgain(){if(!DU)return;DU.round++;DU.ready=false;DU.go=0;DU.started=false;DU.res=null;DU.done=false;if(ar)ar.duel=false;duelPush();renderDuel()}
 function renderDuel(){const el=$('#duelBox');if(!el)return;
-  if(!DU){el.innerHTML=`<p class="note">Сыграй с другом: один создаёт дуэль и называет код, второй вводит его. Маршрут у обоих одинаковый, соперника видно прямо на манеже. Победителю — 60 монет.${S.duelW||S.duelL?` Твой счёт: ${S.duelW||0} побед, ${S.duelL||0} поражений.`:''}</p>
+  if(!DU){el.innerHTML=`<p class="note">Как играть: один нажимает «Создать дуэль» и говорит другу 4 цифры кода. Друг вводит код и нажимает «Войти». Оба жмут «Готов» — через несколько секунд старт на одинаковом маршруте. Нужны два разных аккаунта. Победителю 60 монет.${S.duelW||S.duelL?` Твой счёт: ${S.duelW||0} побед, ${S.duelL||0} поражений.`:''}</p>
       <div class="seg" id="duelD">${Object.entries(DUELS).map(([k,v],i)=>`<button data-dd="${k}" aria-pressed="${i===0}">${v.n}</button>`).join('')}</div>
-      <div class="row" style="justify-content:flex-start"><button class="btn" id="duelNew" ${ON.ro?'disabled':''}>Создать дуэль</button><input id="duelCode" class="search" style="width:110px" inputmode="numeric" maxlength="6" placeholder="Код"><button class="btn ghost" id="duelIn" ${ON.ro?'disabled':''}>Войти</button></div>`;
+      <div class="row" style="justify-content:flex-start"><button class="btn" id="duelNew" ${ON.ro?'disabled':''}>Создать дуэль</button></div>
+      <div class="row" style="justify-content:flex-start;flex-wrap:nowrap"><input id="duelCode" class="search" style="flex:1;min-width:0;max-width:140px" inputmode="numeric" maxlength="4" placeholder="Код друга"><button class="btn ghost" id="duelIn" ${ON.ro?'disabled':''}>Войти</button></div>`;
     let dd='jump';el.querySelectorAll('[data-dd]').forEach(b=>b.onclick=()=>{dd=b.dataset.dd;el.querySelectorAll('[data-dd]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
     $('#duelNew').onclick=()=>duelJoin(String(1000+Math.floor(Math.random()*9000)),'host',dd);$('#duelIn').onclick=()=>duelJoin($('#duelCode').value,'guest');return}
-  const op=DU.op;const st=DU.done?(DU.res.k<DU.op.res.k?'Ты победил!':DU.res.k===DU.op.res.k?'Ничья':'Соперник оказался быстрее'):DU.res?'Ждём результат соперника…':DU.go?'Старт! Переходи на Манеж':'';
-  el.innerHTML=`<div class="row"><b>Код дуэли: ${DU.code}</b><span>${DUELS[DU.disc].n} · раунд ${DU.round}</span></div>
-    <p class="note">Ты: ${DU.ready?'готов':'не готов'}${DU.res?' · '+esc(DU.res.txt):''}<br>Соперник: ${op?esc(pname(op.uid))+' · '+(op.ready?'готов':'не готов')+(op.res&&op.res.round===DU.round?' · '+esc(String(op.res.txt)):''):'ждём, пока он введёт код…'}</p>
-    ${st?`<p class="note"><b>${st}</b></p>`:''}
-    <div class="row" style="justify-content:flex-start">${!DU.ready&&!DU.res?'<button class="btn" id="duelReady">Готов</button>':''}${DU.done?'<button class="btn" id="duelMore">Ещё раунд</button>':''}<button class="btn ghost" id="duelOut">Выйти из дуэли</button></div>`;
-  const r=$('#duelReady');if(r)r.onclick=()=>{DU.ready=true;duelSend(true);duelLogic();renderDuel()};const m=$('#duelMore');if(m)m.onclick=duelAgain;$('#duelOut').onclick=duelLeave}
-function drawDuelGhost(c,kind,x0,gy){if(!DU||!DU.op||!ar.duel)return;const op=DU.op;let sx,y,gait='canter',ph=T*11;
+  const op=DU.op,opRes=op&&op.res&&op.res.round===DU.round?op.res:null;
+  const st=DU.done?(DU.res.k<opRes.k?'Ты победил!':DU.res.k===opRes.k?'Ничья':'Соперник оказался быстрее'):DU.res?'Ждём результат соперника…':DU.go?(Date.now()<DU.go?`Старт через ${Math.ceil((DU.go-Date.now())/1000)} с`:'Идёт заезд'):op?(DU.ready&&op.ready?'Оба готовы, назначаем старт…':'Нажмите оба «Готов»'):'Ждём соперника: он должен ввести код '+DU.code;
+  el.innerHTML=`<div class="row"><b>Код: ${DU.code}</b><span>${DUELS[DU.disc].n} · раунд ${DU.round}</span></div>
+    <div class="tasks"><div class="task"><span>Ты</span><b>${DU.res?esc(DU.res.txt):DU.ready?'готов':'не готов'}</b></div>
+    <div class="task"><span>${op?esc(pname(op.uid)):'Соперник'}</span><b>${op?(opRes?esc(String(opRes.txt)):op.ready&&op.round===DU.round?'готов':'не готов'):'ещё не зашёл'}</b></div></div>
+    <p class="note"><b>${st}</b>${DU.net===false?' · нет связи с сервером, пробую снова':''}</p>
+    <div class="row" style="justify-content:flex-start">${!DU.ready&&!DU.res?'<button class="btn" id="duelReady">Готов</button>':''}${DU.done?'<button class="btn" id="duelMore">Ещё раунд</button>':''}<button class="btn ghost" id="duelOut">Выйти</button></div>`;
+  const r=$('#duelReady');if(r)r.onclick=()=>{DU.ready=true;duelPush();duelLogic();renderDuel()};const m=$('#duelMore');if(m)m.onclick=duelAgain;$('#duelOut').onclick=()=>duelLeave()}
+function drawDuelGhost(c,kind,x0,gy){if(!DU||!ar.duel)return;const op=DU.live;if(!op)return;let sx,y,gait='canter',ph=T*11;
   if(kind==='jump'){sx=x0+((+op.d||0)-ar.dist);y=gy-(+op.jy||0)*1.35}else{sx=x0-70;y=gy-4;gait=op.g||'canter'}
   if(sx<-60||sx>AW+60)return;c.save();c.globalAlpha=.5;drawHorse(c,ghostHorse(op),{x:sx,y,s:.38,t:T,gallop:ph,gait,air:kind==='jump'&&!!op.air,dirt:false,saddle:true,rider:true});
   c.globalAlpha=.95;c.font='800 10px Nunito, sans-serif';const nm=pname(op.uid).slice(0,16)+(kind==='dress'&&op.jd?` · ${(op.sc/(op.jd*10)*100).toFixed(1)}%`:kind==='jump'?` · ${op.f||0} шт.`:'');const w=c.measureText(nm).width+10;
@@ -6774,7 +6793,7 @@ function ridePresence(force){if(DU)duelSend(force);if(!ON.ride)return;const now=
   const p={uid:ON.uid,n:ON.nick||'',hb:h.breed,hc:h.coat,bl:!!h.blaze,so:h.socks||0,st:e?ar.stage:0,km:e?+ar.km.toFixed(2):0,tot:e?+ar.tot.toFixed(2):0,mode,g:e?ar.gait:'trot'};
   try{if(ON.ride.kind==='claude')ON.ride.r.presence(p).catch(()=>{});else ON.ride.ch.track(p).catch(()=>{})}catch(e2){}}
 function ghostHorse(pr){return{breed:BREEDS[pr.hb]?pr.hb:'arab',coat:COATS[pr.hc]?pr.hc:'bay',blaze:!!pr.bl,socks:Math.min(4,pr.so|0),pinto:false,spots:false,patches:[],spotDots:[],dirt:[],stones:[],ribbons:[]}}
-function drawGhosts(c,gy){(DU&&DU.op&&ar.duel?[{presence:DU.op}]:ON.peers).forEach(p=>{const pr=p.presence||{};if(pr.st!==ar.stage||!['ride','vet','hold'].includes(pr.mode))return;const sx=EHX+((+pr.km||0)-ar.km)*EPX;if(sx<-60||sx>AW+60)return;const y=gy(sx);
+function drawGhosts(c,gy){(DU&&DU.live&&ar.duel?[{presence:DU.live}]:ON.peers).forEach(p=>{const pr=p.presence||{};if(pr.st!==ar.stage||!['ride','vet','hold'].includes(pr.mode))return;const sx=EHX+((+pr.km||0)-ar.km)*EPX;if(sx<-60||sx>AW+60)return;const y=gy(sx);
   c.save();c.globalAlpha=.55;const ph=pr.mode==='ride'&&pr.g!=='walk'?T*(ENDG[pr.g]||ENDG.trot).ph:null;drawHorse(c,ghostHorse(pr),{x:sx,y,s:.38,t:T,gallop:ph,gait:pr.g,dirt:false,saddle:true,rider:true});
   c.globalAlpha=.95;c.font='800 10px Nunito, sans-serif';const nm=pname(pr.uid).slice(0,16);const w=c.measureText(nm).width+10;c.fillStyle='rgba(19,32,26,.8)';c.beginPath();c.roundRect(sx-w/2,y-108,w,15,6);c.fill();
   c.fillStyle='#eef1e4';c.textAlign='center';c.textBaseline='middle';c.fillText(nm,sx,y-100.5);c.restore()})}
@@ -6819,11 +6838,11 @@ function renderClub(){if(view!=='trophy')return;const el=$('#onCard');if(!el)ret
 /* ============ LOOP ============ */
 function tick(dt){S.horses.forEach(h=>{h.hunger=clamp(h.hunger-dt/60*1.2);h.thirst=clamp(h.thirst-dt/60*1.6);h.joy=Math.max(0,h.joy-dt*.08)});patCd-=dt}
 let last=0;
-function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;if(DU){duelSend();duelLogic()}
+function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;if(DU){duelSend();duelLogic();if(Date.now()-(DU.pollAt||0)>(DU.go&&!DU.res?6000:2500))duelPoll()}
   if(S){tick(dt);
     if(view==='stable')drawStall(dt);else if(view==='arena')stepArena(dt);
     lastUI+=dt;if(lastUI>.5){lastUI=0;if(view==='stable')liteUI()}
-    lastSave+=dt;if(lastSave>5){lastSave=0;save();ON.cs+=5;if(ON.cs>=120){ON.cs=0;cloudSave();pushPlayer()}ON.poll+=5;if(ON.be==='supa'&&ON.poll>=(raceHot()||view==='trophy'?15:45))supaRefresh();raceTick();if(DU){duelLogic();if(DU.op&&view==='trophy')renderDuel()}}}
+    lastSave+=dt;if(lastSave>5){lastSave=0;save();ON.cs+=5;if(ON.cs>=120){ON.cs=0;cloudSave();pushPlayer()}ON.poll+=5;if(ON.be==='supa'&&ON.poll>=(raceHot()||view==='trophy'?15:45))supaRefresh();raceTick();if(DU&&view==='trophy')renderDuel();}}
   requestAnimationFrame(loop)}
 
 function start(data){

@@ -278,8 +278,8 @@ details summary{cursor:pointer}
     <div class="card">
       <div class="row"><span class="label">Реестр реальных лошадей</span><span class="label" id="regCount"></span></div>
       <input id="regQ" class="search" type="search" placeholder="Кличка, порода, отец или № ФКСР" autocomplete="off">
-      <div class="seg" id="regF"><button data-f="all">Все</button><button data-f="run">Пробеги</button><button data-f="ped">Родословные</button></div>
-      <p class="note">Лошади с сайта probegi.ru: клички, породы, масти, родители, номера ФКСР и статистика пробегов. В «Родословных» — отцы и матери этих лошадей.</p>
+      <div class="seg" id="regF" style="grid-template-columns:repeat(3,1fr);grid-auto-flow:row"><button data-f="all">Все</button><button data-f="run">Пробеги</button><button data-f="jump">Конкур</button><button data-f="dress">Выездка</button><button data-f="event">Троеборье</button><button data-f="ped">Родословные</button></div>
+      <p class="note">Пробеги — лошади с сайта probegi.ru. Конкур и выездка — лошади из российских протоколов соревнований и звёзды мирового спорта, троеборье — участники чемпионата Европы 2025. У каждой реальной лошади в онлайне только один хозяин: если её уже забрали, можно отправить хозяину запрос на покупку.</p>
     </div>
     <div class="shop" id="regList"></div>
     <button class="btn ghost" id="regMore">Показать ещё</button>
@@ -288,13 +288,11 @@ details summary{cursor:pointer}
   <!-- TROPHIES -->
   <section id="v-trophy" hidden style="flex-direction:column;gap:12px">
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
-    <p class="note card" id="v2note" hidden>Чат, аукцион и случка заработают после одного шага: выполни на сервере Supabase файл podkova-setup-2.sql (SQL Editor → New query → Run).</p>
-    <div class="card" id="chatCard" hidden><span class="label">Чат клуба и лента событий</span><div class="chat" id="chatList"></div>
-      <form id="chatForm" class="row" style="flex-wrap:nowrap"><input id="chatIn" class="search" style="flex:1;min-width:0" maxlength="300" placeholder="Сообщение" autocomplete="off"><button class="btn" type="submit">Отправить</button></form></div>
     <div class="card" id="lbCard" hidden><span class="label">Рейтинг игроков</span><div id="lb"></div></div>
     <div class="card" id="teamCard" hidden><span class="label">Команды</span><div id="teamBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
-    <div class="card" id="aucCard" hidden><span class="label">Аукцион</span><div class="shop" id="aucList"></div></div>
-    <div class="card" id="studCard" hidden><span class="label">Жеребцы для случки · для кобылы, выбранной в деннике</span><div class="shop" id="studList"></div></div>
+    <div class="card shop" id="peekBox" hidden></div>
+    <div class="card" id="offerCard" hidden><span class="label">Запросы на покупку лошадей</span><div id="offerBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
+    <div class="card" id="duelCard" hidden><span class="label">Дуэль один на один</span><div id="duelBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card" id="trCard" hidden><span class="label">Онлайн-рынок лошадей</span><div class="shop" id="tradeList"></div></div>
     <div class="card">
       <div class="row"><span class="label">Достижения</span><span class="label" id="achHead"></span></div>
@@ -5029,22 +5027,191 @@ const REG=[],PAR=[];
 (()=>{const el=document.getElementById('horsedata');if(!el)return;const t=el.textContent.split('\n@@\n');const dec=(arr,c)=>{const i=RCH.indexOf(c);return i>=0&&arr[i]!=null?arr[i]:''};
   (t[0]||'').split('\n').forEach(l=>{if(!l)return;const p=l.split('|');REG.push({n:p[0],b:dec(RB,p[1]),s:dec(RS,p[2]),y:p[3]?1990+(+p[3]):null,g:p[4]||'j',sire:p[5]||'',dam:p[6]||'',f:p[7]||'',t:+p[8]||0,c:+p[9]||0,d:+p[10]||79})});
   (t[1]||'').split('\n').forEach(l=>{if(!l)return;const p=l.split('|');PAR.push({n:p[0],g:p[1],b:dec(RB,p[2]),kids:+p[3]||0,par:true})})})();
+const SPORT_RAW=`Невада|полукровная|вороная|2014|k|Динамит|jump|Климина С.А.|4|Чемпионат СФО по конкуру 2025
+Лексус|полукровная|гнедая|2006|j|Силуэт|jump|Лесникова Т.В.|4|Чемпионат СФО по конкуру 2025
+Композиция|русская рысистая|гнедая|2009|k|Принц|jump|Лесникова Т.В.|4|Чемпионат СФО по конкуру 2025
+Дивия|полукровная|рыжая|2013|k|Вован|jump|Мамасова А.А.|5|Чемпионат СФО по конкуру 2025
+Сундогар|полукровная|вороная|2011|j|Тайфун|jump|Панкратова У.Ю.|5|Чемпионат СФО по конкуру 2025
+Покровитель|полукровная|серая|2009|j|Комбат|jump|Панкратова У.Ю.|6|Чемпионат СФО по конкуру 2025
+Крестник|орловская рысистая|серая|2011|j|Кадинал|jump|Усова М.С.|5|Чемпионат СФО по конкуру 2025
+Будапешт|полукровная|гнедая|2011|m||jump|Кулакова М.К.|5|Чемпионат СФО по конкуру 2025
+Элизабет|полукровная|гнедая|2010|k|Эгермейстер|jump|Лугина М.А.|4|Чемпионат СФО по конкуру 2025
+Ангелика|латвийская|гнедая|2007|k|Ароматс|jump|Тихомирова А.М.|6|Чемпионат СФО по конкуру 2025
+Абсент|полукровная|серая|2009|m|Визирь|jump|Агеева А.А.|4|Чемпионат СФО по конкуру 2025
+Майсун|полукровная|серая|2016|k|Апломб|jump|Романчук П.В.|4|Чемпионат СФО по конкуру 2025
+Знахарь|полукровная|гнедая|2014|m|Арпур|jump|Мизгер Д.О.|5|Чемпионат СФО по конкуру 2025
+Хорлема|тракененская|рыжая|2007|k|Ороган|jump|Симонкина Е.В.|5|Чемпионат СФО по конкуру 2025
+Парабеллум С|тракененская|рыжая|2017|j|Братск|jump|Самодуров М.П.|6|Чемпионат СФО по конкуру 2025
+Кунгур|полукровная|гнедая|2011|m|Гранит 1|jump|Середа Н.Ю.|5|Чемпионат СФО по конкуру 2025
+Водопад|полукровная|гнедая|2009|m|Пилигрим|jump|Грачева С.В.|4|Чемпионат СФО по конкуру 2025
+Громовержец Лок|полукровная|темно-гнедая|2009|j|Дэ Онорейбл|jump|Кузнецова М.А.|6|Чемпионат СФО по конкуру 2025
+Дакота|полукровная|гнедая|2008|k||jump|Березовская П.А.|4|Чемпионат СФО по конкуру 2025
+Центрум Лок|полукровная|гнедая|2010|j|Мадис 4|jump|Дикунова Д.Н.|5|Чемпионат СФО по конкуру 2025
+Гамбит|полукровная|рыжая|2015|m|Голд|jump|Мозговой М.А.|5|Чемпионат СФО по конкуру 2025
+Экономика|полукровная|гнедая|2014|k|Экран 41|jump|Хлябина К.О.|5|Чемпионат СФО по конкуру 2025
+Сан Флай|полукровная|темно-гнедая|2015|k|Саргон|jump|Лисица М.Е.|4|Чемпионат СФО по конкуру 2025
+Гамлет|полукровная|рыжая|2012|m|Гам|jump|Стародубцева М.М.|5|Чемпионат СФО по конкуру 2025
+Амелия|будённовская|светло-гнедая|2014|k|Ангел 2|jump|Стародубцева М.М.|5|Чемпионат СФО по конкуру 2025
+Вильям Стар|полукровная|вороная|2017|m|Вильям Крик|jump|Астахова В.Д.|4|Чемпионат СФО по конкуру 2025
+Коперник|тракененская|вороная|2015|j|Паганини|jump|Брагина В.С.|4|Чемпионат СФО по конкуру 2025
+Челентано|полукровная|гнедая|2016|m|Лотос|jump|Мирошниченко В.Ю.|4|Чемпионат СФО по конкуру 2025
+Эль|полукровная|гнедая|2014|m|Экран|jump|Варакина Д.Д.|5|Чемпионат СФО по конкуру 2025
+Авентодор|ганноверская|гнедая|2016|m|Аметист Лок|jump|Павлина М.А.|5|Чемпионат СФО по конкуру 2025
+Клондайк|орловская рысистая|темно-гнедая|2007|m|Диплом|jump|Пименова А.А.|4|Чемпионат СФО по конкуру 2025
+Версаль|полукровная|рыжая|2012|m|Символ|jump|Ледовская А.А.|4|Чемпионат СФО по конкуру 2025
+Дор Блю|полукровная|темно-гнедая|2017|m|Депутат|jump|Дельва А.С.|4|Чемпионат СФО по конкуру 2025
+Авангард|тракененская|рыжая|2006|j|Атлантик|jump|Дробяз А.И.|4|Чемпионат СФО по конкуру 2025
+Атлантида|будённовская|гнедая|2013|k|Асчиф|jump|Тищенко Я.В.|5|Чемпионат СФО по конкуру 2025
+Голден Хорс|полукровная|рыжая|2016|m|Хангай|jump|Сидорчук А.А.|5|Чемпионат СФО по конкуру 2025
+Дрим Бой|чистокровная верховая|рыжая|2013|m|Даллий|jump|Мишуткина А.М.|5|Чемпионат СФО по конкуру 2025
+Ирма|полукровная|рыжая|2014|k|Ионизатор 26|jump|Якубовская В.А.|6|Чемпионат СФО по конкуру 2025
+Кальваро|полукровная|гнедая|2016|m|Лексус Стар|jump|Чернова Е.А.|5|Чемпионат СФО по конкуру 2025
+Кавалер|орловская рысистая|рыжая|2013|m|Брикет 39|jump|Титкова С.А.|4|Чемпионат СФО по конкуру 2025
+Каллета|голштинская|темно-гнедая|2009|k|Калато|jump|Яценко Е.|6|Протокол по конкуру, equestrian.ru 2024
+Феофан|ганноверская|темно-гнедая|2016|m|Гранд Либеро|jump|Кошель С.|6|Протокол по конкуру, equestrian.ru 2024
+Баллу Р|ольденбургская|серая|2013|m|Балу Ду Рует|jump|Горбунова А.|6|Протокол по конкуру, equestrian.ru 2024
+Ла-Манш|вестфальская|серая|2015|m|Лансер-3|jump|Куприянова М.|6|Протокол по конкуру, equestrian.ru 2024
+Кеа Б|голландская теплокровная|гнедая|2015|k|Тадмус|jump|Локтионов И.|6|Протокол по конкуру, equestrian.ru 2024
+Локомета|голландская теплокровная|рыжая|2016|k|Каррера VDL|jump|Лобастова Д.|6|Протокол по конкуру, equestrian.ru 2024
+Карт Ноар|вестфальская|серая|2010|j|Коперфильд|jump|Зиндаки М.|7|Протокол по конкуру, equestrian.ru 2024
+Конте Рико|ганноверская|гнедая|2011|j|Монте Беллини|jump|Лукина О.|7|Протокол по конкуру, equestrian.ru 2024
+Густав|ганноверская|гнедая|2011|m|Грей Топ|jump|Зиндаки М.|7|Протокол по конкуру, equestrian.ru 2024
+Лукретиус|вестфальская|гнедая|2011|m|Фидертанц|dress|Мигунова М.А.|4|Соревнования по выездке, equestrian.ru 2026
+Фланаган Джей Эр|ольденбургская|темно-гнедая|2019|m|Фаундейшн|dress|Шарова Л.А.|3|Соревнования по выездке, equestrian.ru 2026
+Миллиана Ф|голштинская|гнедая|2017|k|Ай Кетчер|dress|Пушкина А.А.|4|Соревнования по выездке, equestrian.ru 2026
+Калон|карабахская|золотисто-рыжая|2019|m||dress|Рябова А.Д.|3|Соревнования по выездке, equestrian.ru 2026
+Эренли|вестфальская|гнедая|2011|k|Эренпар|dress|Гулиева М.Р.|5|Соревнования по выездке, equestrian.ru 2026
+Дубрава|ганноверская|темно-гнедая|2016|k|Байкал|dress|Саженкова А.А.|5|Соревнования по выездке, equestrian.ru 2026
+Джупилер Сюр Мез|голштинская|гнедая|2014|m|Апаче|dress|Еремина В.А.|5|Соревнования по выездке, equestrian.ru 2026
+Симпл Зе Бест Джуниор|полукровная|вороная|2019|k|Статус Джуниор|dress|Бекетова А.А.|4|Соревнования по выездке, equestrian.ru 2026
+Лорд Грэди Вэл|тракененская|гнедая|2010|m|Гопак|dress|Зыкина А.М.|5|Соревнования по выездке, equestrian.ru 2026
+Винипег|русская верховая|вороная|2011|m|Ва-банк|dress|Алексеева А.Н.|6|Соревнования по выездке, equestrian.ru 2026
+Зумер|вестфальская|гнедая|2018|m|Зум|dress|Алексеева А.Н.|5|Соревнования по выездке, equestrian.ru 2026
+ДСП Биг Бэнг|немецкая спортивная|темно-гнедая|2016|m|Бон Кёр|dress|Петрова В.А.|6|Соревнования по выездке, equestrian.ru 2026
+Дон Жуан|латвийская|темно-гнедая|2016|m|Дипломс|dress|Музюкина К.Д.|6|Соревнования по выездке, equestrian.ru 2026
+Фидан|вестфальская|караковая|2019|j|Франческус|dress|Назарова А.А.|6|Соревнования по выездке, equestrian.ru 2026
+Глория|полукровная|бурая|2011|k|Граф|dress|Ганина В.И.|7|Соревнования по выездке, equestrian.ru 2026
+Киллер|голштинская|вороная|2015|m|Джордж Клуни|dress|Марков А.И.|7|Соревнования по выездке, equestrian.ru 2026
+Гайтано Олд|ольденбургская|темно-гнедая|2015|j|Голдберг|dress|Трощенкова Е.В.|7|Соревнования по выездке, equestrian.ru 2026
+Квиксильвер|ольденбургская|гнедая|2017|m|Квантенспринг|dress|Белоус В.И.|7|Соревнования по выездке, equestrian.ru 2026
+Ле Фуэнте БХ|голштинская|вороная|2016|m||dress|Александровская О.В.|7|Соревнования по выездке, equestrian.ru 2026
+Визборн|русская верховая|вороная|2011|j|Ва-банк|dress|Андреева Е.К.|7|Соревнования по выездке, equestrian.ru 2026
+Бедуин|полукровная|темно-гнедая|2018|j|Байкал|dress|Шандак Н.А.|6|Соревнования по выездке, equestrian.ru 2026
+Энкантадо|ганноверская|бурая|2014|m|Баллетмейстер|dress|Грибанова К.А.|7|Соревнования по выездке, equestrian.ru 2026
+Даурия|русская верховая|темно-гнедая|2018|k|Ибар|dress|Курбатова Д.Е.|6|Соревнования по выездке, equestrian.ru 2026
+Карат|голштинская|темно-гнедая|2015|j|Эл Капоне|dress|Попова М.Ю.|7|Соревнования по выездке, equestrian.ru 2026
+Роутер|голштинская|рыжая|2021|m|Леннокс|dress|Маркова В.С.|3|Соревнования по выездке, equestrian.ru 2026
+Кьельдгарденс Дон Жуан|датская теплокровная|темно-гнедая|2020|m|Данки Бой|dress|Ганина В.И.|4|Соревнования по выездке, equestrian.ru 2026
+Винсент Стар|русская верховая|темно-гнедая|2020|j|Визборн|dress|Ахметдинова Т.С.|4|Соревнования по выездке, equestrian.ru 2026
+Дом Периньон|ганноверская|темно-гнедая|2019|m|Дайтона|dress|Халикова В.А.|5|Соревнования по выездке, equestrian.ru 2026
+Виндзор Стар|русская верховая|вороная|2019|m|Вообразимый|dress|Хамина А.С.|5|Соревнования по выездке, equestrian.ru 2026
+Орео|голштинская|темно-гнедая|2019|m|Индиан Рок|dress|Белякова Я.Н.|5|Соревнования по выездке, equestrian.ru 2026
+Источник Стар|русская верховая|караковая|2019|j|Ибар|dress|Халикова В.А.|5|Соревнования по выездке, equestrian.ru 2026
+Олла VH|голштинская|гнедая|2019|k|Холстед|dress|Гарник В.А.|5|Соревнования по выездке, equestrian.ru 2026
+Файмос Кросс|голландская теплокровная|рыжая|2010|m|Патиджн|dress|Шувалова М.В.|8|Соревнования по выездке, equestrian.ru 2026
+Индиго|голландская теплокровная|рыжая|2013|m|Негро|dress|Шадрина Н.В.|8|Соревнования по выездке, equestrian.ru 2026
+Индиго 165|голштинская|темно-гнедая|2013|m|Диего|dress|Трощенкова Е.В.|8|Соревнования по выездке, equestrian.ru 2026
+Вертиго|ольденбургская|темно-гнедая|2012|m|Вивальди|dress|Давыдова Е.П.|8|Соревнования по выездке, equestrian.ru 2026
+Сан-Франциско Т|немецкая спортивная|гнедая|2011|j|Скайфлай|dress|Давыдова Е.П.|8|Соревнования по выездке, equestrian.ru 2026
+Эренферст|вестфальская|гнедая|2011|m|Эренпар|dress|Ирдынчеева М.Л.|8|Соревнования по выездке, equestrian.ru 2026
+Идеолог|русская верховая|гнедая|2016|j|Ибар 9|dress|Халикова В.А.|8|Соревнования по выездке, equestrian.ru 2026
+Армач|русская верховая|гнедая|2012|j|Антарес|dress|Курбатова Д.Е.|8|Соревнования по выездке, equestrian.ru 2026
+Сир Флорет|вестфальская|гнедая|2008|j|Спилберг|dress|Анищева С.Д.|7|Соревнования по выездке, equestrian.ru 2026
+Фристайл|датская теплокровная|||||dress|Катрин Лаудруп-Дюфур (Дания)|10|Чемпионат Европы по выездке 2025
+Венди де Фонтен|ольденбургская|||k||dress|Изабель Верт (Германия)|10|Чемпионат Европы по выездке 2025
+Зоник Плюс|бельгийская теплокровная|||||dress|Жюстен Вербумен (Бельгия)|10|Чемпионат Европы по выездке 2025
+Гермес|голландская теплокровная|||||dress|Динья ван Лир (Нидерланды)|10|Чемпионат Европы по выездке 2025
+Фейм|голландская теплокровная|||||dress|Карл Хестер (Великобритания)|9|Чемпионат Европы по выездке 2025
+Гламурдейл|голландская теплокровная|вороная|2013|j|Лорд Лезердейл|dress|Шарлотта Фрай (Великобритания)|10|Чемпионат Европы по выездке 2025
+Денуа PCH|ганноверская|||||dress|Катарина Хеммер (Германия)|9|Чемпионат Европы по выездке 2025
+Ягербомб|голландская теплокровная|||||dress|Бекки Муди (Великобритания)|9|Чемпионат Европы по выездке 2025
+Блютус OLD|ольденбургская|||||dress|Фредерик Вандрес (Германия)|9|Чемпионат Европы по выездке 2025
+Тотал Хоуп OLD|ольденбургская|||||dress|Изабель Фрезе (Норвегия)|9|Чемпионат Европы по выездке 2025
+Инвойс|шведская теплокровная|||||dress|Мария фон Эссен (Швеция)|9|Чемпионат Европы по выездке 2025
+Тачдаун|голландская теплокровная|||||dress|Патрик Киттель (Швеция)|9|Чемпионат Европы по выездке 2025
+Максима Белла|ганноверская|||||dress|Сандра Сысоева (Польша)|8|Чемпионат Европы по выездке 2025
+Фламбо|бельгийская теплокровная|||||dress|Ларисса Паулюис (Бельгия)|8|Чемпионат Европы по выездке 2025
+Тиффанис Даймонд|ганноверская|||||dress|Хенри Руосте (Финляндия)|8|Чемпионат Европы по выездке 2025
+Джовиан|датская теплокровная|||||dress|Андреас Хельгстранд (Дания)|9|Чемпионат Европы по выездке 2025
+Фавор Герсдорф|ганноверская|||||dress|Надя Обу Слот (Дания)|8|Чемпионат Европы по выездке 2025
+Лаксуриоз|голландская теплокровная|||||dress|Тамар Цвайстра (Нидерланды)|8|Чемпионат Европы по выездке 2025
+Хайатт|шведская теплокровная|||||dress|Тинне Вильхельмсон-Сильвен (Швеция)|8|Чемпионат Европы по выездке 2025
+Зантана OLD|ольденбургская|||k||dress|Марике ван дер Путтен (Нидерланды)|8|Чемпионат Европы по выездке 2025
+Элеганс|ганноверская|||||dress|Беатрис Феррер-Салат (Испания)|8|Чемпионат Европы по выездке 2025
+Гранд Галиано|датская теплокровная|||||dress|Рикке Дюпон (Дания)|8|Чемпионат Европы по выездке 2025
+Витус 95|ганноверская|||||dress|Мате Гараи (Венгрия)|7|Чемпионат Европы по выездке 2025
+Вайрон NRW|вестфальская|||||dress|Ингрид Климке (Германия)|8|Чемпионат Европы по выездке 2025
+Лирио MVL|лузитанская|||||dress|Жуан Мигел Торран (Португалия)|8|Чемпионат Европы по выездке 2025
+Дон Кишот|голландская теплокровная|||||dress|Ровена Вегелар (Нидерланды)|8|Чемпионат Европы по выездке 2025
+Ботичелли|бельгийская теплокровная|||||dress|Шарлотта Дефальк (Бельгия)|7|Чемпионат Европы по выездке 2025
+Гоммеленгардс Заппа|датская теплокровная|||||dress|Мария Клементьева (Кипр)|7|Чемпионат Европы по выездке 2025
+Тотилас|голландская теплокровная|вороная|2000|j|Грибальди|dress|Эдвард Гал (Нидерланды)|10|Легенда выездки: мировые рекорды 2009–2010
+Валегро|голландская теплокровная|гнедая|2002|m|Негро|dress|Шарлотта Дюжарден (Великобритания)|10|Легенда выездки: олимпийский чемпион 2012 и 2016
+Далера BB|тракененская|гнедая|2007|k|Изи Гейм|dress|Джессика фон Бреддов-Верндль (Германия)|10|Олимпийская чемпионка 2021 и 2024
+Вайхеголд OLD|ольденбургская|вороная|2006|k|Дон Шуфро|dress|Изабель Верт (Германия)|10|Олимпийская чемпионка в команде 2016
+Белла Роуз|вестфальская|рыжая|2004|k|Белиссимо М|dress|Изабель Верт (Германия)|10|Чемпионка мира 2018
+Пепел|тракененская|вороная||j||dress|Елена Петушкова (СССР)|10|Легенда: олимпийский чемпион в команде 1972
+Абсент|ахалтекинская|вороная|1952|j|Араб|dress|Сергей Филатов (СССР)|10|Легенда: олимпийский чемпион 1960
+Ихор|тракененская|||j||dress|Иван Кизимов (СССР)|10|Легенда: олимпийский чемпион 1968
+Ияшин Ситте|бельгийская теплокровная|||||jump|Стив Гердат (Швейцария)|10|Чемпионат Европы по конкуру 2025
+Динамикс де Бельм|сель франсе|||||jump|Стив Гердат (Швейцария)|10|Чемпионат Европы по конкуру 2025
+Кинг Эдвард|шведская теплокровная|гнедая|2010|m|Эдвард 28|jump|Хенрик фон Эккерманн (Швеция)|10|Чемпион мира 2022
+Юнайтед Тач S|немецкая спортивная|||||jump||10|Чемпионат Европы по конкуру 2025
+Хелло Фоли|сель франсе|||k||jump||9|Чемпионат Европы по конкуру 2025
+Эрмитаж Калон|сель франсе|||||jump||10|Чемпионат Европы по конкуру 2025
+Катанга ван де Дингесхоф|бельгийская теплокровная|||k||jump||9|Чемпионат Европы по конкуру 2025
+Мила|ольденбургская|||k||jump||9|Чемпионат Европы по конкуру 2025
+ESI Рокки|голландская теплокровная|||||jump||9|Чемпионат Европы по конкуру 2025
+Имэджин Н.О.П.|голландская теплокровная|||||jump||9|Чемпионат Европы по конкуру 2025
+Биг Стар|голландская теплокровная|гнедая|2003|j|Квик Стар|jump|Ник Скелтон (Великобритания)|10|Олимпийский чемпион 2016
+Хикстед|голландская теплокровная|гнедая|1996|j|Гамлет|jump|Эрик Ламаз (Канада)|10|Олимпийский чемпион 2008
+Балубе дю Руэ|сель франсе|рыжая|1989|j|Галубе А|jump|Родриго Песоа (Бразилия)|10|Олимпийский чемпион 2004, трижды выиграл Кубок мира
+Шаттерфлай|ганноверская|гнедая|1993|m|Сильвио I|jump|Мередит Майклс-Бербаум (Германия)|10|Трижды выиграла финал Кубка мира
+Эксплоужн W|голландская теплокровная|рыжая|2009|j|Чакко-Блю|jump|Бен Махер (Великобритания)|10|Олимпийский чемпион 2021
+Корнет Оболенский|бельгийская теплокровная|темно-гнедая|1999|j|Клинтон|jump|Марко Кучер (Германия)|10|Лучший производитель мира по рейтингу WBFSH 2025
+Жаплу|сель франсе|вороная|1975|m|Тироль II|jump|Пьер Дюран (Франция)|10|Олимпийский чемпион 1988
+Ратина Z|цангерсхайде|серая|1982|k|Рамиро Z|jump|Пит Раймакерс / Людгер Беербаум|10|Легенда: олимпийская чемпионка в команде 1992 и 1996
+Милтон|голландская теплокровная|серая|1977|m|Мариус|jump|Джон Уитакер (Великобритания)|10|Легенда: дважды выиграл финал Кубка мира
+Лондон 52|голландская теплокровная|||||event|Лаура Коллетт (Великобритания)|10|Чемпионат Европы по троеборью 2025
+Фишерчипманк FRH|ганноверская|||||event|Михаэль Юнг (Германия)|10|Чемпионат Европы по троеборью 2025
+JL Дублин|голштинская|||||event|Том Макьюэн (Великобритания)|10|Чемпионат Европы по троеборью 2025
+Фантом оперы|ганноверская|||||event|Кальвин Бёкманн (Германия)|9|Чемпионат Европы по троеборью 2025
+Ван Хельсинг P|голландская теплокровная|||||event|Леа Зигль (Австрия)|9|Чемпионат Европы по троеборью 2025
+Жеваль|сель франсе|||||event|Алексис Гури (Франция)|9|Чемпионат Европы по троеборью 2025
+Хуни д'Арвиль|бельгийская теплокровная|||||event|Лара де Лидекерке-Мейер (Бельгия)|9|Чемпионат Европы по троеборью 2025
+Блэк Айс|ганноверская|||||event|Жером Робине (Германия)|9|Чемпионат Европы по троеборью 2025
+Фигаро Фонруа|сель франсе|||||event|Бенжамен Масси (Франция)|8|Чемпионат Европы по троеборью 2025
+Эрин|ирландская спортивная|||k||event|Мелоди Жонер (Швейцария)|8|Чемпионат Европы по троеборью 2025
+Помп-н-Серкамстанс|ирландская спортивная|||||event|Падрейг Маккарти (Ирландия)|8|Чемпионат Европы по троеборью 2025
+Тимо|тракененская|||||event|Николай Альдингер (Германия)|8|Чемпионат Европы по троеборью 2025
+Тоблерон|ирландская спортивная|||||event|Надя Миндер (Швейцария)|8|Чемпионат Европы по троеборью 2025
+Итс Кули Тайм|ирландская спортивная|||||event|Бабби Аптон (Великобритания)|8|Чемпионат Европы по троеборью 2025
+Рехи DJ|ирландская спортивная|||||event|Ясмин Ингем (Великобритания)|9|Чемпионат Европы по троеборью 2025
+Хало|ирландская спортивная|||||event|Пигги Марч (Великобритания)|8|Чемпионат Европы по троеборью 2025
+Глобал DHI|голландская теплокровная|||||event|Робин Годель (Швейцария)|8|Чемпионат Европы по троеборью 2025
+Фрида|голштинская|||k||event|Феликс Фогг (Швейцария)|8|Чемпионат Европы по троеборью 2025`;
+const DISCN={jump:'конкур',dress:'выездка',event:'троеборье'};
+(()=>{const add=[];SPORT_RAW.split('\n').forEach(l=>{const p=l.split('|');if(p.length<10)return;add.push({n:p[0],b:p[1],s:p[2],y:p[3]?+p[3]:null,g:p[4]||'m',sire:p[5]||'',dam:'',f:'',t:0,c:0,d:40,disc:p[6],rider:p[7],lvl:+p[8]||5,src:p[9],sport:true})});REG.unshift(...add)})();
+const realKey=r=>(r.n+'|'+(r.y||'')).toLowerCase();
 const pickReal=()=>REG.length?REG[Math.floor(Math.random()*REG.length)]:{n:pick(NAMES)};
 const permitFrom=d=>d>=160?160:d>=139?120:d>=99?80:40;
-function baseBreed(b){b=b||'';if(/кабард|карач/.test(b))return'kabard';if(/шагия/.test(b))return'arab';if(/араб/.test(b))return'arab';if(/ахалт/.test(b))return'akhal';
+function baseBreed(b){b=b||'';if(/голланд|датск|шведск|бельгий|немецк|вестфал|цангер|сель|ирланд|лузитан/.test(b))return'hann';if(/карабах/.test(b))return'akhal';if(/кабард|карач/.test(b))return'kabard';if(/шагия/.test(b))return'arab';if(/араб/.test(b))return'arab';if(/ахалт/.test(b))return'akhal';
   if(/тракен|ганновер|голштин|ольденбург|латвий/.test(b))return'hann';if(/рысист|орлов|^рус$/.test(b))return'trot';if(/бурят|вятск|алтай|забайкал|татар/.test(b))return'native';if(/тяжелов|упряж/.test(b))return'draft';return'half'}
 function coatFromSuit(s){s=s||'';const pinto=/пег/.test(s),spots=/чубар/.test(s);let c='bay';
   if(/темно-гнед/.test(s))c='darkbay';else if(/карак/.test(s))c='karak';else if(/гнед|^гн/.test(s))c='bay';else if(/ворон/.test(s))c='black';else if(/темно-сер/.test(s))c='dgrey';else if(/сер/.test(s))c='grey';
   else if(/игрен/.test(s))c='igren';else if(/рыж|каур/.test(s))c='chestnut';else if(/солов/.test(s))c='palomino';else if(/булан|саврас/.test(s))c='dun';else if(/мышаст/.test(s))c='mouse';else if(/чал/.test(s))c='roan';else if(/изабел/.test(s))c='isabella';else if(/бур/.test(s))c='brown';
   if(spots)c='grey';return{c,pinto,spots}}
-function realHorse(r){const bk=baseBreed(r.b);const h=makeHorse(bk,r.n);const cs=coatFromSuit(r.s);
+function realHorse(r){const bk=baseBreed(r.b);const h=makeHorse(bk,r.n);const cs=coatFromSuit(r.s||(r.sport?['гнедая','темно-гнедая','вороная','рыжая','гнедая','серая'][hashStr(r.n)%6]:''));
   h.coat=cs.c;h.pinto=cs.pinto;h.spots=cs.spots;h.patches=[];h.spotDots=[];
   if(h.pinto)for(let i=0;i<5;i++)h.patches.push([rnd(-95,70),rnd(-148,-88),rnd(16,30)]);
   if(h.spots)for(let i=0;i<18;i++)h.spotDots.push([rnd(-88,-20),rnd(-150,-104),rnd(2.5,5)]);
   h.blaze=Math.random()<.35;h.socks=ri(0,2);h.sex=r.g==='k'?'f':r.g==='m'?'g':'m';h.breedName=disp(r.b);h.suitName=r.s||'';
   h.level=Math.max(1,Math.min(7,1+Math.floor(r.c/2)));h.permit=permitFrom(r.d);h.fitBonus=Math.min(.25,r.c*.02);h.bond=20;h.prone=r.t?Math.min(.5,(r.t-r.c)/r.t*.6):.15;
-  h.real={f:r.f,y:r.y,sire:r.sire,dam:r.dam,t:r.t,c:r.c};h.spec='end';h.spd=spdFor(h);h.gen=genesFromCoat(h.coat);return h}
-function realPrice(r){const age=r.y?new Date().getFullYear()-r.y:10;return Math.max(80,Math.round((BREEDS[baseBreed(r.b)].price*.8+r.c*20+(permitFrom(r.d)-40)*2)*(age>18?.6:1)/10)*10)}
+  h.real={f:r.f,y:r.y,sire:r.sire,dam:r.dam,t:r.t,c:r.c,key:realKey(r)};h.spec='end';if(r.sport)sportize(h,r);h.spd=spdFor(h);h.gen=genesFromCoat(h.coat);return h}
+function sportize(h,r){h.spec=r.disc==='dress'?'dress':'jump';h.level=Math.max(1,Math.min(10,r.lvl));h.permit=40;h.fitBonus=r.disc==='event'?.08:0;h.prone=.12;
+  const k=Math.max(0,r.lvl-4);if(r.disc==='dress')h.dressBonus=+(k*1.6).toFixed(1);else{h.jumpBonus=+(k*2.4).toFixed(1);if(r.disc==='event')h.dressBonus=+(k*.8).toFixed(1)}
+  h.real.sport=1;h.real.disc=r.disc;h.real.rider=r.rider;h.bio=`${DISCN[r.disc]}${r.rider?', всадник: '+r.rider:''}. ${r.src}.`}
+function realPrice(r){if(r.sport)return Math.round((120+r.lvl*r.lvl*12)/10)*10;const age=r.y?new Date().getFullYear()-r.y:10;return Math.max(80,Math.round((BREEDS[baseBreed(r.b)].price*.8+r.c*20+(permitFrom(r.d)-40)*2)*(age>18?.6:1)/10)*10)}
 
 const INJ={
   bruise:{n:'Ушиб пясти',days:[2,4],full:.97,retire:0,chronic:null,vet:30,serious:false,leg:true},
@@ -5136,7 +5303,7 @@ function coatFromGenes(g,pa,pb){const has=(k,a)=>g[k].includes(a);const n=(k,a)=
 const geneStr=g=>g?['E','A','G','Cr'].map(k=>g[k].join('')).join(' '):'';
 const cmToHands=cm=>{const inch=cm/2.54;return Math.floor(inch/4)+'.'+Math.min(3,Math.round(inch%4))};
 const TRAIN={lunge:{n:'Корда',e:12,f:8,sk:null,l:3,d:'форма'},interval:{n:'Интервалы в поле',e:25,f:10,sk:'end',l:8,d:'выносливость'},poles:{n:'Жерди и гимнастика',e:18,f:6,sk:'jump',l:6,d:'прыжок'},flat:{n:'Работа на манеже',e:15,f:6,sk:'dress',l:4,d:'выездка'},hack:{n:'Прогулка шагом',e:5,f:3,sk:null,l:-6,d:'отдых'}};
-function doTrain(k){const h=cur(),t=TRAIN[k];if(!canCompete(h))return;if(h.trainedDay===S.day){toast(`${h.name} сегодня уже тренировалась`);return}
+function doTrain(k){const h=cur(),t=TRAIN[k];if(isFoal(h)){toast(`${h.name} ещё жеребёнок`);return}if(h.sick){toast(`${h.name} болеет, сначала вылечи`);return}if(h.inj){toast(`${h.name} лечит травму`);return}if(h.preg&&k!=='hack'){toast(`${h.name} ждёт жеребёнка — только прогулки шагом`);return}if(h.trainedDay===S.day){toast(`${h.name} сегодня уже тренировалась`);return}
   if(h.energy<t.e+5){toast(`${h.name} устала. Тренировка завтра`);return}
   h.trainedDay=S.day;h.energy=clamp(h.energy-t.e);h.form=clamp((h.form==null?50:h.form)+t.f*(S.build&&S.build.manege&&k!=='interval'?1.2:1));h.load=clamp((h.load||0)+t.l);
   if(t.sk){h.sk=h.sk||{jump:0,dress:0,end:0};h.sk[t.sk]=Math.min(20,+(h.sk[t.sk]+.8*(S.staff&&S.staff.trainer?1.3:1)).toFixed(1))}
@@ -5291,6 +5458,15 @@ function neckPath(c){c.beginPath();c.moveTo(14,-150);c.bezierCurveTo(40,-170,60,
   c.bezierCurveTo(93,-215,106,-208,107,-195);c.bezierCurveTo(103,-174,90,-148,79,-120);c.lineTo(28,-108);c.closePath()}
 function headPath(c){c.beginPath();c.moveTo(-6,-12);c.bezierCurveTo(8,-17,30,-15,46,-11);c.bezierCurveTo(60,-8,64,6,56,12);
   c.bezierCurveTo(50,16,42,15,38,12);c.bezierCurveTo(30,12,26,15,20,19);c.bezierCurveTo(8,28,-8,25,-10,12);c.bezierCurveTo(-12,2,-12,-6,-6,-12);c.closePath()}
+
+const SADDLES={classic:{n:'Классическое коричневое',c:'#4a2c18',f:'#6a4024',t:null,p:0},
+  dress:{n:'Выездковое чёрное',c:'#1d1a1c',f:'#2e2a2c',t:'#c9c9cf',p:140,long:true},
+  jump:{n:'Конкурное медовое',c:'#9a5c30',f:'#b8733e',t:null,p:140,fwd:true},
+  western:{n:'Вестерн с тиснением',c:'#7a4422',f:'#94562c',t:'#c9c9cf',p:220,west:true},
+  gold:{n:'Праздничное с золотом',c:'#3b1f3a',f:'#57304f',t:'#e0b84a',p:320},
+  white:{n:'Белое парадное',c:'#ece6d8',f:'#f6f1e6',t:'#e0b84a',p:280}};
+const BRIDLES={classic:{n:'Коричневая',c:'#2a1a10',b:null,p:0},black:{n:'Чёрная со стразами',c:'#141214',b:'#eef2f8',sp:true,p:100},white:{n:'Белая',c:'#efe9dc',b:'#c9c9cf',p:100},
+  red:{n:'Красная с золотом',c:'#8a1e2a',b:'#e0b84a',p:120},western:{n:'Вестерн с серебром',c:'#5a3420',b:null,west:true,p:160},gold:{n:'Праздничная',c:'#3a1a10',b:'#e0b84a',sp:true,p:240}};
 const HP={};
 function drawHorse(c,h,o){
   const B=BREEDS[h.breed],C=COATS[h.coat];
@@ -5349,11 +5525,28 @@ function drawHorse(c,h,o){
   c.strokeStyle=OL;bodyPath(c);c.stroke();
   if(o.rug&&h.rug){c.save();bodyPath(c);c.clip();c.fillStyle=h.rug;c.beginPath();c.moveTo(36,-160);c.lineTo(-96,-160);c.lineTo(-100,-94);c.lineTo(48,-94);c.closePath();c.fill();
     c.fillStyle='rgba(255,255,255,.55)';c.fillRect(-104,-97,160,3);c.fillStyle='rgba(0,0,0,.14)';c.fillRect(-104,-160,160,10);c.restore();c.strokeStyle=OL;bodyPath(c);c.stroke()}
-  if(o.saddle){c.fillStyle=h.pad||'#2f3f6a';c.beginPath();c.moveTo(-30,-148);c.quadraticCurveTo(-36,-118,-26,-106);c.lineTo(26,-106);c.quadraticCurveTo(34,-126,30,-152);c.quadraticCurveTo(0,-142,-30,-148);c.fill();olStroke(c);
-    c.strokeStyle='rgba(255,255,255,.6)';c.lineWidth=Math.max(1.6,.9/s);c.beginPath();c.moveTo(-28,-110);c.lineTo(27,-110);c.stroke();c.lineWidth=Math.max(2.2,1.2/s);
-    c.fillStyle='#4a2c18';c.beginPath();c.moveTo(-26,-157);c.quadraticCurveTo(-20,-146,0,-146);c.quadraticCurveTo(18,-146,26,-159);c.lineTo(28,-150);c.quadraticCurveTo(4,-137,-24,-148);c.closePath();c.fill();olStroke(c);
-    c.fillStyle='#6a4024';c.beginPath();c.moveTo(-8,-146);c.quadraticCurveTo(-14,-126,-6,-110);c.lineTo(14,-110);c.quadraticCurveTo(18,-128,14,-147);c.closePath();c.fill();olStroke(c);
-    c.fillStyle='#2a1a10';c.fillRect(16,-140,7,62)}
+  if(o.saddle){const SD=SADDLES[h.saddleK]||SADDLES.classic;
+    c.fillStyle=h.pad||'#2f3f6a';c.beginPath();
+    if(SD.west){c.moveTo(-34,-150);c.lineTo(-36,-104);c.lineTo(32,-104);c.lineTo(32,-154);c.quadraticCurveTo(0,-144,-34,-150)}
+    else{c.moveTo(-30,-148);c.quadraticCurveTo(-36,-118,-26,-106);c.lineTo(26,-106);c.quadraticCurveTo(34,-126,30,-152);c.quadraticCurveTo(0,-142,-30,-148)}
+    c.fill();olStroke(c);
+    c.strokeStyle=SD.west?'rgba(0,0,0,.25)':'rgba(255,255,255,.6)';c.lineWidth=Math.max(1.6,.9/s);c.beginPath();c.moveTo(-28,-110);c.lineTo(27,-110);c.stroke();c.lineWidth=Math.max(2.2,1.2/s);
+    // сиденье
+    c.fillStyle=SD.c;c.beginPath();c.moveTo(-26,-157);c.quadraticCurveTo(-20,-146,0,-146);c.quadraticCurveTo(18,-146,26,-159);c.lineTo(28,-150);c.quadraticCurveTo(4,-137,-24,-148);c.closePath();c.fill();olStroke(c);
+    if(SD.west){c.fillStyle=SD.c;c.beginPath();c.moveTo(22,-156);c.lineTo(24,-170);c.lineTo(30,-170);c.lineTo(28,-154);c.closePath();c.fill();olStroke(c);c.beginPath();c.ellipse(27,-171,6,2.6,0,0,7);c.fill();olStroke(c)}
+    // крыло седла
+    c.fillStyle=SD.f;c.beginPath();
+    if(SD.long){c.moveTo(-4,-147);c.lineTo(-6,-102);c.quadraticCurveTo(4,-96,14,-102);c.lineTo(14,-147)}
+    else if(SD.fwd){c.moveTo(-6,-147);c.quadraticCurveTo(-8,-124,2,-108);c.quadraticCurveTo(14,-104,22,-110);c.quadraticCurveTo(22,-130,14,-147)}
+    else if(SD.west){c.moveTo(-14,-147);c.lineTo(-16,-104);c.quadraticCurveTo(2,-98,22,-104);c.lineTo(20,-147)}
+    else{c.moveTo(-8,-146);c.quadraticCurveTo(-14,-126,-6,-110);c.lineTo(14,-110);c.quadraticCurveTo(18,-128,14,-147)}
+    c.closePath();c.fill();olStroke(c);
+    if(SD.t){c.strokeStyle=SD.t;c.lineWidth=Math.max(1.4,.8/s);c.beginPath();c.moveTo(-24,-149);c.quadraticCurveTo(4,-139,27,-151);c.stroke();
+      c.fillStyle=SD.t;[-16,-4,8,20].forEach(x=>{c.beginPath();c.arc(x,-145+Math.abs(x-4)*.08,1.6,0,7);c.fill()});c.lineWidth=Math.max(2.2,1.2/s)}
+    if(SD.west){c.fillStyle=SD.f;c.beginPath();c.moveTo(-2,-104);c.lineTo(0,-86);c.lineTo(12,-86);c.lineTo(12,-104);c.closePath();c.fill();olStroke(c)}
+    c.fillStyle='#2a1a10';c.fillRect(16,-140,7,62);
+    if(!o.rider){c.strokeStyle='#2a1a10';c.lineWidth=Math.max(1.8,1/s);c.beginPath();c.moveTo(4,-144);c.lineTo(6,-100);c.stroke();c.fillStyle=SD.west?SD.f:'#cfd2d8';c.beginPath();c.moveTo(0,-100);c.lineTo(12,-100);c.lineTo(10,-92);c.lineTo(2,-92);c.closePath();c.fill();olStroke(c);c.lineWidth=Math.max(2.2,1.2/s)}
+    if(SD.t){c.strokeStyle=SD.t;c.lineWidth=Math.max(1.4,.8/s);c.beginPath();c.moveTo(-28,-108);c.lineTo(27,-108);c.stroke();c.lineWidth=Math.max(2.2,1.2/s)}}
   if(o.surcingle){c.fillStyle='#e9e2cf';c.beginPath();c.moveTo(18,-152);c.lineTo(26,-152);c.lineTo(30,-76);c.lineTo(20,-76);c.closePath();c.fill();olStroke(c);c.fillStyle='#b9b2a0';c.fillRect(16,-158,4,8);c.fillRect(24,-158,4,8);c.fillStyle='#c0396b';c.fillRect(-20,-150,40,4)}
   // шея
   c.translate(54,-128);c.rotate((o.neck||0)+nod);c.translate(-54,128);
@@ -5387,7 +5580,12 @@ function drawHorse(c,h,o){
     c.fillStyle='#fff';c.beginPath();c.arc(17.8,-4.4,1.5,0,7);c.fill();c.beginPath();c.arc(14.6,-1,.8,0,7);c.fill();
     c.strokeStyle='#24160f';c.lineWidth=1.3;c.beginPath();c.ellipse(15,-3,6.6,5.6,.15,Math.PI*1.05,Math.PI*1.95);c.stroke();
     c.beginPath();c.moveTo(9.5,-6);c.lineTo(7.5,-8.5);c.moveTo(12,-7.8);c.lineTo(10.8,-10.4);c.moveTo(15,-8.4);c.lineTo(14.6,-11);c.stroke()}
-  if(o.saddle){c.strokeStyle='#2a1a10';c.lineWidth=2.2;c.beginPath();c.moveTo(-2,-11);c.lineTo(42,6);c.moveTo(32,-11);c.quadraticCurveTo(40,3,34,14);c.moveTo(0,-12);c.lineTo(4,15);c.stroke();
+  if(o.saddle){const BD=BRIDLES[h.bridleK]||BRIDLES.classic;c.strokeStyle=BD.c;c.lineWidth=2.4;c.beginPath();
+    c.moveTo(0,-12);c.lineTo(4,15);c.moveTo(-2,-11);c.lineTo(42,6);if(!BD.west){c.moveTo(32,-11);c.quadraticCurveTo(40,3,34,14)}c.stroke();
+    if(BD.b){c.strokeStyle=BD.b;c.lineWidth=3;c.beginPath();c.moveTo(-3,-13);c.quadraticCurveTo(1,-16,6,-15);c.stroke();
+      if(BD.sp){c.fillStyle='#fff';[[-2,-13.6],[1.5,-15],[5,-15]].forEach(([x,y])=>{c.beginPath();c.arc(x,y,1,0,7);c.fill()})}}
+    if(BD.west){c.fillStyle='#d6d6dc';[[2,1],[38,4]].forEach(([x,y])=>{c.beginPath();c.arc(x,y,2.6,0,7);c.fill();olStroke(c)})}
+    else{c.fillStyle=BD.b||BD.c;c.beginPath();c.arc(33,-3,1.6,0,7);c.fill()}
     c.fillStyle='#c9c9cf';c.beginPath();c.arc(44,8,2.4,0,7);c.fill()}
   HP.bit=c.getTransform().transformPoint(new DOMPoint(44,8));
   c.restore();
@@ -5629,9 +5827,8 @@ $('#sellBtn').addEventListener('click',()=>{const h=cur(),box=$('#sellBox');
   if(!box.hidden){box.hidden=true;return}
   if(S.horses.length<=1&&!(ON.ok&&h.sex==='m')){toast('Последнюю лошадь продать нельзя');return}
   const price=sellPrice(h);box.hidden=false;
-  box.innerHTML=`<div class="row"><p class="note">Продать ${esc(h.name)} за ${price} монет? Розетки уедут вместе с лошадью.</p><button class="btn ghost" id="sellNo">Оставить</button><button class="btn" id="sellYes">Продать</button></div>${ON.ok&&!ON.ro?`<div class="row"><p class="note">Или выставить на онлайн-рынок другим игрокам за свою цену:</p><input id="tradePrice" class="search" style="flex:1;min-width:0;max-width:140px" inputmode="numeric" value="${price}" aria-label="Цена на онлайн-рынке"><button class="btn ghost" id="tradeGo">На онлайн-рынок</button></div>
-    <div class="row"><p class="note">Или аукцион: стартовая цена и срок, кто больше даст — тот забирает:</p><input id="aucPrice" class="search" style="flex:1;min-width:0;max-width:110px" inputmode="numeric" value="${Math.round(price*.8)}" aria-label="Стартовая цена"><select id="aucH" class="search" style="max-width:110px" aria-label="Срок аукциона"><option value="1">1 час</option><option value="6">6 часов</option><option value="24" selected>24 часа</option></select><button class="btn ghost" id="aucGo">На аукцион</button></div>`:''}${ON.ok&&!ON.ro&&h.sex==='m'&&!isFoal(h)?`<div class="row"><p class="note">${esc(h.name)} остаётся у тебя, а другие игроки смогут свести с ним своих кобыл за плату:</p><input id="studFee" class="search" style="flex:1;min-width:0;max-width:110px" inputmode="numeric" value="${40+h.level*15}" aria-label="Плата за случку"><button class="btn ghost" id="studGo">Предложить для случки</button></div>`:''}`;
-  {const ag=$('#aucGo');if(ag)ag.onclick=()=>listAuction(h,+$('#aucPrice').value||price,+$('#aucH').value||24);const sg=$('#studGo');if(sg)sg.onclick=()=>listStud(h,+$('#studFee').value||60)}
+  box.innerHTML=`<div class="row"><p class="note">Продать ${esc(h.name)} за ${price} монет? Розетки уедут вместе с лошадью.</p><button class="btn ghost" id="sellNo">Оставить</button><button class="btn" id="sellYes">Продать</button></div>${ON.ok&&!ON.ro?`<div class="row"><p class="note">Или выставить на онлайн-рынок другим игрокам за свою цену:</p><input id="tradePrice" class="search" style="flex:1;min-width:0;max-width:140px" inputmode="numeric" value="${price}" aria-label="Цена на онлайн-рынке"><button class="btn ghost" id="tradeGo">На онлайн-рынок</button></div>`:''}`;
+
   $('#sellNo').onclick=()=>{box.hidden=true};{const tg=$('#tradeGo');if(tg)tg.onclick=()=>listTrade(h,+$('#tradePrice').value||price)}
   $('#sellYes').onclick=()=>{S.coins+=price;S.horses=S.horses.filter(x=>x.id!==h.id);S.cur=S.horses[0].id;box.hidden=true;herdKey='';SFX.coin();toast(`${h.name}: новые хозяева найдены, +${price}`);ui();save()}});
 $('#sndBtn').addEventListener('click',()=>{S.sound=!S.sound;updSnd();save();if(S.sound)SFX.coin()});
@@ -5759,6 +5956,17 @@ function showTut(){if(S.tut==null||S.tut>=TUT.length)return;let el=$('#tutBox');
 
 /* ============ MARKET ============ */
 const FOOD=[{k:'hay',n:'Тюк сена',d:'×5 · сытость +28 за порцию',p:20,q:5,i:'i-hay'},{k:'carrot',n:'Пучок моркови',d:'×5 · лакомство, растит привязанность',p:15,q:5,i:'i-carrot'},{k:'apple',n:'Корзина яблок',d:'×5 · сытость, вода и радость',p:15,q:5,i:'i-apple'}];
+
+function renderTack(th){S.tack=S.tack||{s:['classic'],b:['classic']};const box=document.createElement('div');box.className='item';box.style.alignItems='flex-start';box.style.flexDirection='column';
+  const cv=document.createElement('canvas');cv.width=360;cv.height=240;cv.style.width='180px';cv.style.height='120px';
+  const sec=(T,list,own,cur,kind)=>`<div><b>${T}</b><div class="tasks">${Object.entries(list).map(([k,v])=>{const has=own.includes(k);return`<div class="task"><span>${v.n}${cur===k?' · надето':''}</span>${has?(cur===k?'<b>✓</b>':`<button class="btn ghost" data-eq-${kind}="${k}">Надеть</button>`):`<button class="btn" data-buy-${kind}="${k}" ${S.coins<v.p?'disabled':''}><span class="price">${v.p}</span></button>`}</div>`}).join('')}</div></div>`;
+  box.innerHTML=`<div class="row"><b>Амуниция для ${esc(th.name)}</b><small>купленное подходит всем лошадям</small></div>`;box.appendChild(cv);
+  box.insertAdjacentHTML('beforeend',sec('Сёдла',SADDLES,S.tack.s,th.saddleK||'classic','s')+sec('Уздечки',BRIDLES,S.tack.b,th.bridleK||'classic','b'));
+  const c=cv.getContext('2d');c.scale(2,2);c.fillStyle='#e8efe2';c.fillRect(0,0,180,120);drawHorse(c,th,{x:86,y:112,s:.42,t:0,dirt:false,saddle:true});
+  box.querySelectorAll('[data-buy-s],[data-buy-b]').forEach(b=>b.onclick=()=>{const isS=b.hasAttribute('data-buy-s');const k=isS?b.dataset.buyS:b.dataset.buyB;const v=(isS?SADDLES:BRIDLES)[k];if(S.coins<v.p){toast('Не хватает монет');return}
+    S.coins-=v.p;S.tack[isS?'s':'b'].push(k);if(isS)th.saddleK=k;else th.bridleK=k;SFX.coin();toast(`${v.n} — надето на ${th.name}`);ui();save();renderMarket()});
+  box.querySelectorAll('[data-eq-s],[data-eq-b]').forEach(b=>b.onclick=()=>{const isS=b.hasAttribute('data-eq-s');if(isS)th.saddleK=b.dataset.eqS;else th.bridleK=b.dataset.eqB;toast('Надето');save();renderMarket()});
+  box.id='tackBox';const t=$('#tackShop');const old=$('#tackBox');if(old)old.remove();if(t)t.prepend(box)}
 function renderMarket(){
   $('#foodShop').innerHTML=FOOD.map(f=>`<div class="item"><svg><use href="#${f.i}"/></svg><div><b>${f.n}</b><small>${f.d} · есть ${S.food[f.k]}</small></div><button class="btn" data-food="${f.k}" ${S.coins<f.p?'disabled':''}><span class="price">${f.p}</span> мон.</button></div>`).join('');
   $('#foodShop').querySelectorAll('[data-food]').forEach(b=>b.addEventListener('click',()=>{const f=FOOD.find(x=>x.k===b.dataset.food);if(S.coins<f.p)return;S.coins-=f.p;S.food[f.k]+=f.q;toast(`${f.n} на складе`);ui();save()}));
@@ -5769,7 +5977,7 @@ function renderMarket(){
    const rugs=[['#3a5a8a','синяя'],['#7a2f3a','бордовая'],['#4a6a3a','зелёная'],['#8a6a3a','песочная']];
    $('#tackShop').innerHTML=`<div class="item" style="align-items:flex-start"><svg><use href="#i-brush"/></svg><div><b>Вальтрап · 25 мон.</b><small>Под седло для ${esc(th.name)}, видно на манеже</small><div class="swatches">${pads.map(([c,n])=>`<button class="sw" data-pad="${c}" aria-label="Вальтрап: ${n}" title="${n}" aria-pressed="${th.pad===c}" style="background:${c}"></button>`).join('')}</div></div></div>
    <div class="item" style="align-items:flex-start"><svg><use href="#i-hay"/></svg><div><b>Попона · 60 мон.</b><small>Видна в деннике, ночью шерсть почти не пачкается</small><div class="swatches">${rugs.map(([c,n])=>`<button class="sw" data-rug="${c}" aria-label="Попона: ${n}" title="${n}" aria-pressed="${th.rug===c}" style="background:${c}"></button>`).join('')}</div></div></div>`;
-   $('#tackShop').querySelectorAll('[data-pad]').forEach(b=>b.onclick=()=>{const c=b.dataset.pad;if(th.pad===c)return;if(S.coins<25){toast('Не хватает монет');return}S.coins-=25;th.pad=c;SFX.coin();toast('Новый вальтрап готов к старту');ui();save()});
+   renderTack(th);$('#tackShop').querySelectorAll('[data-pad]').forEach(b=>b.onclick=()=>{const c=b.dataset.pad;if(th.pad===c)return;if(S.coins<25){toast('Не хватает монет');return}S.coins-=25;th.pad=c;SFX.coin();toast('Новый вальтрап готов к старту');ui();save()});
    $('#tackShop').querySelectorAll('[data-rug]').forEach(b=>b.onclick=()=>{const c=b.dataset.rug;if(th.rug===c)return;if(S.coins<60){toast('Не хватает монет');return}S.coins-=60;th.rug=c;SFX.coin();toast(`${th.name} в новой попоне`);ui();save()})}
   const hs=$('#horseShop');hs.innerHTML='';
   S.offers.forEach((o,i)=>{const B=BREEDS[o.breed];const d=document.createElement('div');d.className='item';const cv=document.createElement('canvas');cv.width=192;cv.height=128;d.appendChild(cv);
@@ -5792,7 +6000,7 @@ let EV=null;
 const DRESS=[{n:'Предварительный приз',short:'Предв.',lvl:1,prize:[40,25,15],xp:30,gap:1.55},{n:'Малый приз',short:'Малый',lvl:3,prize:[75,45,25],xp:45,gap:1.3},{n:'Средний приз',short:'Средний',lvl:5,prize:[130,80,45],xp:65,gap:1.1},{n:'Большой приз',short:'Большой',lvl:7,prize:[220,130,75],xp:90,gap:.92}];
 const CMDS=[{k:'walk',n:'Шаг',ph:4.5,v:40,col:'#7cc46b'},{k:'trot',n:'Рысь',ph:9,v:90,col:'#ecc35a'},{k:'canter',n:'Галоп',ph:12,v:150,col:'#e8874a'},{k:'halt',n:'Стоп',ph:0,v:0,col:'#7ea3e6'}];
 const LETTERS=['A','K','E','H','C','M','B','F'];
-const ENDUR=[{km:40,lvl:1,n:'Квалификационный 40 км',q:true,age:5,minHold:40,prize:[50,30,20],xp:40,st:[20,20]},
+const ENDUR=[{km:40,lvl:1,n:'Квалификационный 40 км',pulse:56,q:true,age:5,minHold:40,prize:[50,30,20],xp:40,st:[20,20]},
  {km:80,lvl:3,n:'Квалификационный 80 км',q:true,age:5,minHold:40,prize:[100,60,35],xp:60,st:[30,25,25]},
  {km:120,lvl:5,n:'CEI 2* · 120 км',age:7,minHold:50,prize:[170,100,60],xp:80,st:[40,30,30,20]},
  {km:160,lvl:7,n:'CEI 3* · 160 км',age:8,minHold:50,prize:[300,180,100],xp:120,st:[35,30,30,25,20,20]}];
@@ -5812,7 +6020,7 @@ function rivals(n){return RIDERS.slice().sort(()=>Math.random()-.5).slice(0,n).m
 
 function resetArena(){EV=null;if(disc==='jump')resetJump();else if(disc==='dress')resetDress();else if(disc==='event')resetEvent(0);else if(disc==='volt')resetVolt();else resetEnd();
   $('#jumpBtn').textContent='Старт';$('#jumpBtn').hidden=false;$('#drBtns').hidden=true;$('#enBtns').hidden=true;$('#resCard').hidden=true;
-  $('#arHint').textContent=disc==='end'?'Правила ФКСР: после каждого этапа ветконтроль, пульс ≤ 64 уд/мин. На предъявление 15 минут (на финише 20 и одна попытка). Хромота = FTQ-GA, пульс = FTQ-ME. Скорость не ниже 10 км/ч; в квалификационных пробегах не быстрее 16 км/ч, иначе пробег не идёт в допуск. После этапа обязательная остановка 30–60 минут.':disc==='event'?'Троеборье: выездка, потом кросс по полевым препятствиям, потом конкур. Считаются штрафные очки: выездка = 100 − %, на кросе ошибка у препятствия 20 и 0,4 за каждую секунду сверх нормы, в конкуре 4 за жердь. Побеждает наименьшая сумма.':disc==='volt'?'Вольтижировка: лошадь идёт галопом на корде, вольтижёр выполняет упражнения. Жми упражнение, когда карточка в жёлтом круге. Оценка от 0 до 10.':disc==='jump'?'Жми «Прыжок», когда препятствие дойдёт до белого флажка. Сбитая жердь — 4 штрафных очка.':'Жми команду, когда её карточка войдёт в жёлтый круг. Судьи оценивают точность в процентах.'}
+  $('#arHint').textContent=disc==='end'?(sel.end===0?'Пробег 40 км: пульс на ветконтроле ≤ 56 уд/мин. ':'')+'Правила ФКСР: после каждого этапа ветконтроль, пульс ≤ 64 уд/мин (на 40 км — 56). На предъявление 15 минут (на финише 20 и одна попытка). Хромота = FTQ-GA, пульс = FTQ-ME. Скорость не ниже 10 км/ч; в квалификационных пробегах не быстрее 16 км/ч, иначе пробег не идёт в допуск. После этапа обязательная остановка 30–60 минут.':disc==='event'?'Троеборье: выездка, потом кросс по полевым препятствиям, потом конкур. Считаются штрафные очки: выездка = 100 − %, на кросе ошибка у препятствия 20 и 0,4 за каждую секунду сверх нормы, в конкуре 4 за жердь. Побеждает наименьшая сумма.':disc==='volt'?'Вольтижировка: лошадь идёт галопом на корде, вольтижёр выполняет упражнения. Жми упражнение, когда карточка в жёлтом круге. Оценка от 0 до 10.':disc==='jump'?'Жми «Прыжок», когда препятствие дойдёт до белого флажка. Сбитая жердь — 4 штрафных очка.':'Жми команду, когда её карточка войдёт в жёлтый круг. Судьи оценивают точность в процентах.'}
 function resetJump(){const h=cur(),B=BREEDS[h.breed],cl=CLASSES[sel.jump];
   const fences=[];let x=560;for(let i=0;i<8;i++){const ox=cl.cm>=80&&Math.random()<.4;fences.push({x,h:cl.cm*.26,type:ox?'oxer':'vert',hit:false,passed:false,fall:0,col:pick(['#d9483b','#3f7fd0','#e2a23a','#3a9a5a'])});x+=rnd(300,400)}
   ar={kind:'jump',running:false,done:false,dist:0,speed:262*(h.spd||1),fences,finish:x+60,jy:0,vy:0,air:false,faults:0,t:0,phase:0,P:(36+h.level*1.4+(B.jump+(h.jumpBonus||0))*.6-(hasCh(h,'back')?3:0))*cond(h)*specMul(h,'jump')+((h.sk&&h.sk.jump)||0)*.35+charOf(h).j,msg:null,dust:[]};
@@ -5877,7 +6085,7 @@ function cmd(k){if(!ar.running||ar.kind!=='dress')return;ar.gait=k;
   if(c.cmd!==k){sc=3;txt='Не та команда';col='#e2604f'}else if(d<.09){sc=10;txt='Отлично';col='#7cc46b'}else if(d<.18){sc=8;txt='Хорошо';col='#a8d36b'}else{sc=6;txt='Неточно';col='#e8ad48'}
   c.j=sc;ar.score+=sc;ar.judged++;if(sc>=8)SFX.good();else if(sc<=3)SFX.bad();ar.msg={t:1,txt,col}}
 $('#jumpBtn').addEventListener('click',startOrJump);
-$('#chatForm').addEventListener('submit',e=>{e.preventDefault();const i=$('#chatIn');const t=i.value;i.value='';chatSend(t)});
+
 acv.addEventListener('pointerdown',e=>{e.preventDefault();if(ar.kind==='jump'||!ar.running)startOrJump()});
 $('#drBtns').querySelectorAll('button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();cmd(b.dataset.cmd)}));
 addEventListener('keydown',e=>{if(view!=='arena')return;
@@ -5907,10 +6115,10 @@ function settle(rows,cl,kind,extra){const h=cur();const place=rows.findIndex(r=>
   $('#jumpBtn').hidden=false;$('#drBtns').hidden=true;$('#jumpBtn').textContent='Ещё заезд';renderArenaUI();save();ui()}
 function finishJump(){if(ar.ev){evNext(ar.cross?'cross':'jump');return}const h=cur(),i=sel.jump;
   const on=onlineRows('jump',CLASSES[i].cm);const rows=rivals(5-on.length).map(r=>{let f=0;for(let k=0;k<8;k++)if(Math.random()<.05+i*.03)f+=4;return{...r,f,t:ar.finish/rnd(232,265)}});
-  rows.push(...on);rows.push({me:true,rider:'Ты',horse:h.name,f:ar.faults,t:ar.t});raceSubmit('jump',{f:ar.faults,t:+ar.t.toFixed(2)});rows.sort((a,b)=>a.f-b.f||a.t-b.t);recordBest('jump',CLASSES[i].cm,{f:ar.faults,t:+ar.t.toFixed(2),horse:h.name});settle(rows,CLASSES[i],'jump',false)}
+  rows.push(...on);rows.push({me:true,rider:'Ты',horse:h.name,f:ar.faults,t:ar.t});duelResult('jump',{f:ar.faults,t:ar.t});raceSubmit('jump',{f:ar.faults,t:+ar.t.toFixed(2)});rows.sort((a,b)=>a.f-b.f||a.t-b.t);recordBest('jump',CLASSES[i].cm,{f:ar.faults,t:+ar.t.toFixed(2),horse:h.name});settle(rows,CLASSES[i],'jump',false)}
 function finishDress(){if(ar.ev){evNext('dress');return}if(ar.volt){finishVolt();return}const h=cur(),i=sel.dress;
   let pct=ar.score/(ar.cues.length*10)*100;pct=clamp(pct*(.92+.08*cond(h))+(h.bond-50)*.04+(h.dressBonus||0)-(hasCh(h,'back')?3:0)+(h.spec==='dress'?4:h.spec?-3:0)+((h.sk&&h.sk.dress)||0)*.25+charOf(h).d);
-  const on=onlineRows('dress',DRESS[i].short);const rows=rivals(5-on.length).map(r=>({...r,v:rnd(56,72)+i*1.2}));rows.push(...on);rows.push({me:true,rider:'Ты',horse:h.name,v:pct});raceSubmit('dress',{v:+pct.toFixed(3)});recordBest('dress',DRESS[i].short,{v:+pct.toFixed(3),horse:h.name});rows.sort((a,b)=>b.v-a.v);
+  const on=onlineRows('dress',DRESS[i].short);const rows=rivals(5-on.length).map(r=>({...r,v:rnd(56,72)+i*1.2}));rows.push(...on);rows.push({me:true,rider:'Ты',horse:h.name,v:pct});duelResult('dress',{v:pct});raceSubmit('dress',{v:+pct.toFixed(3)});recordBest('dress',DRESS[i].short,{v:+pct.toFixed(3),horse:h.name});rows.sort((a,b)=>b.v-a.v);
   settle(rows,DRESS[i],'dress',pct>=60)}
 
 function backdrop(c,dist,horizon){
@@ -5948,10 +6156,11 @@ function enPress(i){if(!ar.running||ar.kind!=='end')return;
   else if(ar.mode==='vet'){const v=ar.vet;
     if(i===0&&v.cool<10&&v.cd<=0){v.cool++;v.cd=.3;ar.pulse=Math.max(46,ar.pulse-3);SFX.splash();updEnBtns()}
     if(i===3)present()}}
+const pulseLim=()=>(ENDUR[sel.end]&&ENDUR[sel.end].pulse)||64;
 const vetLimit=()=>ar.stage>=ar.st.length-1?20:15;
 const vetTries=()=>ar.stage>=ar.st.length-1?1:2;
 function present(){const v=ar.vet,p=Math.round(ar.pulse),h=cur();
-  if(p<=64){ar.rec.push(Math.max(1,Math.round(v.t)));
+  if(p<=pulseLim()){ar.rec.push(Math.max(1,Math.round(v.t)));
     let lame=!!ar.injured;if(!lame&&Math.random()<Math.max(0,(60-hoofOf(h))/300)+h.stones.length*.02){lame=true;ar.injured='sole'}
     if(lame){endElim(ar.injured==='rupture'?'FTQ-SI-MUSCU':'FTQ-GA',ar.injured==='rupture'?'Тяжёлая травма сухожилия':'Хромота на ветконтроле');return}
     SFX.good();
@@ -5959,7 +6168,7 @@ function present(){const v=ar.vet,p=Math.round(ar.pulse),h=cur();
     const last=ar.stage+1===ar.st.length-1;ar.cri=(v.t>10?'Восстановление дольше 10 мин — ':'')+((v.t>10||(last&&ar.st.reduce((a,b)=>a+b,0)>=80))?'повторная инспекция (CRI) перед стартом':'');
     if(ar.cri&&Math.random()<ar.strain*.35+ar.fat/600){endElim('FTQ-GA','Неровный аллюр на повторной инспекции');return}
     ar.mode='hold';ar.hold=2.6;ar.msg={t:1.4,txt:`Пульс ${p} · прошли`,col:'#7cc46b'};ar.fat=Math.max(0,ar.fat-45);ar.hydr=Math.min(100,ar.hydr+30);ar.strain*=.6;ar.pulse=60;updEnBtns()}
-  else{v.att++;SFX.bad();ar.msg={t:1.2,txt:`Пульс ${p} > 64`,col:'#e2604f'};if(v.att>=vetTries())endElim('FTQ-ME',v.att>1?'Пульс выше 64 на повторном предъявлении':'Пульс выше 64 на финишном ветконтроле')}}
+  else{v.att++;SFX.bad();ar.msg={t:1.2,txt:`Пульс ${p} > ${pulseLim()}`,col:'#e2604f'};if(v.att>=vetTries())endElim('FTQ-ME',v.att>1?`Пульс выше ${pulseLim()} на повторном предъявлении`:`Пульс выше ${pulseLim()} на финишном ветконтроле`)}}
 function endElim(code,r){if(ar.elim)return;ar.code=code;ar.elim=r;finishEnd()}
 function rivalsEnd(n,cl){const pool=REG.filter(r=>r.t>0&&permitFrom(r.d)>=cl.km);const src=pool.length>20?pool:REG.filter(r=>r.t>0);
   const riders=RIDERS.slice().sort(()=>Math.random()-.5);const out=[];const used=new Set();let guard=0;
@@ -5973,6 +6182,7 @@ function finishEnd(){const h=cur(),cl=ENDUR[sel.end];ar.running=false;ar.done=tr
   const on=onlineRows('end',cl.km);const rows=rivalsEnd(6-on.length,cl).concat(on);if(!ar.elim)recordBest('end',cl.km,{t:Math.round(myT),v:+(ar.tot/Math.max(.01,ar.clock/60)).toFixed(1),horse:h.name});
   rows.push({me:true,rider:'Ты',horse:h.name,t:myT,v:ar.tot/Math.max(.01,ar.clock/60),elim:ar.elim?ar.code:null,why:ar.elim,km:ar.tot,rec:ar.rec.length?Math.round(ar.rec.reduce((a,b)=>a+b,0)/ar.rec.length):0});
   rows.sort((a,b)=>(!!a.elim-!!b.elim)||(a.elim?b.km-a.km:a.t-b.t));
+  duelResult('end',{t:Math.round(myT),v:0,elim:ar.elim?ar.code:null,km:ar.tot});
   raceSubmit('end',{t:Math.round(myT),v:+(ar.tot/Math.max(.01,ar.clock/60)).toFixed(1),elim:ar.elim?ar.code:null,km:+ar.tot.toFixed(1)});
   settleEnd(rows,cl)}
 function settleEnd(rows,cl){const h=cur();const place=rows.findIndex(r=>r.me);const me=rows[place];const fin=!me.elim;const cup=cupDay();
@@ -6038,7 +6248,7 @@ function stepEnd(dt){const c=ax,h=cur(),g=ENDG[ar.gait],L=ar.st[ar.stage];ridePr
     }else if(ar.mode==='vet'){const v=ar.vet;v.t+=dt;v.cd-=dt;
       const rate=(2.6+ar.fit*4)*(ar.hydr<30?.6:1)*(1-ar.strain*.6)*(isHot()?.85:1);
       ar.pulse=Math.max(46,ar.pulse-rate*dt);
-      if(v.t>=vetLimit()){endElim('FTQ-ME',`Пульс не опустился до 64 за ${vetLimit()} минут`);return}
+      if(v.t>=vetLimit()){endElim('FTQ-ME',`Пульс не опустился до ${pulseLim()} за ${vetLimit()} минут`);return}
     }else if(ar.mode==='hold'){ar.hold-=dt;if(ar.hold<=0){ar.stage++;setupStage();updEnBtns()}}
     ar.ut+=dt;if(ar.ut>.2){ar.ut=0;updEnBtns()}
   }
@@ -6079,7 +6289,7 @@ function stepEnd(dt){const c=ax,h=cur(),g=ENDG[ar.gait],L=ar.st[ar.stage];ridePr
   c.restore();weatherFx(c);
   // bottom strip
   c.fillStyle='rgba(19,32,26,.92)';c.fillRect(0,198,AW,42);
-  const p=Math.round(ar.pulse),pc=p<=64?'#7cc46b':p<130?'#ecc35a':p<165?'#e8874a':'#e2604f';
+  const p=Math.round(ar.pulse),pc=p<=pulseLim()?'#7cc46b':p<130?'#ecc35a':p<165?'#e8874a':'#e2604f';
   const beat=1+.15*Math.max(0,Math.sin(T*p/60*Math.PI*2));
   heart(c,18,219,6*beat,pc);
   c.fillStyle=pc;c.font='700 16px Unbounded, sans-serif';c.textAlign='left';c.textBaseline='middle';c.fillText(p,30,215);
@@ -6093,7 +6303,7 @@ function stepEnd(dt){const c=ax,h=cur(),g=ENDG[ar.gait],L=ar.st[ar.stage];ridePr
     c.fillStyle='rgba(19,32,26,.85)';c.beginPath();c.roundRect(214,42,176,104,10);c.fill();
     c.textAlign='center';c.fillStyle='#ecc35a';c.font='700 11px Unbounded, sans-serif';c.fillText('ВЕТКОНТРОЛЬ',302,58);
     c.fillStyle=pc;c.font='700 30px Unbounded, sans-serif';c.fillText(p,302,86);
-    c.fillStyle='#eef1e4';c.font='700 11px Nunito, sans-serif';c.fillText('норма ≤ 64 уд/мин',302,106);
+    c.fillStyle='#eef1e4';c.font='700 11px Nunito, sans-serif';c.fillText(`норма ≤ ${pulseLim()} уд/мин`,302,106);
     c.fillStyle='#22392e';c.fillRect(226,116,152,6);c.fillStyle=v.t>vetLimit()-4?'#e2604f':'#ecc35a';c.fillRect(226,116,152*Math.min(1,v.t/vetLimit()),6);
     c.fillStyle='#9fb3a3';c.font='700 10px Nunito, sans-serif';c.fillText(`${Math.floor(v.t)} из ${vetLimit()} мин · попыток ${v.att}/${vetTries()}`,302,136)}
   if(ar.mode==='hold'&&ar.running)overlay(c,`Этап ${ar.stage+1} пройден · отдых ${ar.holds[ar.stage]} мин`,ar.cri||`Время восстановления ${ar.rec[ar.rec.length-1]} мин идёт в зачёт`);
@@ -6129,7 +6339,7 @@ function stepJump(dt){const c=ax;
       c.fillStyle='#f3efe4';c.fillRect(-12,0,24,4);c.fillStyle=f.col;for(let k=-12;k<12;k+=8)c.fillRect(k,0,4,4);c.restore()})});
   const h=cur();
   c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(HX,GY+2,Math.max(8,34*(1-ar.jy/120)),4,0,0,7);c.fill();
-  drawHorse(c,h,{x:HX,y:GY-ar.jy*1.35,s:.38,t:T,dist:ar.dist,gallop:ar.running?ar.phase:null,gait:'canter',air:ar.air,pitch:ar.air?-Math.max(-1,Math.min(1,ar.vy/Math.sqrt(2*G*ar.P)))*.28:0,dirt:false,neck:ar.air?.12:-.05,saddle:true,rider:true});
+  drawDuelGhost(c,'jump',HX,GY);drawHorse(c,h,{x:HX,y:GY-ar.jy*1.35,s:.38,t:T,dist:ar.dist,gallop:ar.running?ar.phase:null,gait:'canter',air:ar.air,pitch:ar.air?-Math.max(-1,Math.min(1,ar.vy/Math.sqrt(2*G*ar.P)))*.28:0,dirt:false,neck:ar.air?.12:-.05,saddle:true,rider:true});
   ar.dust=ar.dust.filter(d=>(d.l-=dt*2)>0);ar.dust.forEach(d=>{d.x+=d.vx*dt;d.y+=d.vy*dt;c.globalAlpha=d.l*.6;c.fillStyle='#c4a274';c.beginPath();c.arc(d.x,d.y,3,0,7);c.fill()});c.globalAlpha=1;
   c.restore();const done=ar.fences.filter(f=>f.passed).length;
   weatherFx(c);hud(c,`Препятствие ${Math.min(8,done+1)}/8`,`Штраф: ${ar.faults}`,`${ar.t.toFixed(1)} с`,ar.faults?'#e2604f':'#7cc46b');
@@ -6150,7 +6360,7 @@ function stepDress(dt){const c=ax,h=cur();const g=CMDS.find(x=>x.k===(ar.volt?'c
     c.fillStyle='#fff';c.fillRect(x-9,120,18,18);c.strokeStyle='#22333a';c.lineWidth=1;c.strokeRect(x-9.5,119.5,19,19);
     c.fillStyle='#22333a';c.font='800 11px Nunito, sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(L,x,129.5)}
   const hx=150,gy=168;c.fillStyle='rgba(0,0,0,.18)';c.beginPath();c.ellipse(hx,gy+2,32,3.5,0,0,7);c.fill();
-  drawHorse(c,h,{x:hx,y:gy,s:.38,t:T,gallop:moving?ar.phase:null,gait:ar.volt?'canter':ar.gait,dirt:false,neck:-.1,saddle:!ar.volt,surcingle:ar.volt,rider:true,dist:ar.dist,vpose:ar.volt?(ar.running?ar.gait:'walk'):null});c.restore();
+  drawDuelGhost(c,'dress',hx,gy);drawHorse(c,h,{x:hx,y:gy,s:.38,t:T,gallop:moving?ar.phase:null,gait:ar.volt?'canter':ar.gait,dirt:false,neck:-.1,saddle:!ar.volt,surcingle:ar.volt,rider:true,dist:ar.dist,vpose:ar.volt?(ar.running?ar.gait:'walk'):null});c.restore();
   // cue lane
   const HIT=64,LY=207;c.fillStyle='#16251e';c.fillRect(0,176,AW,AH-176);
   c.fillStyle='rgba(236,195,90,.12)';c.beginPath();c.arc(HIT,LY,26,0,7);c.fill();
@@ -6167,15 +6377,15 @@ function stepDress(dt){const c=ax,h=cur();const g=CMDS.find(x=>x.k===(ar.volt?'c
 /* ============ REGISTRY ============ */
 let regF='all',regN=40,KIDS=null,regT=null;
 function kidsOf(name){if(!KIDS){KIDS=new Map();REG.forEach(r=>{[r.sire,r.dam].forEach(p=>{if(!p)return;const k=p.toLowerCase();if(!KIDS.has(k))KIDS.set(k,[]);KIDS.get(k).push(r)})})}return KIDS.get(name.toLowerCase())||[]}
-function regMatches(){const q=$('#regQ').value.trim().toLowerCase();let src=regF==='ped'?PAR:regF==='run'?REG.filter(r=>r.t>0).sort((a,b)=>b.c-a.c||b.t-a.t):REG;
-  if(!q)return src;return src.filter(r=>(r.n+' '+disp(r.b)+' '+(r.s||'')+' '+(r.sire||'')+' '+(r.dam||'')+' '+(r.f||'')).toLowerCase().includes(q))}
+function regMatches(){const q=$('#regQ').value.trim().toLowerCase();let src=regF==='ped'?PAR:regF==='run'?REG.filter(r=>r.t>0).sort((a,b)=>b.c-a.c||b.t-a.t):['jump','dress','event'].includes(regF)?REG.filter(r=>r.disc===regF).sort((a,b)=>b.lvl-a.lvl):REG;
+  if(!q)return src;return src.filter(r=>(r.n+' '+disp(r.b)+' '+(r.s||'')+' '+(r.sire||'')+' '+(r.dam||'')+' '+(r.f||'')+' '+(r.rider||'')).toLowerCase().includes(q))}
 const sexOf=r=>r.g==='k'?'кобыла':r.g==='m'&&!r.par?'мерин':'жеребец';
 function renderReg(){const m=regMatches();$('#regCount').textContent=`${(REG.length+PAR.length).toLocaleString('ru-RU')} лошадей · найдено ${m.length}`;
   const list=$('#regList');list.innerHTML='';m.slice(0,regN).forEach(r=>list.appendChild(regItem(r)));$('#regMore').hidden=m.length<=regN;
   if(!m.length)list.innerHTML='<p class="hint" style="text-align:left;margin:0">Никого не нашли. Попробуй другую кличку или номер ФКСР.</p>';
   $('#regF').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.f===regF))}
 function regItem(r){const d=document.createElement('div');d.className='item regi';
-  const sub=r.par?`${disp(r.b)} · ${sexOf(r)} · из родословных · потомков в базе: ${r.kids}`:`${disp(r.b)} · ${r.s||'масть не указана'} · ${sexOf(r)}${r.y?' · '+r.y+' г. р.':''}${r.t?' · стартов '+r.t:''}`;
+  const sub=r.par?`${disp(r.b)} · ${sexOf(r)} · из родословных · потомков в базе: ${r.kids}`:r.sport?`${DISCN[r.disc]} · ${disp(r.b)}${r.s?' · '+r.s:''} · ${sexOf(r)}${r.y?' · '+r.y+' г. р.':''}${r.rider?' · '+r.rider:''}${ownerOf(realKey(r))?' · есть хозяин':''}`:`${disp(r.b)} · ${r.s||'масть не указана'} · ${sexOf(r)}${r.y?' · '+r.y+' г. р.':''}${r.t?' · стартов '+r.t:''}`;
   d.innerHTML=`<button class="regh"><b>${esc(r.n)}</b><small>${esc(sub)}</small></button>`;
   d.querySelector('.regh').onclick=()=>toggleReg(d,r);return d}
 function pedLink(n){return n?`<button class="linkbtn" data-q="${esc(n)}">${esc(n)}</button>`:'не указан'}
@@ -6185,18 +6395,21 @@ function toggleReg(d,r){const ex=d.querySelector('.regx');if(ex){ex.remove();ret
   if(!r.par){if(!r._h)r._h=realHorse(r);
     rows.push(['Порода',disp(r.b)],['Масть',r.s||'не указана'],['Пол',sexOf(r)],['Год рождения',r.y||'не указан'],['Отец',pedLink(r.sire)],['Мать',pedLink(r.dam)]);
     if(r.f)rows.push(['№ ФКСР',String(r.f).padStart(6,'0')]);
-    rows.push(['Пробеги',r.t?`стартов ${r.t}, завершено ${r.c}, снятий ${r.t-r.c}`:'стартов пока нет'],['Допуск',permitFrom(r.d)+' км'],['Риск травм в игре',r.t?((r.t-r.c)/r.t>.4?'высокий':(r.t-r.c)/r.t>.15?'средний':'низкий')+' (по доле снятий)':'средний']);
+    if(r.sport)rows.push(['Дисциплина',DISCN[r.disc]],['Всадник',r.rider||'не указан'],['Уровень в игре',r.lvl],['Откуда',r.src]);
+    else rows.push(['Пробеги',r.t?`стартов ${r.t}, завершено ${r.c}, снятий ${r.t-r.c}`:'стартов пока нет'],['Допуск',permitFrom(r.d)+' км'],['Риск травм в игре',r.t?((r.t-r.c)/r.t>.4?'высокий':(r.t-r.c)/r.t>.15?'средний':'низкий')+' (по доле снятий)':'средний']);
   }else rows.push(['Пол',sexOf(r)],['Порода потомков',disp(r.b)]);
   if(kids.length)rows.push(['Потомки',`<span class="kids">${kids.slice(0,10).map(k=>pedLink(k.n)).join('')}${kids.length>10?` и ещё ${kids.length-10}`:''}</span>`]);
   let html=r.par?'':'<canvas width="360" height="240"></canvas>';
   html+=`<dl>${rows.map(([a,b])=>`<dt>${a}</dt><dd>${typeof b==='string'&&b.startsWith('<')?b:esc(String(b))}</dd>`).join('')}</dl>`;
-  if(!r.par){const owned=S.horses.some(h=>h.real&&h.name===r.n&&h.real.f===r.f&&h.real.y===r.y);const price=realPrice(r);
-    html+=owned?'<p class="note">Эта лошадь уже живёт в твоей конюшне.</p>':`<div class="row"><p class="note">Можно забрать в конюшню. Характеристики зависят от её реальных пробегов.</p><button class="btn" data-buy ${S.coins<price||S.horses.length>=S.stalls?'disabled':''}><span class="price">${price}</span> мон.</button></div>`}
+  if(!r.par){const owned=S.horses.some(h=>h.real&&h.name===r.n&&h.real.f===r.f&&h.real.y===r.y);const price=realPrice(r);const ow=ownerOf(realKey(r));
+    if(!owned&&ow){const oh=(ow.best.herd||[]).find(x=>x.k===realKey(r));html+=`<p class="note">Хозяин: <b>${esc(pname(ow.id))}</b>. Реальная лошадь может быть только у одного игрока. Предложи ему цену:</p><div class="row"><input class="search" data-offp style="flex:1;min-width:0;max-width:130px" inputmode="numeric" value="${price}" aria-label="Цена"><button class="btn" data-offer ${ON.ro?'disabled':''}>Предложить покупку</button></div>`}
+    else html+=owned?'<p class="note">Эта лошадь уже живёт в твоей конюшне.</p>':`<div class="row"><p class="note">Можно забрать в конюшню. Характеристики зависят от её реальных пробегов.</p><button class="btn" data-buy ${S.coins<price||S.horses.length>=S.stalls?'disabled':''}><span class="price">${price}</span> мон.</button></div>`}
   else html+='<p class="note">Лошадь из родословных: известна по потомкам, своих данных о пробегах нет.</p>';
   x.innerHTML=html;d.appendChild(x);
-  const cv=x.querySelector('canvas');if(cv){const c=cv.getContext('2d');c.scale(2,2);drawHorse(c,r._h,{x:88,y:110,s:.42,t:0,dirt:false})}
+  const cv=x.querySelector('canvas');if(cv){const c=cv.getContext('2d');c.scale(2,2);drawHorse(c,r._h,{x:88,y:110,s:.42,t:0,dirt:false,saddle:!!r.sport})}
   x.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{$('#regQ').value=b.dataset.q;regF='all';regN=40;renderReg();$('#regQ').scrollIntoView({block:'center'})});
-  const bb=x.querySelector('[data-buy]');if(bb)bb.onclick=()=>{const price=realPrice(r);if(S.horses.length>=S.stalls){toast(`Все ${S.stalls} денников заняты. Купи ещё денник в Деннике`);return}if(S.coins<price){toast('Не хватает монет');return}
+  const ob=x.querySelector('[data-offer]');if(ob)ob.onclick=()=>{const ow=ownerOf(realKey(r));if(!ow)return;const oh=(ow.best.herd||[]).find(z=>z.k===realKey(r));makeOffer(ow.id,oh?oh.id:'',r.n,+x.querySelector('[data-offp]').value,realKey(r))};
+  const bb=x.querySelector('[data-buy]');if(bb)bb.onclick=()=>{const price=realPrice(r);if(ownerOf(realKey(r))){toast('Эту лошадь уже забрал другой игрок');renderReg();return}if(S.horses.length>=S.stalls){toast(`Все ${S.stalls} денников заняты. Купи ещё денник в Деннике`);return}if(S.coins<price){toast('Не хватает монет');return}
     S.coins-=price;const h=r._h;r._h=null;S.horses.push(h);S.cur=h.id;herdKey='';SFX.neigh();toast(`${h.name} переезжает в твою конюшню`);save();setView('stable')};
 }
 $('#regQ').addEventListener('input',()=>{clearTimeout(regT);regT=setTimeout(()=>{regN=40;renderReg()},150)});
@@ -6230,12 +6443,8 @@ async function initClaude(){
   if(ON.user){try{ON.uid=await ON.user.id()}catch(e){}try{ON.ro=(await ON.user.can('data.write'))===false}catch(e){}}
   ON.ok=!!(ON.db&&ON.uid);ON.tried=true;renderClub();
   if(!ON.db)return;
-  try{ON.db.collection('players').orderBy('score','desc').limit(50).onSnapshot(s=>{ON.players=s.docs.map(d=>Object.assign({id:d.id},d.data()));resolveNames(ON.players.map(p=>p.id));renderClub()},()=>{})}catch(e){}
+  try{ON.db.collection('players').orderBy('score','desc').limit(200).onSnapshot(s=>{ON.players=s.docs.map(d=>Object.assign({id:d.id},d.data()));resolveNames(ON.players.map(p=>p.id));renderClub()},()=>{})}catch(e){}
   try{ON.db.collection('trades').where('status','in',['open','sold']).limit(200).onSnapshot(s=>{ON.trades=s.docs.map(d=>Object.assign({id:d.id},d.data()));payouts();renderClub()},()=>{})}catch(e){}
-  try{ON.db.collection('chat').orderBy('at','desc').limit(40).onSnapshot(s=>{ON.chat=s.docs.map(d=>Object.assign({id:d.id},d.data()));resolveNames(ON.chat.map(m=>m.uid));renderChat()},()=>{})}catch(e){}
-  try{ON.db.collection('auctions').orderBy('at','desc').limit(60).onSnapshot(s=>{ON.auctions=s.docs.map(d=>Object.assign({id:d.id},d.data()));aucSettle();renderClub()},()=>{})}catch(e){}
-  try{ON.db.collection('studs').orderBy('at','desc').limit(60).onSnapshot(s=>{ON.studs=s.docs.map(d=>Object.assign({id:d.id},d.data()));renderClub()},()=>{})}catch(e){}
-  if(ON.uid){try{ON.db.collection('stud_uses').where('owner','==',ON.uid).limit(50).onSnapshot(s=>{ON.myUses=s.docs.map(d=>Object.assign({id:d.id},d.data()));studPayouts()},()=>{})}catch(e){}}
   if(ON.uid){try{const sv=await ON.db.doc(`data/users/${ON.uid}/save`).get();ON.cloud=sv.exists?sv.data():null}catch(e){}renderClub();setTimeout(()=>pushPlayer(true),1500)}
   if(view==='arena'&&disc==='end')joinRide(ENDUR[sel.end].km);
 }
@@ -6247,11 +6456,11 @@ async function supaSignedIn(u){ON.uid=u.id;ON.needLogin=false;ON.ok=true;
   await supaRefresh();pushPlayer(true);
   if(view==='arena'&&disc==='end')joinRide(ENDUR[sel.end].km)}
 async function supaRefresh(){if(ON.be!=='supa'||!ON.ok)return;ON.poll=0;
-  try{const {data}=await ON.sb.from('players').select('id,nick,score,ribbons,cups,end_km,top,best').order('score',{ascending:false}).limit(50);
+  try{const {data}=await ON.sb.from('players').select('id,nick,score,ribbons,cups,end_km,top,best').order('score',{ascending:false}).limit(300);
     if(data){ON.players=data.map(p=>({id:p.id,score:p.score,ribbons:p.ribbons,cups:p.cups,endKm:p.end_km,top:p.top,best:p.best||{}}));data.forEach(p=>{ON.names[p.id]=cleanNick(p.nick)||'Игрок'})}}catch(e){}
   try{const {data}=await ON.sb.from('trades').select('id,seller,seller_nick,horse,name,breed,level,price,status').eq('status','open').order('created_at',{ascending:false}).limit(100);
     if(data){ON.trades=data;data.forEach(t=>{ON.names[t.seller]=cleanNick(t.seller_nick)||'Игрок'})}}catch(e){}
-  await supaV2();await payouts();renderClub()}
+  await payouts();await offersTick();renderClub()}
 async function supaAuth(mode){const em=$('#suEmail').value.trim(),pw=$('#suPass').value,nk=cleanNick($('#suNick')?$('#suNick').value:'');const msg=$('#suMsg');
   if(!em||pw.length<6){msg.textContent='Введи почту и пароль от 6 символов';return}
   if(mode==='up'&&nk.length<2){msg.textContent='Придумай ник для рейтинга (от 2 символов)';return}
@@ -6266,7 +6475,7 @@ async function supaLogout(){try{await ON.sb.auth.signOut()}catch(e){}leaveRide()
 function topHorse(){const b=S.horses.slice().sort((a,b)=>b.level-a.level)[0];return b?`${b.name}, ур. ${b.level}`:''}
 function pushPlayer(force){if(!ON.ok||ON.ro)return;const now=Date.now();if(!force&&now-ON.lastPush<20000)return;ON.lastPush=now;
   const rib=S.horses.reduce((a,h)=>a+h.ribbons.length,0),ach=Object.keys(S.ach||{}).length;
-  const body={score:Math.round(rib*10+(S.cups||0)*50+(S.stats.endKm||0)/5+ach*5+S.horses.reduce((a,h)=>a+h.level,0)*3),ribbons:rib,cups:S.cups||0,endKm:Math.round(S.stats.endKm||0),ach,day:S.day,horses:S.horses.length,top:topHorse().slice(0,60),best:Object.assign({},S.best||{},S.lastRace?{race:S.lastRace}:{},S.team?{team:S.team}:{}),at:now};
+  const body={score:Math.round(rib*10+(S.cups||0)*50+(S.stats.endKm||0)/5+ach*5+S.horses.reduce((a,h)=>a+h.level,0)*3),ribbons:rib,cups:S.cups||0,endKm:Math.round(S.stats.endKm||0),ach,day:S.day,horses:S.horses.length,top:topHorse().slice(0,60),best:Object.assign({},S.best||{},S.lastRace?{race:S.lastRace}:{},S.team?{team:S.team}:{},{herd:herdSnap(),offers:(S.myOffers||[]).slice(-6),dec:(S.declined||[]).slice(-20)}),at:now};
   if(ON.be==='claude')writeQ(()=>ON.db.doc('players/'+ON.uid).set(body));
   else writeQ(()=>ON.sb.from('players').upsert({id:ON.uid,nick:ON.nick||'Игрок',score:body.score,ribbons:rib,cups:body.cups,end_km:body.endKm,ach,day:S.day,horses:body.horses,top:body.top,best:body.best,updated_at:new Date().toISOString()}).then(()=>{}))}
 function cloudSave(manual){if(!ON.ok||ON.ro)return;const txt=JSON.stringify(S);if(!manual&&txt===ON.lastSaved)return;ON.lastSaved=txt;
@@ -6341,7 +6550,7 @@ async function chatSend(text,kind){kind=kind||'msg';if(!ON.ok||ON.ro)return;text
   try{if(ON.be==='claude')await ON.db.collection('chat').add({uid:ON.uid,text,kind,team:S.team||'',at:Date.now()});
     else{const r=await ON.sb.from('chat').insert({uid:ON.uid,nick:ON.nick||'Игрок',text,kind,team:S.team||''});if(r.error)throw r.error;supaV2()}}
   catch(e){if(kind==='msg')toast(ON.v2===false?'Чат заработает после шага с SQL на сервере':'Сообщение не отправилось')}}
-function feed(text){if(!ON.ok||ON.ro)return;const n=Date.now();if(n-(ON.lastFeed||0)<30000)return;ON.lastFeed=n;chatSend(text,'feed')}
+function feed(text){return;const n=Date.now();if(n-(ON.lastFeed||0)<30000)return;ON.lastFeed=n;chatSend(text,'feed')}
 async function supaV2(){if(ON.be!=='supa'||!ON.ok)return;
   try{const c=await ON.sb.from('chat').select('id,uid,nick,text,kind,team,created_at').order('created_at',{ascending:false}).limit(40);
     if(c.error){ON.v2=false;return}ON.v2=true;ON.chat=(c.data||[]).map(m=>({id:m.id,uid:m.uid,text:m.text,kind:m.kind,team:m.team,at:Date.parse(m.created_at)}));(c.data||[]).forEach(m=>ON.names[m.uid]=cleanNick(m.nick)||'Игрок');
@@ -6410,14 +6619,14 @@ function renderOnline2(){if(!ON.ok)return;
       ${list.length?`<div class="tablewrap"><table class="proto"><thead><tr><th>#</th><th>Команда</th><th>Игроков</th><th>Очки</th></tr></thead><tbody>${list.map((t,i)=>`<tr class="${t.n===S.team?'me':''}"><td>${i+1}</td><td>${esc(t.n)}</td><td>${t.m}</td><td>${t.score}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Команд пока нет. Впиши название — друзья с тем же названием попадут в одну команду.</p>'}`;
     $('#teamGo').onclick=()=>{S.team=cleanNick($('#teamIn').value).slice(0,20);save();pushPlayer(true);toast(S.team?`Ты в команде «${S.team}»`:'Ты вышел из команды');renderClub()}}
   // аукцион
-  const al=$('#aucList');if(al){const now=Date.now();const open=ON.auctions.filter(a=>a.status==='open'&&a.horse);al.innerHTML='';
+  const al=null;if(al){const now=Date.now();const open=ON.auctions.filter(a=>a.status==='open'&&a.horse);al.innerHTML='';
     if(!open.length)al.innerHTML='<p class="note">Сейчас торгов нет. Выставить лошадь можно в деннике: «Продать» → «На аукцион».</p>';
     open.forEach(a=>{const d=document.createElement('div');d.className='item';const cv=document.createElement('canvas');cv.width=192;cv.height=128;d.appendChild(cv);const left=a.ends-now;const mine=a.seller===ON.uid;
       const inf=document.createElement('div');inf.innerHTML=`<b>${esc(String(a.name||'Лошадь').slice(0,24))}</b><small>${left>0?'ещё '+mins(left):'торги закрыты'} · ${a.bid?`ставка ${a.bid} (${a.bidder===ON.uid?'твоя':esc(pname(a.bidder))})`:`старт ${a.start}`}<br>${mine?'твой лот':'продаёт '+esc(pname(a.seller))}</small>`;d.appendChild(inf);
       if(!mine&&left>0&&!ON.ro){const min=a.bid?a.bid+10:a.start;const b=document.createElement('button');b.className='btn';b.innerHTML=`Ставка <span class="price">${min}</span>`;b.disabled=S.coins<min||a.bidder===ON.uid;b.onclick=()=>placeBid(a,min);d.appendChild(b)}
       al.appendChild(d);try{if(BREEDS[a.horse.breed]&&COATS[a.horse.coat])miniHorse(cv,Object.assign(ghostHorse({}),a.horse,{dirt:[],inj:null}))}catch(e){}})}
   // жеребцы
-  const sl=$('#studList');if(sl){sl.innerHTML='';const m=cur();
+  const sl=null;if(sl){sl.innerHTML='';const m=cur();
     if(!ON.studs.length)sl.innerHTML='<p class="note">В каталоге пока нет жеребцов. Свой можно предложить в деннике: «Продать» → «Предложить для случки».</p>';
     ON.studs.forEach(st=>{if(!st.horse)return;const d=document.createElement('div');d.className='item';const cv=document.createElement('canvas');cv.width=192;cv.height=128;d.appendChild(cv);const mine=st.owner===ON.uid;const H=st.horse;
       const inf=document.createElement('div');inf.innerHTML=`<b>${esc(String(st.name||'Жеребец').slice(0,24))}</b><small>${esc(String(H.breedName||(BREEDS[H.breed]||{}).name||''))}, ур. ${+H.level||1}${SPEC[H.spec]?' · '+SPEC[H.spec].n.toLowerCase():''}<br>${mine?'твой жеребец':'хозяин '+esc(pname(st.owner))}</small>`;d.appendChild(inf);
@@ -6425,6 +6634,101 @@ function renderOnline2(){if(!ON.ok)return;
       d.appendChild(b);sl.appendChild(d);try{if(BREEDS[H.breed]&&COATS[H.coat])miniHorse(cv,Object.assign(ghostHorse({}),H,{dirt:[],inj:null}))}catch(e){}})}
   if(ON.be==='supa'&&ON.v2===false){const n=$('#v2note');if(n)n.hidden=false}
   renderChat()}
+
+/* ---- реальные лошади уникальны; игроки отправляют друг другу запросы на покупку ---- */
+function hKey(h){if(!h.real)return'';if(!h.real.key)h.real.key=(h.name+'|'+(h.real.y||'')).toLowerCase();return h.real.key}
+const herdSnap=()=>S.horses.slice(0,30).map(h=>({id:h.id,n:String(h.name).slice(0,30),b:h.breed,c:h.coat,l:h.level,sx:h.sex,k:hKey(h)}));
+function ownerOf(key){if(!key||!ON.ok)return null;return ON.players.find(p=>p.id!==ON.uid&&p.best&&Array.isArray(p.best.herd)&&p.best.herd.some(x=>x&&x.k===key))||null}
+function makeOffer(to,hid,name,price,key){if(!ON.ok||ON.ro)return;price=Math.max(10,Math.min(99999,Math.round(price)||0));if(S.coins<price){toast('Не хватает монет на такую цену');return}
+  S.myOffers=(S.myOffers||[]).filter(o=>Date.now()-o.at<3*864e5&&!(o.to===to&&o.hid===hid));if(S.myOffers.length>=6){toast('Можно держать не больше 6 запросов сразу');return}
+  S.myOffers.push({id:Math.random().toString(36).slice(2,10),to,hid,name:String(name).slice(0,30),key:key||'',price,at:Date.now()});save();pushPlayer(true);
+  toast(`Запрос отправлен: ${name} за ${price}. Когда хозяин согласится, лошадь придёт сама`);renderClub()}
+function incomingOffers(){S.declined=S.declined||[];S.accepted=S.accepted||{};const out=[];
+  ON.players.forEach(p=>{if(p.id===ON.uid||!p.best||!Array.isArray(p.best.offers))return;p.best.offers.forEach(o=>{if(!o||o.to!==ON.uid||S.declined.includes(o.id)||S.accepted[o.id])return;if(Date.now()-(+o.at||0)>3*864e5)return;
+    const h=S.horses.find(x=>x.id===o.hid)||(o.key&&S.horses.find(x=>hKey(x)===o.key));if(!h)return;out.push({o,from:p.id,h})})});return out}
+function declineOffer(o){S.declined=(S.declined||[]).concat(o.id).slice(-40);save();pushPlayer(true);toast('Ты отказался');renderClub()}
+async function acceptOffer(x){if(!ON.ok||ON.ro)return;const {o,from,h}=x;if(S.horses.length<=1){toast('Последнюю лошадь продать нельзя');return}
+  const horse=JSON.parse(JSON.stringify(Object.assign({},h,{reservedFor:from,offerId:o.id}))),name=h.name,breed=h.breedName||BREEDS[h.breed].name,price=Math.max(10,Math.min(99999,+o.price||0));
+  try{if(ON.be==='claude')await ON.db.collection('trades').add({seller:ON.uid,horse,price,status:'open',at:Date.now(),name,breed,level:h.level});
+    else{const r=await ON.sb.from('trades').insert({seller:ON.uid,seller_nick:ON.nick,horse,name,breed,level:h.level,price});if(r.error)throw r.error}}
+  catch(e){toast('Не получилось: нет связи с сервером');return}
+  S.accepted=S.accepted||{};S.accepted[o.id]=1;S.horses=S.horses.filter(z=>z.id!==h.id);if(!S.horses.find(z=>z.id===S.cur))S.cur=S.horses[0].id;herdKey='';
+  toast(`${name} продана ${pname(from)} за ${price}. Деньги придут, когда покупатель её заберёт`);SFX.coin();save();cloudSave();pushPlayer(true);ui();if(ON.be==='supa')supaRefresh();else renderClub()}
+let offerBusy=false;
+async function offersTick(){if(!ON.ok||ON.ro||offerBusy)return;offerBusy=true;const mine=S.myOffers||[];
+  try{for(const o of mine.slice()){const owner=ON.players.find(p=>p.id===o.to);
+      if(owner&&owner.best&&Array.isArray(owner.best.dec)&&owner.best.dec.includes(o.id)){S.myOffers=S.myOffers.filter(z=>z.id!==o.id);toast(`${pname(o.to)} отказался продавать ${o.name}`);save();pushPlayer(true);continue}
+      const t=ON.trades.find(t=>t.status==='open'&&t.horse&&t.horse.offerId===o.id&&t.horse.reservedFor===ON.uid);
+      if(t){if(S.coins<t.price){if(!o.warned){o.warned=1;toast(`${o.name} ждёт тебя: нужно ${t.price} монет`)}continue}
+        if(S.horses.length>=S.stalls)S.stalls++;S.myOffers=S.myOffers.filter(z=>z.id!==o.id);save();await buyTrade(t);pushPlayer(true)}}}
+  catch(e){}offerBusy=false}
+function renderOffers(){const el=$('#offerBox');if(!el)return;const inc=incomingOffers();const mine=(S.myOffers||[]);
+  el.innerHTML=(inc.length?inc.map((x,i)=>`<div class="task"><span><b>${esc(pname(x.from))}</b> хочет купить <b>${esc(x.h.name)}</b> за ${+x.o.price||0}</span><span class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn" data-acc="${i}">Продать</button><button class="btn ghost" data-dec="${i}">Нет</button></span></div>`).join(''):'<p class="note">Тебе пока никто не предлагал купить лошадь.</p>')
+    +(mine.length?`<p class="note">Твои запросы: ${mine.map(o=>`${esc(o.name)} за ${o.price} (${esc(pname(o.to))})`).join(', ')}</p>`:'')
+    +'<p class="note">Чтобы купить чужую лошадь, нажми на игрока в рейтинге и выбери лошадь из его конюшни, или найди реальную лошадь в Реестре.</p>';
+  el.querySelectorAll('[data-acc]').forEach(b=>b.onclick=()=>acceptOffer(inc[+b.dataset.acc]));el.querySelectorAll('[data-dec]').forEach(b=>b.onclick=()=>declineOffer(inc[+b.dataset.dec].o))}
+const p_peek=pid=>pid===ON.uid?toast('Это ты'):showStable(pid);
+function showStable(pid){const p=ON.players.find(x=>x.id===pid);const el=$('#peekBox');if(!p||!el)return;const herd=(p.best&&Array.isArray(p.best.herd))?p.best.herd:[];
+  el.hidden=false;el.innerHTML=`<div class="row"><span class="label">Конюшня игрока ${esc(pname(pid))}</span><button class="linkbtn" id="peekX">Закрыть</button></div>`+(herd.length?'':'<p class="note">Игрок ещё не обновил игру — лошади появятся, когда он зайдёт в новую версию.</p>');
+  herd.forEach(x=>{if(!x||!BREEDS[x.b])return;const d=document.createElement('div');d.className='item';const cv=document.createElement('canvas');cv.width=192;cv.height=128;d.appendChild(cv);
+    const inf=document.createElement('div');inf.innerHTML=`<b>${esc(String(x.n))}</b><small>${esc(BREEDS[x.b].name)} · ур. ${+x.l||1}</small><div class="row" style="flex-wrap:nowrap;gap:6px"><input class="search" style="width:90px" inputmode="numeric" value="${150+(+x.l||1)*60}" aria-label="Цена"><button class="btn">Предложить</button></div>`;d.appendChild(inf);
+    inf.querySelector('button').onclick=()=>makeOffer(pid,x.id,x.n,+inf.querySelector('input').value,x.k);el.appendChild(d);
+    try{miniHorse(cv,Object.assign(ghostHorse({}),{breed:x.b,coat:COATS[x.c]?x.c:'bay',sex:x.sx},{dirt:[],inj:null}))}catch(e){}});
+  $('#peekX').onclick=()=>{el.hidden=true};el.scrollIntoView({block:'nearest'})}
+
+/* ---- дуэль один на один: общий код, одинаковый маршрут, соперник виден на манеже ---- */
+const DUELS={jump:{n:'Конкур 100 см',cls:1},dress:{n:'Выездка, Малый приз',cls:1},end:{n:'Пробег 40 км',cls:0}};
+let DU=null;
+function duelSend(force){if(!DU||!DU.chan)return;const n=performance.now();if(!force&&n-(DU.t||0)<300)return;DU.t=n;const h=cur();
+  const e=ar.kind==='end',me=ar.duel&&ar.running;
+  const p={uid:ON.uid,n:ON.nick||'',role:DU.role,disc:DU.disc,ready:!!DU.ready,go:DU.go||0,round:DU.round,hb:h.breed,hc:h.coat,bl:!!h.blaze,so:h.socks||0,
+    d:me&&ar.kind==='jump'?Math.round(ar.dist):0,jy:me&&ar.kind==='jump'?Math.round(ar.jy):0,air:me&&!!ar.air,f:ar.duel?ar.faults||0:0,
+    sc:ar.duel&&ar.kind==='dress'?+(ar.score||0).toFixed(1):0,jd:ar.duel&&ar.kind==='dress'?ar.judged||0:0,
+    st:e?ar.stage:0,km:e?+ar.km.toFixed(2):0,tot:e?+ar.tot.toFixed(2):0,mode:e&&ar.duel?(ar.done?(ar.elim?'out':'fin'):ar.mode):'lobby',g:e?ar.gait:'canter',res:DU.res||null};
+  try{if(DU.chan.kind==='claude')DU.chan.r.presence(p).catch(()=>{});else DU.chan.ch.track(p).catch(()=>{})}catch(e2){}}
+function duelPeers(list){DU.op=list[0]||null;if(DU.op){ON.names[DU.op.uid]=cleanNick(DU.op.n)||ON.names[DU.op.uid]||'Игрок';if(DU.role==='guest'&&DU.op.role==='host'){DU.disc=DU.op.disc||DU.disc}}duelLogic();renderDuel()}
+async function duelJoin(code,role,disc){if(!ON.ok){toast('Сначала войди в онлайн-клуб');return}duelLeave();code=String(code).replace(/\D/g,'').slice(0,6);if(code.length<4){toast('Код — 4 цифры');return}
+  DU={code,role,disc:disc||'jump',ready:false,round:1,op:null,go:0};const name='duel-'+code;
+  try{if(ON.be==='claude'){if(!ON.room){toast('Онлайн-комнаты недоступны');DU=null;return}const r=await ON.room.join(name);DU.chan={kind:'claude',r};
+      r.onPeers(ch=>{duelPeers(ch.peers.filter(p=>!p.isMe&&p.presence&&p.presence.uid&&p.presence.uid!==ON.uid).map(p=>p.presence))},()=>{})}
+    else{const ch=ON.sb.channel('podkova-'+name,{config:{presence:{key:ON.uid}}});DU.chan={kind:'supa',ch};
+      ch.on('presence',{event:'sync'},()=>{const st=ch.presenceState();duelPeers(Object.entries(st).filter(([k])=>k!==ON.uid).map(([k,arr])=>Object.assign({},arr[arr.length-1],{uid:k})))});
+      ch.subscribe(st=>{if(st==='SUBSCRIBED')duelSend(true)})}
+    duelSend(true);renderDuel();toast(role==='host'?`Дуэль создана. Код ${code} — скажи его сопернику`:'Ты в дуэли. Жми «Готов»')}
+  catch(e){DU=null;toast('Не удалось подключиться к дуэли')}}
+function duelLeave(){if(DU&&DU.chan){try{if(DU.chan.kind==='claude')DU.chan.r.leave().catch(()=>{});else ON.sb.removeChannel(DU.chan.ch)}catch(e){}}if(ar&&ar.duel)ar.duel=false;DU=null;renderDuel()}
+function duelLogic(){if(!DU)return;const op=DU.op;
+  if(DU.role==='host'&&op&&DU.ready&&op.ready&&!DU.go&&!DU.res){DU.go=Date.now()+4000;duelSend(true)}
+  if(DU.role==='guest'&&op&&op.go&&op.round===DU.round&&!DU.go&&DU.ready)DU.go=op.go;
+  if(DU.go&&!DU.started&&Date.now()>=DU.go-3500){DU.started=true;duelStart()}
+  if(DU.res&&op&&op.res&&op.res.round===DU.round&&!DU.done)duelFinish()}
+function duelStart(){const d=DU.disc,cl=DUELS[d].cls;setView('arena');disc=d;sel[d]=cl;renderArenaUI();withSeed(hashStr('duel'+DU.code+'r'+DU.round),()=>resetArena());ar.duel=true;
+  const h=cur();if(!canCompete(h)){DU.res={round:DU.round,k:1e9,txt:'не вышел на старт'};duelSend(true);return}
+  const wait=Math.max(0,DU.go-Date.now());toast(`Дуэль: старт через ${Math.ceil(wait/1000)} с`);setTimeout(()=>{if(DU&&ar.duel&&!ar.running&&!ar.done)startOrJump()},wait)}
+function duelResult(kind,val){if(!DU||!ar.duel)return;const k=kind==='jump'?val.f*1000+val.t:kind==='dress'?1000-val.v:(val.elim?1e7-(val.km||0):val.t);
+  const txt=kind==='jump'?`${val.f} шт. · ${val.t.toFixed(2)} с`:kind==='dress'?`${val.v.toFixed(2)}%`:val.elim?`${val.elim} · ${(val.km||0).toFixed(1)} км`:`${fmtT(val.t)}`;
+  DU.res={round:DU.round,k,txt};duelSend(true);duelLogic();renderDuel()}
+function duelFinish(){DU.done=true;const op=DU.op.res,me=DU.res;const win=me.k<op.k,draw=me.k===op.k;
+  if(win){S.coins+=60;S.duelW=(S.duelW||0)+1;SFX.win()}else if(!draw)S.duelL=(S.duelL||0)+1;save();ui();
+  toast(win?`Победа в дуэли над ${pname(DU.op.uid)}! +60 монет`:draw?'Ничья в дуэли':`Дуэль проиграна: ${pname(DU.op.uid)} быстрее`);renderDuel()}
+function duelAgain(){if(!DU)return;DU.round++;DU.ready=false;DU.go=0;DU.started=false;DU.res=null;DU.done=false;if(ar)ar.duel=false;duelSend(true);renderDuel()}
+function renderDuel(){const el=$('#duelBox');if(!el)return;
+  if(!DU){el.innerHTML=`<p class="note">Сыграй с другом: один создаёт дуэль и называет код, второй вводит его. Маршрут у обоих одинаковый, соперника видно прямо на манеже. Победителю — 60 монет.${S.duelW||S.duelL?` Твой счёт: ${S.duelW||0} побед, ${S.duelL||0} поражений.`:''}</p>
+      <div class="seg" id="duelD">${Object.entries(DUELS).map(([k,v],i)=>`<button data-dd="${k}" aria-pressed="${i===0}">${v.n}</button>`).join('')}</div>
+      <div class="row" style="justify-content:flex-start"><button class="btn" id="duelNew" ${ON.ro?'disabled':''}>Создать дуэль</button><input id="duelCode" class="search" style="width:110px" inputmode="numeric" maxlength="6" placeholder="Код"><button class="btn ghost" id="duelIn" ${ON.ro?'disabled':''}>Войти</button></div>`;
+    let dd='jump';el.querySelectorAll('[data-dd]').forEach(b=>b.onclick=()=>{dd=b.dataset.dd;el.querySelectorAll('[data-dd]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+    $('#duelNew').onclick=()=>duelJoin(String(1000+Math.floor(Math.random()*9000)),'host',dd);$('#duelIn').onclick=()=>duelJoin($('#duelCode').value,'guest');return}
+  const op=DU.op;const st=DU.done?(DU.res.k<DU.op.res.k?'Ты победил!':DU.res.k===DU.op.res.k?'Ничья':'Соперник оказался быстрее'):DU.res?'Ждём результат соперника…':DU.go?'Старт! Переходи на Манеж':'';
+  el.innerHTML=`<div class="row"><b>Код дуэли: ${DU.code}</b><span>${DUELS[DU.disc].n} · раунд ${DU.round}</span></div>
+    <p class="note">Ты: ${DU.ready?'готов':'не готов'}${DU.res?' · '+esc(DU.res.txt):''}<br>Соперник: ${op?esc(pname(op.uid))+' · '+(op.ready?'готов':'не готов')+(op.res&&op.res.round===DU.round?' · '+esc(String(op.res.txt)):''):'ждём, пока он введёт код…'}</p>
+    ${st?`<p class="note"><b>${st}</b></p>`:''}
+    <div class="row" style="justify-content:flex-start">${!DU.ready&&!DU.res?'<button class="btn" id="duelReady">Готов</button>':''}${DU.done?'<button class="btn" id="duelMore">Ещё раунд</button>':''}<button class="btn ghost" id="duelOut">Выйти из дуэли</button></div>`;
+  const r=$('#duelReady');if(r)r.onclick=()=>{DU.ready=true;duelSend(true);duelLogic();renderDuel()};const m=$('#duelMore');if(m)m.onclick=duelAgain;$('#duelOut').onclick=duelLeave}
+function drawDuelGhost(c,kind,x0,gy){if(!DU||!DU.op||!ar.duel)return;const op=DU.op;let sx,y,gait='canter',ph=T*11;
+  if(kind==='jump'){sx=x0+((+op.d||0)-ar.dist);y=gy-(+op.jy||0)*1.35}else{sx=x0-70;y=gy-4;gait=op.g||'canter'}
+  if(sx<-60||sx>AW+60)return;c.save();c.globalAlpha=.5;drawHorse(c,ghostHorse(op),{x:sx,y,s:.38,t:T,gallop:ph,gait,air:kind==='jump'&&!!op.air,dirt:false,saddle:true,rider:true});
+  c.globalAlpha=.95;c.font='800 10px Nunito, sans-serif';const nm=pname(op.uid).slice(0,16)+(kind==='dress'&&op.jd?` · ${(op.sc/(op.jd*10)*100).toFixed(1)}%`:kind==='jump'?` · ${op.f||0} шт.`:'');const w=c.measureText(nm).width+10;
+  c.fillStyle='rgba(19,32,26,.8)';c.beginPath();c.roundRect(sx-w/2,y-112,w,15,6);c.fill();c.fillStyle='#eef1e4';c.textAlign='center';c.textBaseline='middle';c.fillText(nm,sx,y-104.5);c.restore()}
 /* ---- horse trading ---- */
 function adoptHorse(raw){const h=makeHorse(BREEDS[raw&&raw.breed]?raw.breed:'arab');Object.assign(h,JSON.parse(JSON.stringify(raw||{})));fixHorse(h);h.id=Math.random().toString(36).slice(2,9);if(!COATS[h.coat])h.coat='bay';
   ['dirt','manure','stones','ribbons','patches','spotDots'].forEach(k=>{if(!Array.isArray(h[k]))h[k]=[]});h.name=String(h.name||'Лошадь').slice(0,24);return h}
@@ -6465,12 +6769,12 @@ async function joinRide(km){const name='ride-'+km;if(ON.rideName===name)return;
     ch.subscribe(s=>{if(s==='SUBSCRIBED')ridePresence(true)});ON.ride={kind:'supa',ch}}
   catch(e){ON.rideName=null}}
 function leaveRide(){if(ON.ride){try{if(ON.ride.kind==='claude')ON.ride.r.leave().catch(()=>{});else ON.sb.removeChannel(ON.ride.ch)}catch(e){}}ON.ride=null;ON.rideName=null;ON.peers=[]}
-function ridePresence(force){if(!ON.ride)return;const now=performance.now();if(!force&&now-(ON.rpT||0)<(ON.ride.kind==='supa'?700:500))return;ON.rpT=now;const h=cur();const e=ar.kind==='end';
+function ridePresence(force){if(DU)duelSend(force);if(!ON.ride)return;const now=performance.now();if(!force&&now-(ON.rpT||0)<(ON.ride.kind==='supa'?700:500))return;ON.rpT=now;const h=cur();const e=ar.kind==='end';
   const mode=!e||(!ar.running&&!ar.done)?'lobby':ar.done?(ar.elim?'out':'fin'):ar.mode;
   const p={uid:ON.uid,n:ON.nick||'',hb:h.breed,hc:h.coat,bl:!!h.blaze,so:h.socks||0,st:e?ar.stage:0,km:e?+ar.km.toFixed(2):0,tot:e?+ar.tot.toFixed(2):0,mode,g:e?ar.gait:'trot'};
   try{if(ON.ride.kind==='claude')ON.ride.r.presence(p).catch(()=>{});else ON.ride.ch.track(p).catch(()=>{})}catch(e2){}}
 function ghostHorse(pr){return{breed:BREEDS[pr.hb]?pr.hb:'arab',coat:COATS[pr.hc]?pr.hc:'bay',blaze:!!pr.bl,socks:Math.min(4,pr.so|0),pinto:false,spots:false,patches:[],spotDots:[],dirt:[],stones:[],ribbons:[]}}
-function drawGhosts(c,gy){ON.peers.forEach(p=>{const pr=p.presence||{};if(pr.st!==ar.stage||!['ride','vet','hold'].includes(pr.mode))return;const sx=EHX+((+pr.km||0)-ar.km)*EPX;if(sx<-60||sx>AW+60)return;const y=gy(sx);
+function drawGhosts(c,gy){(DU&&DU.op&&ar.duel?[{presence:DU.op}]:ON.peers).forEach(p=>{const pr=p.presence||{};if(pr.st!==ar.stage||!['ride','vet','hold'].includes(pr.mode))return;const sx=EHX+((+pr.km||0)-ar.km)*EPX;if(sx<-60||sx>AW+60)return;const y=gy(sx);
   c.save();c.globalAlpha=.55;const ph=pr.mode==='ride'&&pr.g!=='walk'?T*(ENDG[pr.g]||ENDG.trot).ph:null;drawHorse(c,ghostHorse(pr),{x:sx,y,s:.38,t:T,gallop:ph,gait:pr.g,dirt:false,saddle:true,rider:true});
   c.globalAlpha=.95;c.font='800 10px Nunito, sans-serif';const nm=pname(pr.uid).slice(0,16);const w=c.measureText(nm).width+10;c.fillStyle='rgba(19,32,26,.8)';c.beginPath();c.roundRect(sx-w/2,y-108,w,15,6);c.fill();
   c.fillStyle='#eef1e4';c.textAlign='center';c.textBaseline='middle';c.fillText(nm,sx,y-100.5);c.restore()})}
@@ -6489,8 +6793,8 @@ function renderClub(){if(view!=='trophy')return;const el=$('#onCard');if(!el)ret
       <div class="row" style="justify-content:flex-start"><button class="btn" type="submit">Войти</button><button class="btn ghost" type="button" id="suUp">Создать аккаунт</button></div>
       <p class="note" id="suMsg" role="status"></p></form>`;
     $('#suForm').addEventListener('submit',e=>{e.preventDefault();supaAuth('in')});$('#suUp').onclick=()=>supaAuth('up');
-    $('#lbCard').hidden=true;$('#trCard').hidden=true;['chatCard','teamCard','aucCard','studCard'].forEach(k=>{const e=$('#'+k);if(e)e.hidden=true});return}
-  if(!ON.ok){el.innerHTML=`<span class="label">Онлайн-клуб</span><p class="note">${!ON.tried?'Подключаемся…':ON.netErr?'Нет связи с сервером игры. Проверь интернет и открой игру заново.':ON.be==='claude'?'Онлайн работает, когда ты вошёл в аккаунт claude.ai и у тебя есть доступ к игре.':'Онлайн-сервер для этой версии ещё не подключён.'}</p>`;$('#lbCard').hidden=true;$('#trCard').hidden=true;['chatCard','teamCard','aucCard','studCard'].forEach(k=>{const e=$('#'+k);if(e)e.hidden=true});return}
+    $('#lbCard').hidden=true;$('#trCard').hidden=true;['teamCard','offerCard','duelCard','peekBox'].forEach(k=>{const e=$('#'+k);if(e)e.hidden=true});return}
+  if(!ON.ok){el.innerHTML=`<span class="label">Онлайн-клуб</span><p class="note">${!ON.tried?'Подключаемся…':ON.netErr?'Нет связи с сервером игры. Проверь интернет и открой игру заново.':ON.be==='claude'?'Онлайн работает, когда ты вошёл в аккаунт claude.ai и у тебя есть доступ к игре.':'Онлайн-сервер для этой версии ещё не подключён.'}</p>`;$('#lbCard').hidden=true;$('#trCard').hidden=true;['teamCard','offerCard','duelCard','peekBox'].forEach(k=>{const e=$('#'+k);if(e)e.hidden=true});return}
   const c=ON.cloud;const when=c?new Date(c.at).toLocaleString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
   el.innerHTML=`<div class="row"><span class="label">Онлайн-клуб${ON.be==='supa'&&ON.nick?' · '+esc(ON.nick):''}</span>${ON.be==='supa'?'<button class="linkbtn" id="suOut">Выйти</button>':''}</div>
     <p class="note">${ON.ro?'У тебя доступ только на просмотр. Чтобы играть онлайн, попроси владельца игры дать тебе доступ «Участник».':'Прогресс сам сохраняется на сервер каждые 2 минуты и в конце дня, а твои лучшие результаты попадают в протоколы других игроков.'}</p>
@@ -6500,25 +6804,26 @@ function renderClub(){if(view!=='trophy')return;const el=$('#onCard');if(!el)ret
   const cs=$('#cSave');if(cs)cs.onclick=()=>cloudSave(true);
   const cl=$('#cLoad');if(cl)cl.onclick=()=>{$('#cConfirm').innerHTML=`<div class="row"><p class="note">Прогресс на этом устройстве заменится сохранением с сервера (день ${c.day}). Загрузить?</p><button class="btn ghost" id="cNo">Отмена</button><button class="btn" id="cYes">Загрузить</button></div>`;$('#cNo').onclick=()=>{$('#cConfirm').innerHTML=''};$('#cYes').onclick=cloudLoad};
   $('#lbCard').hidden=false;const pl=ON.players.slice(0,20);
-  $('#lb').innerHTML=pl.length?`<div class="tablewrap"><table class="proto"><thead><tr><th>#</th><th>Игрок</th><th>Очки</th><th>Розетки</th><th>Кубки</th><th>Пробеги</th></tr></thead><tbody>${pl.map((p,i)=>`<tr class="${p.id===ON.uid?'me':''}"><td>${i+1}</td><td>${esc(pname(p.id))}<small> · ${esc(String(p.top||'').slice(0,40))}</small></td><td>${+p.score||0}</td><td>${+p.ribbons||0}</td><td>${+p.cups||0}</td><td>${+p.endKm||0} км</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Пока никого. Сыграй любое соревнование, чтобы попасть в рейтинг.</p>';
+  $('#lb').innerHTML=pl.length?`<div class="tablewrap"><table class="proto"><thead><tr><th>#</th><th>Игрок</th><th>Очки</th><th>Розетки</th><th>Кубки</th><th>Пробеги</th></tr></thead><tbody>${pl.map((p,i)=>`<tr class="${p.id===ON.uid?'me':''}"><td>${i+1}</td><td><button class="linkbtn" data-peek="${esc(p.id)}">${esc(pname(p.id))}</button><small> · ${esc(String(p.top||'').slice(0,40))}</small></td><td>${+p.score||0}</td><td>${+p.ribbons||0}</td><td>${+p.cups||0}</td><td>${+p.endKm||0} км</td></tr>`).join('')}</tbody></table></div>`:'<p class="note">Пока никого. Сыграй любое соревнование, чтобы попасть в рейтинг.</p>';
+  $('#lb').querySelectorAll('[data-peek]').forEach(b=>b.onclick=()=>p_peek(b.dataset.peek));
   $('#trCard').hidden=false;const list=$('#tradeList');list.innerHTML='';
-  const open=ON.trades.filter(t=>t.status==='open'&&t.horse);
+  const open=ON.trades.filter(t=>t.status==='open'&&t.horse&&(!t.horse.reservedFor||t.horse.reservedFor===ON.uid||t.seller===ON.uid));
   if(!open.length)list.innerHTML='<p class="note">На рынке пока пусто. Выставить свою лошадь можно в деннике: кнопка «Продать» под кличкой.</p>';
   open.sort((a,b)=>(a.seller===ON.uid)-(b.seller===ON.uid)).forEach(t=>{const d=document.createElement('div');d.className='item';const cv=document.createElement('canvas');cv.width=192;cv.height=128;d.appendChild(cv);
     const mine=t.seller===ON.uid;const inf=document.createElement('div');inf.innerHTML=`<b>${esc(String(t.name||'Лошадь').slice(0,24))}</b><small>${esc(String(t.breed||'').slice(0,30))} · ур. ${+t.level||1}<br>${mine?'твоё объявление':'продаёт '+esc(pname(t.seller))}</small>`;d.appendChild(inf);
     const b=document.createElement('button');b.className=mine?'btn ghost':'btn';b.innerHTML=mine?'Снять':`<span class="price">${+t.price||0}</span>`;b.disabled=ON.ro||(!mine&&(S.coins<t.price||S.horses.length>=S.stalls));b.onclick=()=>mine?cancelTrade(t):buyTrade(t);d.appendChild(b);list.appendChild(d);
     try{if(BREEDS[t.horse.breed]&&COATS[t.horse.coat])miniHorse(cv,Object.assign(ghostHorse({}),t.horse,{dirt:[],inj:null}))}catch(e){}});
   resolveNames(open.map(t=>t.seller));
-  ['chatCard','teamCard','aucCard','studCard'].forEach(k=>{const e=$('#'+k);if(e)e.hidden=false});renderOnline2()}
+  ['teamCard','offerCard','duelCard'].forEach(k=>{const e=$('#'+k);if(e)e.hidden=false});renderOnline2();renderOffers();renderDuel()}
 
 /* ============ LOOP ============ */
 function tick(dt){S.horses.forEach(h=>{h.hunger=clamp(h.hunger-dt/60*1.2);h.thirst=clamp(h.thirst-dt/60*1.6);h.joy=Math.max(0,h.joy-dt*.08)});patCd-=dt}
 let last=0;
-function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
+function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;if(DU){duelSend();duelLogic()}
   if(S){tick(dt);
     if(view==='stable')drawStall(dt);else if(view==='arena')stepArena(dt);
     lastUI+=dt;if(lastUI>.5){lastUI=0;if(view==='stable')liteUI()}
-    lastSave+=dt;if(lastSave>5){lastSave=0;save();ON.cs+=5;if(ON.cs>=120){ON.cs=0;cloudSave();pushPlayer()}ON.poll+=5;if(ON.be==='supa'&&ON.poll>=(raceHot()||view==='trophy'?15:45))supaRefresh();raceTick();}}
+    lastSave+=dt;if(lastSave>5){lastSave=0;save();ON.cs+=5;if(ON.cs>=120){ON.cs=0;cloudSave();pushPlayer()}ON.poll+=5;if(ON.be==='supa'&&ON.poll>=(raceHot()||view==='trophy'?15:45))supaRefresh();raceTick();if(DU){duelLogic();if(DU.op&&view==='trophy')renderDuel()}}}
   requestAnimationFrame(loop)}
 
 function start(data){

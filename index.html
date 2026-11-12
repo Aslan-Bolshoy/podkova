@@ -290,7 +290,7 @@ details summary{cursor:pointer}
   <section id="v-trophy" hidden style="flex-direction:column;gap:12px">
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
-    <p class="note" id="verNote" style="text-align:center">Версия игры 2.9</p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 3.0</p>
     <div class="card" id="lbCard" hidden><span class="label">Рейтинг игроков</span><div id="lb"></div></div>
     <div class="card" id="teamCard" hidden><span class="label">Команды</span><div id="teamBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card shop" id="peekBox" hidden></div>
@@ -5214,7 +5214,7 @@ function realHorse(r){const bk=baseBreed(r.b);const h=makeHorse(bk,r.n);const cs
   h.real={f:r.f,y:r.y,sire:r.sire,dam:r.dam,t:r.t,c:r.c,key:realKey(r)};h.spec='end';if(r.sport)sportize(h,r);h.spd=spdFor(h);h.gen=genesFromCoat(h.coat);return h}
 function sportize(h,r){h.spec=r.disc==='dress'?'dress':'jump';h.level=Math.max(1,Math.min(10,r.lvl));h.permit=40;h.fitBonus=r.disc==='event'?.08:0;h.prone=.12;
   const k=Math.max(0,r.lvl-4);if(r.disc==='dress')h.dressBonus=+(k*1.6).toFixed(1);else{h.jumpBonus=+(k*2.4).toFixed(1);if(r.disc==='event')h.dressBonus=+(k*.8).toFixed(1)}
-  h.real.sport=1;h.real.disc=r.disc;h.real.rider=r.rider;h.bio=`${DISCN[r.disc]}${r.rider?', всадник: '+r.rider:''}. ${r.src}.`}
+  h.real.sport=1;h.spdV2=1;h.real.disc=r.disc;h.real.rider=r.rider;h.bio=`${DISCN[r.disc]}${r.rider?', всадник: '+r.rider:''}. ${r.src}.`}
 function realPrice(r){if(r.sport)return Math.round((100+r.lvl*r.lvl*8)/10)*10;const age=r.y?new Date().getFullYear()-r.y:10;return Math.max(80,Math.round((BREEDS[baseBreed(r.b)].price*.8+r.c*20+(permitFrom(r.d)-40)*2)*(age>18?.6:1)/10)*10)}
 
 const INJ={
@@ -5281,7 +5281,10 @@ function makeHorse(bk,name){
 const SPEC={jump:{n:'Конкурная',d:'конкур'},dress:{n:'Выездковая',d:'выездка'},end:{n:'Пробежная',d:'пробеги'}};
 const SPEC_BY={arab:['end'],akhal:['end','jump'],kabard:['end','jump'],native:['end'],trot:['end','jump'],hann:['jump','dress'],half:['jump','dress','end'],friz:['dress'],appa:['jump','end'],tinker:['dress'],draft:['dress'],pony:['jump','dress']};
 function specFor(h){return h.real?'end':pick(SPEC_BY[h.breed]||['jump','dress','end'])}
-function spdFor(h){const B=BREEDS[h.breed]||{speed:0};return +(1+B.speed/220+rnd(-.06,.07)+(h.spec==='end'?.03:0)+(h.real?Math.min(.05,(h.real.c||0)*.006):0)).toFixed(3)}
+function spdFor(h){const B=BREEDS[h.breed]||{speed:0};
+  // звёзды конкура и выездки: скорость по классу лошади (уровень 10 — самые быстрые в игре)
+  if(h.real&&h.real.sport){const ch=(typeof CHAR!=='undefined'&&CHAR[h.char])?CHAR[h.char].s:0;return +((1.03+h.level*.012+rnd(0,.03))*(1+ch)).toFixed(3)}
+  return +(1+B.speed/220+rnd(-.06,.07)+(h.spec==='end'?.03:0)+(h.real?Math.min(.05,(h.real.c||0)*.006):0)).toFixed(3)}
 const specMul=(h,d)=>!h.spec?1:h.spec===d?1.06:.95;
 const gallopKmh=h=>Math.round(21*(h.spd||1));
 const CHAR={calm:{n:'спокойная',d:2,j:0,s:0,f:.03},hot:{n:'горячая',d:-2,j:1,s:.03,f:-.05},lazy:{n:'ленивая',d:0,j:-1,s:-.03,f:.04},shy:{n:'пугливая',d:-1,j:-2,s:0,f:-.02},brave:{n:'смелая',d:0,j:3,s:.01,f:0}};
@@ -6882,7 +6885,7 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
 
 
 /* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
-const APP_V='2.9',SITE='https://aslan-bolshoy.github.io/podkova/';
+const APP_V='3.0',SITE='https://aslan-bolshoy.github.io/podkova/';
 const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
 const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
 let updShown=null,updTimer=null,updLater=0;
@@ -6908,7 +6911,7 @@ function start(data){
   if(S.offers&&S.offers[0]&&!S.offers[0].sex)S.offers=genOffers();
   if(!S.tasks)S.tasks=genTasks();
   if(!S.stats)S.stats={};if(!S.ach)S.ach={};if(!S.weather)S.weather=genWeather();if(S.sound==null)S.sound=true;S.cups=S.cups||0;updSnd();
-  S.gifts=S.gifts||{};S.horses.forEach(fixHorse);S.build=S.build||{};S.staff=S.staff||{};if(S.tut==null)S.tut=data&&data.state?6:(S.day>1?6:0);setTimeout(showTut,1200);S.stalls=Math.max(10,S.stalls||0,S.horses.length);
+  S.gifts=S.gifts||{};S.horses.forEach(fixHorse);S.horses.forEach(h=>{if(h.real&&h.real.sport&&!h.spdV2){h.spd=spdFor(h);h.spdV2=1}});S.build=S.build||{};S.staff=S.staff||{};if(S.tut==null)S.tut=data&&data.state?6:(S.day>1?6:0);setTimeout(showTut,1200);S.stalls=Math.max(10,S.stalls||0,S.horses.length);
   if(!S.gifts.noMansur){S.horses=S.horses.filter(h=>h.name!=='Аль Мансурка Лучший');S.gifts.noMansur=1;S.gifts.mansur=1;
     if(!S.horses.length){const st=fresh().horses[0];S.horses.push(st)}
     if(!S.horses.find(h=>h.id===S.cur))S.cur=S.horses[0].id}

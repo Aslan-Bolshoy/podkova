@@ -290,7 +290,7 @@ details summary{cursor:pointer}
   <section id="v-trophy" hidden style="flex-direction:column;gap:12px">
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
-    <p class="note" id="verNote" style="text-align:center">Версия игры 2.7</p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 2.8</p>
     <div class="card" id="lbCard" hidden><span class="label">Рейтинг игроков</span><div id="lb"></div></div>
     <div class="card" id="teamCard" hidden><span class="label">Команды</span><div id="teamBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card shop" id="peekBox" hidden></div>
@@ -5861,10 +5861,13 @@ function renderBreed(h){const el=$('#breedBox');
   if(isFoal(h)){el.innerHTML=`<p class="note">Жеребёнок растёт: ${h.age} из 5 дней. Потом можно выступать.</p>`;return}
   if(h.preg){el.innerHTML=`<p class="note">Ждёт жеребёнка: осталось ${h.preg.days} ${h.preg.days===1?'ночь':'ночи'}.</p>`;return}
   if(h.sex!=='f'){el.innerHTML='';return}
-  const dad=S.horses.filter(x=>x.sex==='m'&&!isFoal(x)).sort((a,b)=>b.level-a.level)[0];
-  if(!dad){el.innerHTML='<p class="note">Купи жеребца на ярмарке, и у кобылы сможет родиться жеребёнок.</p>';return}
+  const dads=S.horses.filter(x=>x.sex==='m'&&!isFoal(x)&&!x.sick).sort((a,b)=>b.level-a.level);
+  if(!dads.length){el.innerHTML='<p class="note">Нужен жеребец (не мерин): купи его на ярмарке или в Реестре, и у кобылы сможет родиться жеребёнок.</p>';return}
+  S.sireSel=S.sireSel||{};let dad=dads.find(x=>x.id===S.sireSel[h.id])||dads[0];
   const ok=h.level>=2&&S.coins>=80&&S.horses.length<S.stalls;
-  el.innerHTML=`<div class="row"><p class="note">Жеребёнок от ${esc(dad.name)} родится через 2 ночи${h.level<2?'. Нужен уровень 2':''}${S.horses.length>=S.stalls?'. Нет свободного денника':''}</p><button class="btn ghost" id="breedBtn" ${ok?'':'disabled'}>Свести · 80</button></div>`;
+  el.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px"><label class="note" for="sireSel">Отец жеребёнка:</label><select id="sireSel" class="search">${dads.map(x=>`<option value="${esc(x.id)}" ${x===dad?'selected':''}>${esc(x.name)} · ур. ${x.level}${SPEC[x.spec]?' · '+SPEC[x.spec].n.toLowerCase():''}</option>`).join('')}</select>
+    <div class="row"><p class="note">Жеребёнок от ${esc(dad.name)} родится через 2 ночи${h.level<2?'. Кобыле нужен уровень 2':''}${S.horses.length>=S.stalls?'. Нет свободного денника — купи денник':''}${S.coins<80?'. Нужно 80 монет':''}</p><button class="btn ghost" id="breedBtn" ${ok?'':'disabled'}>Свести · 80</button></div></div>`;
+  $('#sireSel').onchange=e=>{S.sireSel[h.id]=e.target.value;save();renderBreed(h)};
   $('#breedBtn').onclick=()=>{if(!ok)return;S.coins-=80;fixHorse(dad);h.preg={days:2,breed:dad.breed,coat:dad.coat,gen:dad.gen,spd:dad.spd,spec:dad.spec,char:dad.char,cm:heightCm(dad.hands||BREEDS[dad.breed].hands),sire:dad.name};toast(`${h.name} ждёт жеребёнка`);ui();save()}}
 const TASKS={feed:{t:'Покормить сеном',n:3,r:15},brush:{t:'Счистить пятна грязи',n:8,r:15},manure:{t:'Убрать навоз',n:3,r:10},hoof:{t:'Вынуть камни из копыт',n:2,r:15},
   pat:{t:'Погладить лошадей',n:10,r:10},treat:{t:'Угостить лакомством',n:2,r:10},show:{t:'Выступить на соревнованиях',n:1,r:20},ribbon:{t:'Выиграть розетку',n:1,r:30},dress:{t:'Выездка на 60% и выше',n:1,r:30},endrun:{t:'Финишировать в пробеге',n:1,r:30}};
@@ -6877,7 +6880,7 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
 
 
 /* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
-const APP_V='2.7',SITE='https://aslan-bolshoy.github.io/podkova/';
+const APP_V='2.8',SITE='https://aslan-bolshoy.github.io/podkova/';
 const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
 const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
 let updShown=null,updTimer=null,updLater=0;

@@ -300,7 +300,7 @@ details summary{cursor:pointer}
   <section id="v-trophy" hidden style="flex-direction:column;gap:12px">
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
-    <p class="note" id="verNote" style="text-align:center">Версия игры 3.3 · соперники на экране, персонал, фильтры денников</p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 3.4 · старшие конюхи, соперники на экране, фильтры денников</p>
     <div class="card" id="wkCard"><span class="label">Лига недели · обнуляется каждый понедельник</span><div id="wkBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card" id="lbCard" hidden><span class="label">Рейтинг игроков</span><div id="lb"></div></div>
     <div class="card" id="teamCard" hidden><span class="label">Команды</span><div id="teamBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
@@ -5367,7 +5367,8 @@ const BUILD={manege:{n:'Крытый манеж',d:'нет штрафа пого
   barn:{n:'Сенник',d:'каждую ночь +2 сена за уровень',c:[200,350,550]}};
 /* персонал: каждого можно нанять до 3 человек; один работник обслуживает ограниченное число лошадей */
 const STAFF={
-  groom:{n:'Конюх',d:'ночью убирает навоз и грязь, кормит и поит',per:5,w:25,max:3,u:'5 лошадей на одного'},
+  groom:{n:'Конюх',d:'ночью убирает навоз и грязь, кормит и поит',per:5,w:25,max:8,u:'5 лошадей на одного'},
+  headgroom:{n:'Старший конюх',d:'опытный конюх с помощником: делает ту же работу, но на большее число лошадей',per:10,w:45,max:6,u:'10 лошадей на одного'},
   feeder:{n:'Кормач',d:'привозит сено: +3 сена каждую ночь',w:15,max:3,u:'+3 сена за каждого'},
   farrier:{n:'Коваль',d:'вынимает камни и подравнивает копыта',per:6,w:20,max:3,u:'6 лошадей на одного'},
   vet:{n:'Ветврач',d:'лечит болезни и ускоряет заживление травм',w:30,max:3,u:'каждый следующий лечит быстрее'},
@@ -5389,6 +5390,7 @@ const foalNights=(a,b)=>{let n=0;while(a<5&&n<30){if(a<4)a=Math.min(4,a+b);a++;n
 const nightsW=n=>n+' '+(n===1?'ночь':n<5?'ночи':'ночей');
 const stf=k=>Math.max(0,Math.min((STAFF[k]||{}).max||0,+((S.staff||{})[k])||0));
 const staffWage=()=>Object.keys(STAFF).reduce((a,k)=>a+stf(k)*STAFF[k].w,0);
+const groomCap=()=>stf('groom')*5+stf('headgroom')*10;
 const stallsUsed=()=>S.horses.filter(h=>!isFoal(h)).length;
 const stallPrice=()=>300+Math.max(0,S.stalls-10)*50;
 function buyStall(){const p=stallPrice();if(S.coins<p){toast(`Новый денник стоит ${p} монет`);return}S.coins-=p;S.stalls++;SFX.coin();toast(`Построен денник №${S.stalls}`);ui();save()}
@@ -5968,7 +5970,7 @@ $('#nightBtn').addEventListener('click',()=>{if(night)return;const oldDay=S.day;
   if(seasonOf(oldDay)!==seasonOf(S.day))seasonEnd(news,oldDay);
   {const w=staffWage();if(w){if(S.coins>=w){S.coins-=w;news.push(`Зарплата персоналу: −${w} монет`)}else{Object.keys(S.staff).forEach(k=>S.staff[k]=0);news.push('Не хватило денег на зарплату — персонал уволился')}}}
   const bl=S.build||{};if(bl.barn){S.food.hay+=bl.barn*2}if(stf('feeder'))S.food.hay+=3*stf('feeder');
-  {const n=S.horses.length,need=[['groom',5],['farrier',6]].filter(([k,c])=>stf(k)&&stf(k)*c<n);if(need.length)news.push(`Персоналу не хватает рук: ${need.map(([k,c])=>`${STAFF[k].n.toLowerCase()} обслуживает ${stf(k)*c} из ${n} лошадей`).join(', ')}`)}
+  {const n=S.horses.length,need=[['groom',groomCap()],['farrier',stf('farrier')*6]].filter(([k,c])=>(k==='groom'?(stf('groom')||stf('headgroom')):stf(k))&&c<n);if(need.length)news.push(`Персоналу не хватает рук: ${need.map(([k,c])=>`${k==='groom'?'конюхи':STAFF[k].n.toLowerCase()} обслуживают ${c} из ${n} лошадей`).join(', ')}`)}
   S.horses.slice().forEach(h=>{h.energy=clamp(h.energy+65);h.hunger=clamp(h.hunger-18);h.thirst=clamp(h.thirst-22);h.hooves=clamp(h.hooves-(hasCh(h,'hoof')?10:5));h.joy=0;
     addManure(h,ri(1,3));addDirt(h,h.rug?ri(0,1):ri(2,4)+(S.weather==='rain'?2:0));addStones(h,ri(0,2));h.mangerHay=0;
     h.load=clamp((h.load||0)-(h.workedToday?4:16));h.workedToday=false;if(h.rest>0)h.rest--;
@@ -5985,7 +5987,7 @@ $('#nightBtn').addEventListener('click',()=>{if(night)return;const oldDay=S.day;
     const dp=(h.diet||0)+stf('nutri');h.diet=0;h.form=clamp((h.form==null?50:h.form)-(h.trainedDay===oldDay||h.workedToday?1:4)+(dp>=4?3:dp>=2?1:dp===0?-3:0));
     if(bl.clinic&&h.inj&&Math.random()<.35*bl.clinic)h.inj.left=Math.max(1,h.inj.left-1);
     const hi=S.horses.indexOf(h);
-    if(hi<stf('groom')*5){h.manure=[];h.dirt=h.dirt.slice(0,Math.floor(h.dirt.length/3));h.hunger=clamp(h.hunger+25);h.thirst=clamp(h.thirst+35)}
+    if(hi<groomCap()){h.manure=[];h.dirt=h.dirt.slice(0,Math.floor(h.dirt.length/3));h.hunger=clamp(h.hunger+25);h.thirst=clamp(h.thirst+35)}
     if(hi<stf('farrier')*6){h.stones=[];h.hooves=clamp(h.hooves+6)}
     if(hi<stf('physio')*5)h.load=clamp((h.load||0)-10);
     if(hi<stf('rider')*4&&!isFoal(h)&&!h.inj&&!h.sick){h.form=clamp((h.form==null?50:h.form)+4)}
@@ -6128,7 +6130,7 @@ function renderBase(){const h=cur();dqInit();S.build=S.build||{};S.staff=S.staff
   $('#buildList').innerHTML=Object.entries(BUILD).map(([k,b])=>{const lv=S.build[k]||0,pr=b.c[lv];return`<div class="task"><span><b>${b.n}</b>${lv?' · ур. '+lv:''}<br><small>${b.d}</small></span>${pr?`<button class="btn" data-b="${k}" ${S.coins<pr?'disabled':''}><span class="price">${pr}</span></button>`:'<b>макс.</b>'}</div>`}).join('');
   $('#buildList').querySelectorAll('[data-b]').forEach(x=>x.onclick=()=>{const k=x.dataset.b,lv=S.build[k]||0,pr=BUILD[k].c[lv];if(!pr||S.coins<pr)return;S.coins-=pr;S.build[k]=lv+1;SFX.coin();toast(`${BUILD[k].n}: уровень ${lv+1}`);save();ui();renderBase()});
   // персонал
-  $('#staffList').innerHTML=`<p class="note">Сейчас работают ${Object.keys(STAFF).reduce((a,k)=>a+stf(k),0)} человек · зарплата ${staffWage()} монет за ночь · лошадей ${S.horses.length}</p>`+Object.entries(STAFF).map(([k,st])=>{const n=stf(k);return`<div class="task"><span><b>${st.n}</b>${n?` × ${n}`:''} · ${st.w} в день за каждого<br><small>${st.d}. ${st.u}${st.per&&n?` · сейчас обслуживает ${Math.min(S.horses.length,n*st.per)} из ${S.horses.length}`:''}</small></span><span class="row" style="gap:6px;flex-wrap:nowrap">${n?`<button class="btn ghost" data-sm="${k}" aria-label="Уволить одного">−</button>`:''}<b>${n}/${st.max}</b>${n<st.max?`<button class="btn" data-sp="${k}" aria-label="Нанять ещё">+</button>`:''}</span></div>`}).join('');
+  $('#staffList').innerHTML=`<p class="note">Сейчас работают ${Object.keys(STAFF).reduce((a,k)=>a+stf(k),0)} человек · зарплата ${staffWage()} монет за ночь · лошадей ${S.horses.length}</p>`+Object.entries(STAFF).map(([k,st])=>{const n=stf(k);return`<div class="task"><span><b>${st.n}</b>${n?` × ${n}`:''} · ${st.w} в день за каждого<br><small>${st.d}. ${st.u}${st.per&&n?` · сейчас обслуживает ${Math.min(S.horses.length,(k==='groom'||k==='headgroom')?groomCap():n*st.per)} из ${S.horses.length}`:''}</small></span><span class="row" style="gap:6px;flex-wrap:nowrap">${n?`<button class="btn ghost" data-sm="${k}" aria-label="Уволить одного">−</button>`:''}<b>${n}/${st.max}</b>${n<st.max?`<button class="btn" data-sp="${k}" aria-label="Нанять ещё">+</button>`:''}</span></div>`}).join('');
   $('#staffList').querySelectorAll('[data-sp]').forEach(x=>x.onclick=()=>{const k=x.dataset.sp;S.staff[k]=Math.min(STAFF[k].max,stf(k)+1);toast(`Нанят: ${STAFF[k].n.toLowerCase()} (${stf(k)} из ${STAFF[k].max})`);save();renderBase()});
   $('#staffList').querySelectorAll('[data-sm]').forEach(x=>x.onclick=()=>{const k=x.dataset.sm;S.staff[k]=Math.max(0,stf(k)-1);toast(`${STAFF[k].n}: осталось ${stf(k)}`);save();renderBase()})}
 const dailyAmt=()=>Math.min(150,30+((S.daily&&S.daily.streak)||0)*10);
@@ -7115,7 +7117,7 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
 
 
 /* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
-const APP_V='3.3',SITE='https://aslan-bolshoy.github.io/podkova/';
+const APP_V='3.4',SITE='https://aslan-bolshoy.github.io/podkova/';
 const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
 const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
 let updShown=null,updTimer=null,updLater=0;

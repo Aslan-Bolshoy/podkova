@@ -301,7 +301,7 @@ details summary{cursor:pointer}
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
     <div class="row" style="justify-content:center;gap:8px"><button class="btn ghost" id="verCheck" type="button">Проверить обновление</button><button class="btn ghost" id="verHard" type="button">Перезагрузить без кэша</button></div><p class="note" id="verMsg" role="status" style="text-align:center"></p>
-    <p class="note" id="verNote" style="text-align:center">Версия игры 3.8 · починены кнопки обновления, Уголёк, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 3.9 · Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
     <div class="card" id="wkCard"><span class="label">Лига недели · обнуляется каждый понедельник</span><div id="wkBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card" id="lbCard" hidden><span class="label">Рейтинг игроков</span><div id="lb"></div></div>
     <div class="card" id="teamCard" hidden><span class="label">Команды</span><div id="teamBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
@@ -5008,7 +5008,7 @@ const BREEDS={
   trot:{name:'Рысистая',hands:'15.3',scale:.98,jump:2,speed:18,price:330},
   native:{name:'Аборигенная',hands:'14.0',scale:.85,jump:0,speed:5,price:240},
   draft:{name:'Тяжеловозная',hands:'16.0',scale:1.08,jump:-5,speed:-25,price:280},
-  mini:{name:'Миниатюрная лошадь',hands:'cm60',scale:.34,jump:-6,speed:-40,price:500,feather:true,hidden:true},
+  mini:{name:'Миниатюрная лошадь',hands:'cm60',scale:.34,jump:-6,speed:-40,price:500,feather:false,hidden:true},
   pony:{name:'Шетлендский пони',hands:'10.0',scale:.72,jump:-3,speed:-20,price:160},
   thor:{name:'Чистокровная верховая',hands:'16.0',scale:1,jump:2,speed:35,price:900}
 };
@@ -5335,7 +5335,7 @@ const specMul=(h,d)=>!h.spec?1:h.spec===d?1.06:.95;
 const gallopKmh=h=>Math.round(21*(h.spd||1));
 const CHAR={calm:{n:'спокойная',d:2,j:0,s:0,f:.03},hot:{n:'горячая',d:-2,j:1,s:.03,f:-.05},lazy:{n:'ленивая',d:0,j:-1,s:-.03,f:.04},shy:{n:'пугливая',d:-1,j:-2,s:0,f:-.02},brave:{n:'смелая',d:0,j:3,s:.01,f:0}};
 const charOf=h=>CHAR[h.char]||CHAR.calm;
-function fixHorse(h){if(h.uniq==='ugolek'){h.breed='mini';h.level=10;h.fat=2;h.fluffy=2;h.years=3;h.hands='cm60';h.sz=.34;h.spd=.524;h.coat='black';h.pinto=true;h.suitName='вороно-пегая';if(!h.patches||h.patches.length<6)h.patches=[[-70,-120,22],[-20,-105,28],[28,-125,20],[60,-96,24],[-85,-90,20],[5,-140,18],[75,-150,15]]}
+function fixHorse(h){if(h.uniq==='ugolek'){h.breed='mini';h.level=10;h.fat=2;h.fluffy=0;h.years=3;h.hands='cm60';h.sz=.34;h.spd=1.4286;h.coat='black';h.pinto=true;h.suitName='вороно-пегая';if(!h.patches||h.patches.length<6)h.patches=[[-70,-120,22],[-20,-105,28],[28,-125,20],[60,-96,24],[-85,-90,20],[5,-140,18],[75,-150,15]]}
   if(!SPEC[h.spec])h.spec=specFor(h);if(!h.spd)h.spd=spdFor(h);
   if(!CHAR[h.char]){h.char=pick(Object.keys(CHAR));h.spd=+(h.spd*(1+CHAR[h.char].s)).toFixed(3)}
   if(h.form==null)h.form=50;h.sk=h.sk||{jump:0,dress:0,end:0};if(!h.gen)h.gen=genesFromCoat(h.coat)}
@@ -6191,11 +6191,11 @@ function renderMarket(){
 
 /* ---- Уголёк: единственный в игре, купить может один игрок (занимается на сервере ключом в таблице unique_horses) ---- */
 const UGO_PRICE=500;
-function ugolekHorse(){const h=makeHorse('pony');Object.assign(h,{name:'Уголёк',breed:'mini',coat:'black',sex:'m',char:'lazy',spec:'dress',spd:.524,level:10,xp:0,hands:'cm60',sz:.34,fat:2,fluffy:2,years:3,uniq:'ugolek',socks:0,blaze:false,pinto:true,spots:false,patches:[],spotDots:[],prone:.05,form:60});h.sex='g';fixHorse(h);return h}
+function ugolekHorse(){const h=makeHorse('pony');Object.assign(h,{name:'Уголёк',breed:'mini',coat:'black',sex:'m',char:'lazy',spec:'dress',spd:1.4286,level:10,xp:0,hands:'cm60',sz:.34,fat:2,fluffy:0,years:3,uniq:'ugolek',socks:0,blaze:false,pinto:true,spots:false,patches:[],spotDots:[],prone:.05,form:60});h.sex='g';fixHorse(h);return h}
 async function ugolekState(){if(!ON.ok||ON.be!=='supa')return{st:'off'};if(S.horses.some(x=>x.uniq==='ugolek'))return{st:'mine'};
   try{const r=await ON.sb.from('unique_horses').select('owner,owner_nick').eq('key','ugolek').maybeSingle();if(r.error)throw r.error;return r.data?{st:r.data.owner===ON.uid?'mine':'taken',who:cleanNick(r.data.owner_nick)||'Игрок'}:{st:'free'}}catch(e){return{st:'err'}}}
 async function renderUgolek(hs){const d=document.createElement('div');d.className='item';const cv=document.createElement('canvas');cv.width=192;cv.height=128;d.appendChild(cv);hs.appendChild(d);const u=ugolekHorse();miniHorse(cv,u);
-  d.insertAdjacentHTML('beforeend','<div><b>Уголёк · единственный</b><small>Мини-лошадь, мерин, 3 года, 60 см. Толстый и пушистый, ленивый, всегда 10 ур. Купить его сможет только один игрок.</small></div><button class="btn" disabled style="flex:0 0 auto;max-width:92px;white-space:normal;line-height:1.15;padding:8px 10px">…</button>');
+  d.insertAdjacentHTML('beforeend','<div><b>Уголёк · единственный</b><small>Мини-лошадь, мерин, 3 года, 60 см. Очень толстый, всегда 10 ур., галоп 30 км/ч. Купить его сможет только один игрок.</small></div><button class="btn" disabled style="flex:0 0 auto;max-width:92px;white-space:normal;line-height:1.15;padding:8px 10px">…</button>');
   const btn=d.querySelector('button');const stt=await ugolekState(),full=stallsUsed()>=S.stalls;
   const set=(t,dis)=>{btn.textContent=t;btn.disabled=!!dis};
   if(stt.st==='off')set(ON.needLogin||!ON.ok?'Войди в клуб':'Нужен онлайн',1);else if(stt.st==='taken')set('Куплен: '+stt.who,1);else if(stt.st==='mine')set('Он у тебя',1);else if(stt.st==='err')set('Недоступен',1);
@@ -7149,7 +7149,7 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
 
 
 /* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
-const APP_V='3.8',SITE='https://aslan-bolshoy.github.io/podkova/';
+const APP_V='3.9',SITE='https://aslan-bolshoy.github.io/podkova/';
 const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
 const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
 let updShown=null,updTimer=null,updLater=0;

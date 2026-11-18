@@ -300,7 +300,7 @@ details summary{cursor:pointer}
   <section id="v-trophy" hidden style="flex-direction:column;gap:12px">
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
-    <p class="note" id="verNote" style="text-align:center">Версия игры 3.6 · сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 3.7 · Уголёк, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
     <div class="card" id="wkCard"><span class="label">Лига недели · обнуляется каждый понедельник</span><div id="wkBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card" id="lbCard" hidden><span class="label">Рейтинг игроков</span><div id="lb"></div></div>
     <div class="card" id="teamCard" hidden><span class="label">Команды</span><div id="teamBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
@@ -5007,6 +5007,7 @@ const BREEDS={
   trot:{name:'Рысистая',hands:'15.3',scale:.98,jump:2,speed:18,price:330},
   native:{name:'Аборигенная',hands:'14.0',scale:.85,jump:0,speed:5,price:240},
   draft:{name:'Тяжеловозная',hands:'16.0',scale:1.08,jump:-5,speed:-25,price:280},
+  mini:{name:'Миниатюрная лошадь',hands:'cm60',scale:.34,jump:-6,speed:-40,price:500,feather:true,hidden:true},
   pony:{name:'Шетлендский пони',hands:'10.0',scale:.72,jump:-3,speed:-20,price:160},
   thor:{name:'Чистокровная верховая',hands:'16.0',scale:1,jump:2,speed:35,price:900}
 };
@@ -5306,7 +5307,7 @@ function renderInj(h){const el=$('#injBox');if(!el)return;let html='';const load
 const realBio=h=>h.real?`Реальная лошадь из базы probegi.ru${h.real.f?' · № ФКСР '+String(h.real.f).padStart(6,'0'):''}${h.real.y?' · '+h.real.y+' г. р.':''}${h.real.sire?' · отец '+h.real.sire:''}${h.real.dam?', мать '+h.real.dam:''}${h.real.t?` · стартов в пробегах ${h.real.t}, завершено ${h.real.c}`:''}`:'';
 
 function shade(hex,f){const n=parseInt(hex.slice(1),16);const r=(n>>16)&255,g=(n>>8)&255,b=n&255;return `rgb(${Math.round(r*f)},${Math.round(g*f)},${Math.round(b*f)})`}
-function heightCm(hands){const [a,b]=hands.split('.').map(Number);return Math.round((a*4+b)*2.54)}
+function heightCm(hands){if(String(hands).startsWith('cm'))return +String(hands).slice(2)||60;const [a,b]=hands.split('.').map(Number);return Math.round((a*4+b)*2.54)}
 
 function addDirt(h,n){for(let i=0;i<n&&h.dirt.length<12;i++){
   if(Math.random()<.75)h.dirt.push([rnd(-85,72),rnd(-138,-92),rnd(6,11)]);
@@ -5333,7 +5334,8 @@ const specMul=(h,d)=>!h.spec?1:h.spec===d?1.06:.95;
 const gallopKmh=h=>Math.round(21*(h.spd||1));
 const CHAR={calm:{n:'спокойная',d:2,j:0,s:0,f:.03},hot:{n:'горячая',d:-2,j:1,s:.03,f:-.05},lazy:{n:'ленивая',d:0,j:-1,s:-.03,f:.04},shy:{n:'пугливая',d:-1,j:-2,s:0,f:-.02},brave:{n:'смелая',d:0,j:3,s:.01,f:0}};
 const charOf=h=>CHAR[h.char]||CHAR.calm;
-function fixHorse(h){if(!SPEC[h.spec])h.spec=specFor(h);if(!h.spd)h.spd=spdFor(h);
+function fixHorse(h){if(h.uniq==='ugolek'){h.breed='mini';h.level=10;h.fat=1;h.fluffy=1;h.years=3;h.hands='cm60';h.sz=.34}
+  if(!SPEC[h.spec])h.spec=specFor(h);if(!h.spd)h.spd=spdFor(h);
   if(!CHAR[h.char]){h.char=pick(Object.keys(CHAR));h.spd=+(h.spd*(1+CHAR[h.char].s)).toFixed(3)}
   if(h.form==null)h.form=50;h.sk=h.sk||{jump:0,dress:0,end:0};if(!h.gen)h.gen=genesFromCoat(h.coat)}
 /* генетика масти: E (рыжая/чёрная основа), A (гнедая), G (серая), Cr (буланая/соловая), D (мышастая), Rn (чалая) */
@@ -5359,7 +5361,7 @@ function doTrain(k){const h=cur(),t=TRAIN[k];if(isFoal(h)){toast(`${h.name} ещ
   h.trainedDay=S.day;h.energy=clamp(h.energy-t.e);h.form=clamp((h.form==null?50:h.form)+t.f*(S.build&&S.build.manege&&k!=='interval'?1.2:1));h.load=clamp((h.load||0)+t.l);
   if(t.sk){h.sk=h.sk||{jump:0,dress:0,end:0};h.sk[t.sk]=h.sk[t.sk]||0;if(t.sk==='spd'&&h.sk.spd<20)h.spd=+((h.spd||1)+.004).toFixed(3);h.sk[t.sk]=Math.min(20,+(h.sk[t.sk]+.8*(1+.3*stf('trainer')+.3*stf({jump:'coachj',dress:'coachd',end:'coache'}[t.sk]||'-'))).toFixed(1))}
   addXP(h,8);addDirt(h,k==='interval'?3:1);h.workedToday=k!=='pasture';if(k==='mountain'&&Math.random()<.35+.15*stf('guide')){const g_=15+ri(0,25);S.coins+=g_;toast('На горной тропе нашли '+g_+' монет')}if(k==='pasture')h.joy=Math.min(15,h.joy+8);dq('train');SFX.good();toast(`${t.n}: форма ${Math.round(h.form)}${t.sk?`, ${t.d} ${h.sk[t.sk]}`:''}`);ui();save()}
-function genOffers(){const keys=Object.keys(BREEDS);const out=[];const used=new Set();
+function genOffers(){const keys=Object.keys(BREEDS).filter(k=>!BREEDS[k].hidden);const out=[];const used=new Set();
   while(out.length<3){const k=pick(keys);if(used.has(k))continue;used.add(k);const h=makeHorse(k);h.price=Math.round(BREEDS[k].price*rnd(.9,1.15)/10)*10;out.push(h)}for(let i=0;i<2&&REG.length;i++){const h=realHorse(pickReal());h.price=realPrice({b:'',c:h.real.c,d:h.permit>=160?160:h.permit>=120?139:h.permit>=80?99:79,y:h.real.y});h.price=Math.round((h.price+BREEDS[h.breed].price*.2)/10)*10;out.push(h)}return out}
 const BUILD={manege:{n:'Крытый манеж',d:'нет штрафа погоды в конкуре и выездке, тренировки эффективнее',c:[600,900,1400]},
   paddock:{n:'Левады',d:'ночью лошади гуляют: +энергия, меньше нагрузки',c:[250,450,700]},
@@ -5586,7 +5588,7 @@ function drawHorse(c,h,o){
   if(G){bob=-G.bob*Math.abs(Math.sin(Math.PI*p*G.bobN));if(G.bobN===1)bob=-G.bob*(.5+.5*Math.sin(Math.PI*2*p+.6));pitch+=G.pitch*Math.sin(Math.PI*2*p+.4);nod=G.nod*Math.sin(Math.PI*2*p*(G.bobN===2?2:1)+1.2)}
   else if(g==null)bob=Math.sin(t*1.7)*.6;
   HP.bob=bob;HP.pitch=pitch;HP.rise=G&&gk==='trot'?Math.max(0,Math.sin(Math.PI*2*p*2))*5:0;
-  c.save();c.translate(o.x,o.y);c.scale(s,s);
+  c.save();c.translate(o.x,o.y);c.scale(s,s);if(h.fat)c.scale(1.24,.9);
   c.__ol=true;c.lineWidth=Math.max(2.2,1.2/s);c.lineJoin='round';c.lineCap='round';
   const cp=Math.cos(pitch),sp=Math.sin(pitch);const R=k=>{const [x,y]=ROOT[k];const yy=y+110;return[x*cp-yy*sp,-118+x*sp+yy*cp+bob]};
   const legs={};
@@ -5602,7 +5604,7 @@ function drawHorse(c,h,o){
   // хвост
   c.save();c.translate(0,-118+bob);c.rotate(pitch);c.translate(0,110);
   {const sw=g==null?Math.sin(t*1.1)*5+(o.swish||0):Math.sin((G?p*Math.PI*2:g)*2)*4;const lift=G?G.tail:o.air?.9:0;
-    const ex=-104-lift*58+sw*.4,ey=-30-lift*80,W=h.thinTail?9:22;
+    const ex=-104-lift*58+sw*.4,ey=-30-lift*80,W=h.thinTail?9:h.fluffy?36:22;
     c.fillStyle=mane;c.beginPath();c.moveTo(-94,-146);
     c.bezierCurveTo(-114-lift*20,-142-lift*14,-112+sw*.5-lift*44,ey+56-lift*12,ex-W*.55+sw,ey);
     c.quadraticCurveTo(ex-W*.2+sw,ey+8,ex+sw,ey+2);c.quadraticCurveTo(ex+W*.25+sw,ey+9,ex+W*.6+sw,ey-2);
@@ -5759,7 +5761,7 @@ function drawRosette(c,x,y,r,col){
 }
 function heart(c,x,y,r,col){c.fillStyle=col;c.beginPath();c.moveTo(x,y+r*.9);c.bezierCurveTo(x-r*1.6,y-r*.2,x-r*.6,y-r*1.4,x,y-r*.4);c.bezierCurveTo(x+r*.6,y-r*1.4,x+r*1.6,y-r*.2,x,y+r*.9);c.fill()}
 function miniHorse(cv,h){const c=cv.getContext('2d');c.setTransform(1,0,0,1,0,0);c.clearRect(0,0,cv.width,cv.height);
-  const k=cv.width/150;c.setTransform(k,0,0,k,0,0);drawHorse(c,h,{x:72,y:96,s:.4,dirt:false});}
+  const k=cv.width/150;c.setTransform(k,0,0,k,0,0);drawHorse(c,h,{x:72,y:96,s:h.uniq?1.15:.4,dirt:false});}
 
 /* ============ STALL SCENE ============ */
 const SW=400,SH=300;
@@ -6047,7 +6049,7 @@ function ui(){
   const h=cur(),B=BREEDS[h.breed],C=COATS[h.coat];
   checkAch();$('#coins').textContent=S.coins;$('#wx').textContent=' · '+SEASONS[seasonOf()].toLowerCase()+', '+wxName();$('#day').textContent=S.day;$('#ros').textContent=S.horses.reduce((a,x)=>a+x.ribbons.length,0);
   $('#hName').textContent=h.name;
-  $('#hMeta').textContent=`${h.breedName||B.name} · ${sexWord(h)}${isFoal(h)?', '+h.age+' дн.':''} · ${h.suitName||C.name} масть · рост ${heightCm(h.hands||B.hands)} см · ${SPEC[h.spec]?SPEC[h.spec].n.toLowerCase()+' · ':''}характер: ${charOf(h).n} · галоп ~${gallopKmh(h)} км/ч${h.gen?' · гены '+geneStr(h.gen):''} · уровень ${h.level} · допуск ${permitOf(h)} км`;
+  $('#hMeta').textContent=`${h.breedName||B.name} · ${sexWord(h)}${isFoal(h)?', '+h.age+' дн.':''} · ${h.suitName||C.name} масть · рост ${heightCm(h.hands||B.hands)} см${h.years?' · '+h.years+' года':''} · ${SPEC[h.spec]?SPEC[h.spec].n.toLowerCase()+' · ':''}характер: ${charOf(h).n} · галоп ~${gallopKmh(h)} км/ч${h.gen?' · гены '+geneStr(h.gen):''} · уровень ${h.level} · допуск ${permitOf(h)} км`;
   const m=moodOf(h);
   const rows=[['Сытость',h.hunger],['Вода',h.thirst],['Чистота шерсти',cleanOf(h)],['Чистота денника',stallOf(h)],['Копыта',hoofOf(h)],['Энергия',h.energy],[`Настроение · ${moodWord(m)}`,m]];
   $('#bars').innerHTML=rows.map(([l,v],i)=>`<div class="bar${i===6?' xp':''}">${l}<b>${Math.round(v)}</b><i><span style="width:${clamp(v)}%;background:${barCol(v)}"></span></i></div>`).join('')+
@@ -6180,8 +6182,26 @@ function renderMarket(){
     d.querySelector('button').addEventListener('click',()=>{if(S.coins<o.price||stallsUsed()>=S.stalls)return;S.coins-=o.price;delete o.price;S.horses.push(o);S.offers.splice(i,1);S.cur=o.id;herdKey='';toast(`${o.name} переезжает в денник`);save();setView('stable')});
     hs.appendChild(d);miniHorse(cv,o)});
   if(!S.offers.length)hs.innerHTML='<p class="hint" style="text-align:left;margin:0">Все лошади разобраны. Новые появятся завтра.</p>';
+  renderUgolek(hs);
   if(stallsUsed()>=S.stalls)hs.insertAdjacentHTML('beforeend',`<p class="hint" style="text-align:left;margin:0">Все ${S.stalls} денников заняты. Новый денник покупается во вкладке «Денник».</p>`);
 }
+
+/* ---- Уголёк: единственный в игре, купить может один игрок (занимается на сервере ключом в таблице unique_horses) ---- */
+const UGO_PRICE=500;
+function ugolekHorse(){const h=makeHorse('pony');Object.assign(h,{name:'Уголёк',breed:'mini',coat:'black',sex:'m',char:'lazy',spec:'dress',spd:.72,level:10,xp:0,hands:'cm60',sz:.34,fat:1,fluffy:1,years:3,uniq:'ugolek',socks:0,blaze:false,pinto:false,spots:false,patches:[],spotDots:[],prone:.05,form:60});h.sex='g';fixHorse(h);return h}
+async function ugolekState(){if(!ON.ok||ON.be!=='supa')return{st:'off'};if(S.horses.some(x=>x.uniq==='ugolek'))return{st:'mine'};
+  try{const r=await ON.sb.from('unique_horses').select('owner,owner_nick').eq('key','ugolek').maybeSingle();if(r.error)throw r.error;return r.data?{st:r.data.owner===ON.uid?'mine':'taken',who:cleanNick(r.data.owner_nick)||'Игрок'}:{st:'free'}}catch(e){return{st:'err'}}}
+async function renderUgolek(hs){const d=document.createElement('div');d.className='item';const cv=document.createElement('canvas');cv.width=192;cv.height=128;d.appendChild(cv);hs.appendChild(d);const u=ugolekHorse();miniHorse(cv,u);
+  d.insertAdjacentHTML('beforeend','<div><b>Уголёк · единственный</b><small>Мини-лошадь, мерин, 3 года, 60 см. Толстый и пушистый, ленивый, всегда 10 ур. Купить его сможет только один игрок.</small></div><button class="btn" disabled style="flex:0 0 auto;max-width:92px;white-space:normal;line-height:1.15;padding:8px 10px">…</button>');
+  const btn=d.querySelector('button');const stt=await ugolekState(),full=stallsUsed()>=S.stalls;
+  const set=(t,dis)=>{btn.textContent=t;btn.disabled=!!dis};
+  if(stt.st==='off')set('Нужен онлайн',1);else if(stt.st==='taken')set('Куплен: '+stt.who,1);else if(stt.st==='mine')set('Он у тебя',1);else if(stt.st==='err')set('Недоступен',1);
+  else{btn.innerHTML=`<span class="price">${UGO_PRICE}</span>`;btn.disabled=S.coins<UGO_PRICE||full||ON.ro;
+    btn.onclick=async()=>{if(S.coins<UGO_PRICE||stallsUsed()>=S.stalls)return;btn.disabled=true;
+      try{const r=await ON.sb.from('unique_horses').insert({key:'ugolek',owner:ON.uid,owner_nick:ON.nick});
+        if(r.error){if(String(r.error.code)==='23505'){toast('Уголька только что купил другой игрок');renderMarket();return}throw r.error}
+        S.coins-=UGO_PRICE;const h=ugolekHorse();S.horses.push(h);S.cur=h.id;herdKey='';SFX.coin();toast('Уголёк переезжает в твой денник!');save();pushPlayer(true);setView('stable')}
+      catch(e){toast('Не получилось купить: сервер не ответил');btn.disabled=false}}}}
 
 /* ============ ARENA ============ */
 const AW=400,AH=240,GY=204,HX=92,G=1100;
@@ -7126,7 +7146,7 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
 
 
 /* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
-const APP_V='3.6',SITE='https://aslan-bolshoy.github.io/podkova/';
+const APP_V='3.7',SITE='https://aslan-bolshoy.github.io/podkova/';
 const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
 const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
 let updShown=null,updTimer=null,updLater=0;

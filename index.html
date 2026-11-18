@@ -300,7 +300,8 @@ details summary{cursor:pointer}
   <section id="v-trophy" hidden style="flex-direction:column;gap:12px">
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
-    <p class="note" id="verNote" style="text-align:center">Версия игры 3.7 · Уголёк, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
+    <div class="row" style="justify-content:center;gap:8px"><button class="btn ghost" id="verCheck" type="button">Проверить обновление</button><button class="btn ghost" id="verHard" type="button">Перезагрузить без кэша</button></div><p class="note" id="verMsg" role="status" style="text-align:center"></p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 3.8 · починены кнопки обновления, Уголёк, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
     <div class="card" id="wkCard"><span class="label">Лига недели · обнуляется каждый понедельник</span><div id="wkBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card" id="lbCard" hidden><span class="label">Рейтинг игроков</span><div id="lb"></div></div>
     <div class="card" id="teamCard" hidden><span class="label">Команды</span><div id="teamBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
@@ -5334,7 +5335,7 @@ const specMul=(h,d)=>!h.spec?1:h.spec===d?1.06:.95;
 const gallopKmh=h=>Math.round(21*(h.spd||1));
 const CHAR={calm:{n:'спокойная',d:2,j:0,s:0,f:.03},hot:{n:'горячая',d:-2,j:1,s:.03,f:-.05},lazy:{n:'ленивая',d:0,j:-1,s:-.03,f:.04},shy:{n:'пугливая',d:-1,j:-2,s:0,f:-.02},brave:{n:'смелая',d:0,j:3,s:.01,f:0}};
 const charOf=h=>CHAR[h.char]||CHAR.calm;
-function fixHorse(h){if(h.uniq==='ugolek'){h.breed='mini';h.level=10;h.fat=1;h.fluffy=1;h.years=3;h.hands='cm60';h.sz=.34}
+function fixHorse(h){if(h.uniq==='ugolek'){h.breed='mini';h.level=10;h.fat=2;h.fluffy=2;h.years=3;h.hands='cm60';h.sz=.34;h.spd=.524;h.coat='black';h.pinto=true;h.suitName='вороно-пегая';if(!h.patches||h.patches.length<6)h.patches=[[-70,-120,22],[-20,-105,28],[28,-125,20],[60,-96,24],[-85,-90,20],[5,-140,18],[75,-150,15]]}
   if(!SPEC[h.spec])h.spec=specFor(h);if(!h.spd)h.spd=spdFor(h);
   if(!CHAR[h.char]){h.char=pick(Object.keys(CHAR));h.spd=+(h.spd*(1+CHAR[h.char].s)).toFixed(3)}
   if(h.form==null)h.form=50;h.sk=h.sk||{jump:0,dress:0,end:0};if(!h.gen)h.gen=genesFromCoat(h.coat)}
@@ -5588,7 +5589,7 @@ function drawHorse(c,h,o){
   if(G){bob=-G.bob*Math.abs(Math.sin(Math.PI*p*G.bobN));if(G.bobN===1)bob=-G.bob*(.5+.5*Math.sin(Math.PI*2*p+.6));pitch+=G.pitch*Math.sin(Math.PI*2*p+.4);nod=G.nod*Math.sin(Math.PI*2*p*(G.bobN===2?2:1)+1.2)}
   else if(g==null)bob=Math.sin(t*1.7)*.6;
   HP.bob=bob;HP.pitch=pitch;HP.rise=G&&gk==='trot'?Math.max(0,Math.sin(Math.PI*2*p*2))*5:0;
-  c.save();c.translate(o.x,o.y);c.scale(s,s);if(h.fat)c.scale(1.24,.9);
+  c.save();c.translate(o.x,o.y);c.scale(s,s);if(h.fat)c.scale(h.fat>1?1.3:1.24,h.fat>1?.86:.9);
   c.__ol=true;c.lineWidth=Math.max(2.2,1.2/s);c.lineJoin='round';c.lineCap='round';
   const cp=Math.cos(pitch),sp=Math.sin(pitch);const R=k=>{const [x,y]=ROOT[k];const yy=y+110;return[x*cp-yy*sp,-118+x*sp+yy*cp+bob]};
   const legs={};
@@ -5604,7 +5605,7 @@ function drawHorse(c,h,o){
   // хвост
   c.save();c.translate(0,-118+bob);c.rotate(pitch);c.translate(0,110);
   {const sw=g==null?Math.sin(t*1.1)*5+(o.swish||0):Math.sin((G?p*Math.PI*2:g)*2)*4;const lift=G?G.tail:o.air?.9:0;
-    const ex=-104-lift*58+sw*.4,ey=-30-lift*80,W=h.thinTail?9:h.fluffy?36:22;
+    const ex=-104-lift*58+sw*.4,ey=-30-lift*80,W=h.thinTail?9:h.fluffy>1?58:h.fluffy?36:22;
     c.fillStyle=mane;c.beginPath();c.moveTo(-94,-146);
     c.bezierCurveTo(-114-lift*20,-142-lift*14,-112+sw*.5-lift*44,ey+56-lift*12,ex-W*.55+sw,ey);
     c.quadraticCurveTo(ex-W*.2+sw,ey+8,ex+sw,ey+2);c.quadraticCurveTo(ex+W*.25+sw,ey+9,ex+W*.6+sw,ey-2);
@@ -5619,6 +5620,8 @@ function drawHorse(c,h,o){
   c.save();c.translate(0,-118+bob);c.rotate(pitch);c.translate(0,110);
   // корпус
   const gr=c.createLinearGradient(0,-158,0,-66);gr.addColorStop(0,shL(body,.2));gr.addColorStop(.42,body);gr.addColorStop(1,sh(body,.72));
+  if(h.fat>1){c.fillStyle=gr;c.beginPath();c.ellipse(-4,-100,92,60,0,0,7);c.fill();olStroke(c)}
+  if(h.fluffy>1){c.save();c.strokeStyle=sh(body,.8);c.lineCap='round';c.lineWidth=3.2;for(let i=0;i<46;i++){const a=i/46*6.283,rx=94+Math.sin(i*2.3)*3,ry=63+Math.cos(i*1.7)*3,px=-4+Math.cos(a)*rx,py=-100+Math.sin(a)*ry,L=7+((i*37)%5);c.beginPath();c.moveTo(px,py);c.quadraticCurveTo(px+Math.cos(a)*L*.6+Math.sin(a)*2,py+Math.sin(a)*L*.6-Math.cos(a)*2,px+Math.cos(a)*L,py+Math.sin(a)*L);c.stroke()}c.restore()}
   c.fillStyle=gr;bodyPath(c);c.fill();
   if(h.pinto||h.spots){c.save();bodyPath(c);c.clip();
     if(h.pinto){c.fillStyle='#f4f0e6';h.patches.forEach(q=>{c.beginPath();c.ellipse(q[0]*.9,q[1],q[2]*1.35,q[2],q[0]*.01,0,7);c.fill()})}
@@ -6188,14 +6191,14 @@ function renderMarket(){
 
 /* ---- Уголёк: единственный в игре, купить может один игрок (занимается на сервере ключом в таблице unique_horses) ---- */
 const UGO_PRICE=500;
-function ugolekHorse(){const h=makeHorse('pony');Object.assign(h,{name:'Уголёк',breed:'mini',coat:'black',sex:'m',char:'lazy',spec:'dress',spd:.72,level:10,xp:0,hands:'cm60',sz:.34,fat:1,fluffy:1,years:3,uniq:'ugolek',socks:0,blaze:false,pinto:false,spots:false,patches:[],spotDots:[],prone:.05,form:60});h.sex='g';fixHorse(h);return h}
+function ugolekHorse(){const h=makeHorse('pony');Object.assign(h,{name:'Уголёк',breed:'mini',coat:'black',sex:'m',char:'lazy',spec:'dress',spd:.524,level:10,xp:0,hands:'cm60',sz:.34,fat:2,fluffy:2,years:3,uniq:'ugolek',socks:0,blaze:false,pinto:true,spots:false,patches:[],spotDots:[],prone:.05,form:60});h.sex='g';fixHorse(h);return h}
 async function ugolekState(){if(!ON.ok||ON.be!=='supa')return{st:'off'};if(S.horses.some(x=>x.uniq==='ugolek'))return{st:'mine'};
   try{const r=await ON.sb.from('unique_horses').select('owner,owner_nick').eq('key','ugolek').maybeSingle();if(r.error)throw r.error;return r.data?{st:r.data.owner===ON.uid?'mine':'taken',who:cleanNick(r.data.owner_nick)||'Игрок'}:{st:'free'}}catch(e){return{st:'err'}}}
 async function renderUgolek(hs){const d=document.createElement('div');d.className='item';const cv=document.createElement('canvas');cv.width=192;cv.height=128;d.appendChild(cv);hs.appendChild(d);const u=ugolekHorse();miniHorse(cv,u);
   d.insertAdjacentHTML('beforeend','<div><b>Уголёк · единственный</b><small>Мини-лошадь, мерин, 3 года, 60 см. Толстый и пушистый, ленивый, всегда 10 ур. Купить его сможет только один игрок.</small></div><button class="btn" disabled style="flex:0 0 auto;max-width:92px;white-space:normal;line-height:1.15;padding:8px 10px">…</button>');
   const btn=d.querySelector('button');const stt=await ugolekState(),full=stallsUsed()>=S.stalls;
   const set=(t,dis)=>{btn.textContent=t;btn.disabled=!!dis};
-  if(stt.st==='off')set('Нужен онлайн',1);else if(stt.st==='taken')set('Куплен: '+stt.who,1);else if(stt.st==='mine')set('Он у тебя',1);else if(stt.st==='err')set('Недоступен',1);
+  if(stt.st==='off')set(ON.needLogin||!ON.ok?'Войди в клуб':'Нужен онлайн',1);else if(stt.st==='taken')set('Куплен: '+stt.who,1);else if(stt.st==='mine')set('Он у тебя',1);else if(stt.st==='err')set('Недоступен',1);
   else{btn.innerHTML=`<span class="price">${UGO_PRICE}</span>`;btn.disabled=S.coins<UGO_PRICE||full||ON.ro;
     btn.onclick=async()=>{if(S.coins<UGO_PRICE||stallsUsed()>=S.stalls)return;btn.disabled=true;
       try{const r=await ON.sb.from('unique_horses').insert({key:'ugolek',owner:ON.uid,owner_nick:ON.nick});
@@ -6702,7 +6705,7 @@ async function initOnline(){
 async function initClaude(){
   try{const r=await Promise.all(['db','user','room'].map(n=>window.claude.use(n).catch(()=>null)));ON.db=r[0];ON.user=r[1];ON.room=r[2]}catch(e){}
   if(ON.user){try{ON.uid=await ON.user.id()}catch(e){}try{ON.ro=(await ON.user.can('data.write'))===false}catch(e){}}
-  ON.ok=!!(ON.db&&ON.uid);ON.tried=true;renderClub();
+  ON.ok=!!(ON.db&&ON.uid);ON.tried=true;renderClub();if(view==='market')renderMarket();
   if(!ON.db)return;
   try{ON.db.collection('players').orderBy('score','desc').limit(200).onSnapshot(s=>{ON.players=s.docs.map(d=>Object.assign({id:d.id},d.data()));setTimeout(offersTick,300);resolveNames(ON.players.map(p=>p.id));renderClub()},()=>{})}catch(e){}
   try{ON.db.collection('trades').where('status','in',['open','sold']).limit(200).onSnapshot(s=>{ON.trades=s.docs.map(d=>Object.assign({id:d.id},d.data()));payouts();renderClub()},()=>{})}catch(e){}
@@ -6710,7 +6713,7 @@ async function initClaude(){
   if(view==='arena'&&disc==='end')joinRide(ENDUR[sel.end].km);
 }
 /* ---- supabase ---- */
-async function supaSignedIn(u){ON.uid=u.id;ON.needLogin=false;ON.ok=true;
+async function supaSignedIn(u){ON.uid=u.id;ON.needLogin=false;ON.ok=true;setTimeout(()=>{if(view==='market')renderMarket()},900);
   try{const {data}=await ON.sb.from('players').select('nick').eq('id',ON.uid).maybeSingle();ON.nick=cleanNick((data&&data.nick)||(u.user_metadata&&u.user_metadata.nick)||'Игрок')}catch(e){ON.nick='Игрок'}
   ON.names[ON.uid]=ON.nick;
   try{const {data}=await ON.sb.from('saves').select('day,coins,horses,updated_at,state').eq('id',ON.uid).maybeSingle();ON.cloud=data?{day:data.day,coins:data.coins,horses:data.horses,at:Date.parse(data.updated_at),state:data.state}:null}catch(e){}
@@ -7146,7 +7149,7 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
 
 
 /* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
-const APP_V='3.7',SITE='https://aslan-bolshoy.github.io/podkova/';
+const APP_V='3.8',SITE='https://aslan-bolshoy.github.io/podkova/';
 const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
 const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
 let updShown=null,updTimer=null,updLater=0;
@@ -7154,15 +7157,24 @@ async function checkUpdate(){if(!onSite()&&!inApk())return;
   try{const r=await fetch((onSite()?'./':SITE)+'version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)return;const j=await r.json();
     if(vNum(j.v)>vNum(APP_V)&&Date.now()>updLater)showUpdate(j)}catch(e){}}
 function busy(){try{return !!(ar&&ar.running)||!!(DU&&DU.go&&!DU.done)}catch(e){return false}}
-function doUpdate(v){try{save()}catch(e){}location.replace(location.pathname+'?v='+encodeURIComponent(v)+'&t='+Date.now())}
+async function freshReload(v){try{if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}}catch(e){}try{if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(r=>r.unregister()))}}catch(e){}
+  location.replace(location.pathname+'?v='+encodeURIComponent(v)+'&t='+Date.now())}
+function doUpdate(v){try{save()}catch(e){}freshReload(v)}
+async function manualCheck(){const b=$('#verCheck'),m=$('#verMsg');if(b)b.disabled=true;if(m)m.textContent='Проверяю…';
+  try{const r=await fetch((onSite()?'./':SITE)+'version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();
+    if(vNum(j.v)>vNum(APP_V)){if(m)m.textContent='Вышла версия '+j.v+'. Обновляю…';updLater=0;doUpdate(j.v)}else if(m)m.textContent='У тебя последняя версия '+APP_V+'.'}
+  catch(e){if(m)m.textContent='Не удалось проверить: нет связи с сайтом. Можно нажать «Перезагрузить без кэша».'}
+  if(b)b.disabled=false}
 function showUpdate(j){const el=$('#updBar');if(!el)return;updShown=j;clearInterval(updTimer);
   if(inApk()){el.innerHTML=`<b>Вышла новая версия ${esc(j.v)}</b>${j.n?`<span>${esc(j.n)}</span>`:''}<span>Скачай новое приложение и установи поверх старого: <b>aslan-bolshoy.github.io/podkova/Podkova.apk</b></span><div class="row"><button id="updCopy">Скопировать ссылку</button><button class="l" id="updNo">Позже</button></div>`;
     $('#updCopy').onclick=()=>{const t=SITE+'Podkova.apk';(navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('Ссылка скопирована — открой её в браузере'),()=>toast(t))};}
-  else{let left=15;const draw=()=>{el.innerHTML=`<b>Вышло обновление ${esc(j.v)}</b>${j.n?`<span>${esc(j.n)}</span>`:''}<span>${busy()?'Обновлю сразу после заезда.':`Игра обновится сама через ${left} с. Прогресс сохранится.`}</span><div class="row"><button id="updGo">Обновить сейчас</button><button class="l" id="updNo">Позже</button></div>`;
-      $('#updGo').onclick=()=>doUpdate(j.v);$('#updNo').onclick=later};
-    draw();updTimer=setInterval(()=>{if(busy())return draw();left--;if(left<=0){clearInterval(updTimer);doUpdate(j.v)}else draw()},1000)}
+  else{let left=15;const msg=()=>busy()?'Обновлю сразу после заезда.':`Игра обновится сама через ${left} с. Прогресс сохранится.`;
+    el.innerHTML=`<b>Вышло обновление ${esc(j.v)}</b>${j.n?`<span>${esc(j.n)}</span>`:''}<span id="updMsg">${msg()}</span><div class="row"><button id="updGo">Обновить сейчас</button><button class="l" id="updNo">Позже</button></div>`;
+    $('#updGo').onclick=()=>doUpdate(j.v);$('#updNo').onclick=later;
+    updTimer=setInterval(()=>{const m=$('#updMsg');if(busy()){if(m)m.textContent=msg();return}left--;if(left<=0){clearInterval(updTimer);doUpdate(j.v)}else if(m)m.textContent=msg()},1000)}
   el.hidden=false;const n=$('#updNo');if(n)n.onclick=later}
 function later(){clearInterval(updTimer);updLater=Date.now()+10*60e3;const el=$('#updBar');if(el)el.hidden=true;toast('Хорошо, напомню через 10 минут')}
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#verCheck,#verHard');if(!t)return;if(t.id==='verCheck')manualCheck();else{try{save()}catch(er){}freshReload('r'+Date.now())}});
 setInterval(checkUpdate,3*60e3);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});setTimeout(checkUpdate,4000);
 function start(data){
   S=(data&&data.state)||load()||fresh();

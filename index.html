@@ -300,7 +300,7 @@ details summary{cursor:pointer}
   <section id="v-trophy" hidden style="flex-direction:column;gap:12px">
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
-    <p class="note" id="verNote" style="text-align:center">Версия игры 3.5 · рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 3.6 · сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
     <div class="card" id="wkCard"><span class="label">Лига недели · обнуляется каждый понедельник</span><div id="wkBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card" id="lbCard" hidden><span class="label">Рейтинг игроков</span><div id="lb"></div></div>
     <div class="card" id="teamCard" hidden><span class="label">Команды</span><div id="teamBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
@@ -6674,7 +6674,7 @@ async function initOnline(){
   if(window.claude&&typeof window.claude.use==='function'){ON.be='claude';return initClaude()}
   if(!supaOn()){ON.tried=true;renderClub();return}
   ON.be='supa';
-  try{const srcs=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.1/dist/umd/supabase.js','https://unpkg.com/@supabase/supabase-js@2.110.1/dist/umd/supabase.js','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js'];let okL=false;for(const u of srcs){try{await loadScript(u);if(window.supabase&&window.supabase.createClient){okL=true;break}}catch(e){}}if(!okL)throw new Error('load');ON.sb=window.supabase.createClient(SUPA.url,SUPA.key,{auth:{persistSession:true,autoRefreshToken:true}})}
+  try{const srcs=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.1/dist/umd/supabase.js','https://unpkg.com/@supabase/supabase-js@2.110.1/dist/umd/supabase.js','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.js'];let okL=false;for(const u of srcs){try{await loadScript(u);if(window.supabase&&window.supabase.createClient){okL=true;break}}catch(e){}}if(!okL)throw new Error('load');ON.sb=window.supabase.createClient(SUPA.url,SUPA.key,{auth:{persistSession:true,autoRefreshToken:true}});try{ON.sb.auth.onAuthStateChange(ev=>{if(ev==='PASSWORD_RECOVERY'){ON.recovery=true;const t=document.querySelector('button[data-v=trophy]');if(t&&view!=='trophy')t.click();setTimeout(renderClub,50)}})}catch(e){}}
   catch(e){ON.tried=true;ON.netErr=true;renderClub();return}
   try{const {data}=await ON.sb.auth.getSession();if(data&&data.session)await supaSignedIn(data.session.user);else ON.needLogin=true}catch(e){ON.needLogin=true}
   ON.tried=true;renderClub();
@@ -7048,6 +7048,12 @@ function drawStandings(c){const ps=ON.peers.filter(p=>p.presence&&p.presence.mod
   c.fillStyle='#ecc35a';c.fillText('ОНЛАЙН В ПРОБЕГЕ',14,49);all.forEach((r,i)=>{c.fillStyle=r.m==='me'?'#ecc35a':'#eef1e4';c.fillText(`${i+1}. ${r.n.slice(0,12)} · ${r.m==='out'?'снят':r.m==='fin'?'финиш':r.tot.toFixed(1)+' км'}`,14,63+i*13)})}
 /* ---- club tab ---- */
 function renderClub(){if(view!=='trophy')return;const el=$('#onCard');if(!el)return;
+  if(ON.be==='supa'&&ON.recovery){
+    el.innerHTML=`<span class="label">Новый пароль</span><p class="note">Ты перешёл по ссылке из письма. Придумай новый пароль, и ты сразу войдёшь в аккаунт.</p>
+      <form id="rcForm" style="display:flex;flex-direction:column;gap:8px"><input id="rcPass" class="search" type="password" placeholder="Новый пароль (от 6 символов)" autocomplete="new-password"><div class="row" style="justify-content:flex-start"><button class="btn" type="submit">Сохранить пароль</button></div><p class="note" id="rcMsg" role="status"></p></form>`;
+    $('#rcForm').addEventListener('submit',async e=>{e.preventDefault();const pw=$('#rcPass').value,m=$('#rcMsg');if(pw.length<6){m.textContent='Пароль минимум 6 символов';return}
+      try{const r=await ON.sb.auth.updateUser({password:pw});if(r.error)throw r.error;ON.recovery=false;const g=await ON.sb.auth.getUser();if(g.data&&g.data.user)await supaSignedIn(g.data.user);try{history.replaceState(null,'',location.pathname)}catch(e){}toast('Пароль изменён, ты в аккаунте');renderClub()}catch(er){m.textContent='Не получилось: '+((er&&er.message)||'ошибка сети')}});
+    ['lbCard','trCard','teamCard','offerCard','duelCard','peekBox'].forEach(k=>{const x=$('#'+k);if(x)x.hidden=true});return}
   if(ON.be==='supa'&&ON.needLogin){
     el.innerHTML=`<span class="label">Онлайн-клуб</span><p class="note">Войди или создай аккаунт, чтобы попасть в рейтинг, хранить прогресс на сервере, торговать лошадьми и ездить пробеги вместе.</p>
       <form id="suForm" style="display:flex;flex-direction:column;gap:8px" autocomplete="on">
@@ -7055,8 +7061,11 @@ function renderClub(){if(view!=='trophy')return;const el=$('#onCard');if(!el)ret
       <input id="suPass" class="search" type="password" placeholder="Пароль (от 6 символов)" autocomplete="current-password">
       <input id="suNick" class="search" placeholder="Ник для рейтинга (только при регистрации)" maxlength="24" autocomplete="nickname">
       <div class="row" style="justify-content:flex-start"><button class="btn" type="submit">Войти</button><button class="btn ghost" type="button" id="suUp">Создать аккаунт</button></div>
+      <button class="linkbtn" type="button" id="suForgot" style="align-self:flex-start">Забыл пароль? Пришлю письмо для сброса</button>
       <p class="note" id="suMsg" role="status"></p></form>`;
     $('#suForm').addEventListener('submit',e=>{e.preventDefault();supaAuth('in')});$('#suUp').onclick=()=>supaAuth('up');
+    $('#suForgot').onclick=async()=>{const em=$('#suEmail').value.trim(),m=$('#suMsg');if(!/^\S+@\S+\.\S+$/.test(em)){m.textContent='Впиши почту, с которой регистрировался, и нажми ещё раз';return}
+      try{const r=await ON.sb.auth.resetPasswordForEmail(em,{redirectTo:location.origin+location.pathname});if(r.error)throw r.error;m.textContent='Письмо отправлено на '+em+'. Открой ссылку из него (проверь «Спам») и задай новый пароль.'}catch(er){m.textContent='Не получилось отправить письмо: '+((er&&er.message)||'ошибка сети')}};
     $('#lbCard').hidden=true;$('#trCard').hidden=true;['teamCard','offerCard','duelCard','peekBox'].forEach(k=>{const e=$('#'+k);if(e)e.hidden=true});return}
   if(!ON.ok){el.innerHTML=`<span class="label">Онлайн-клуб</span><p class="note">${!ON.tried?'Подключаемся…':ON.netErr?'Нет связи с сервером игры. Проверь интернет и открой игру заново.':ON.be==='claude'?'Онлайн работает, когда ты вошёл в аккаунт claude.ai и у тебя есть доступ к игре.':'Онлайн-сервер для этой версии ещё не подключён.'}</p>`;$('#lbCard').hidden=true;$('#trCard').hidden=true;['teamCard','offerCard','duelCard','peekBox'].forEach(k=>{const e=$('#'+k);if(e)e.hidden=true});return}
   const c=ON.cloud;const when=c?new Date(c.at).toLocaleString('ru-RU',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
@@ -7117,7 +7126,7 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
 
 
 /* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
-const APP_V='3.5',SITE='https://aslan-bolshoy.github.io/podkova/';
+const APP_V='3.6',SITE='https://aslan-bolshoy.github.io/podkova/';
 const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
 const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
 let updShown=null,updTimer=null,updLater=0;

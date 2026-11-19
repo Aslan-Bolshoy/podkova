@@ -301,8 +301,9 @@ details summary{cursor:pointer}
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
     <div class="row" style="justify-content:center;gap:8px"><button class="btn ghost" id="verCheck" type="button">Проверить обновление</button><button class="btn ghost" id="verHard" type="button">Перезагрузить без кэша</button></div><p class="note" id="verMsg" role="status" style="text-align:center"></p>
-    <p class="note" id="verNote" style="text-align:center">Версия игры 4.2 · еда и вода не убывают, пока тебя нет, Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 4.3 · ивент «Жеребячий бум», еда и вода не убывают, пока тебя нет, Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
     <div class="card" id="wkCard"><span class="label">Лига недели · обнуляется каждый понедельник</span><div id="wkBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
+    <div class="card" id="foalCard" hidden></div>
     <div class="card" id="candleCard" hidden></div>
     <div class="card" id="lbCard" hidden><span class="label">Рейтинг игроков</span><div id="lb"></div></div>
     <div class="card" id="teamCard" hidden><span class="label">Команды</span><div id="teamBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
@@ -6001,7 +6002,7 @@ $('#nightBtn').addEventListener('click',()=>{if(night)return;try{candleReport()}
     if(stf('breeder')){if(h.preg&&h.preg.days>1)h.preg.days=Math.max(1,h.preg.days-stf('breeder'));if(h.age!=null&&h.age<4)h.age=Math.min(4,h.age+stf('breeder'))}
     if(h.age!=null){h.age++;if(h.age===5)news.push(`${h.name} ${h.sex==='f'?'выросла':'вырос'} и может выступать${stallsUsed()>S.stalls?'. Ему нужен свой денник — купи ещё один':''}`)}
     if(h.preg){h.preg.days--;if(h.preg.days<=0){const f=makeFoal(h);f.dam=h.id;births.push(f);S.stats.foals=(S.stats.foals||0)+1;h.preg=null;news.unshift(`Родился жеребёнок: ${f.name}! Пока он маленький, живёт в деннике с мамой`);feed(`в конюшне родился жеребёнок ${f.name} (${COATS[f.coat].name})`)}}});
-  if(births.length){S.horses.push(...births);herdKey=''}
+  if(births.length){S.horses.push(...births);herdKey='';try{foalReport(births.length)}catch(e){}}
   S.offers=genOffers();S.tasks=genTasks();S.weather=genWeather();if(cupDay())news.push('Сегодня Кубок выходного дня: призы ×2');night={t:0,news};anim=null;herdKey='';ui();save();pushPlayer(true);cloudSave();
   news.forEach((n,i)=>setTimeout(()=>toast(n),3000+i*2400))});
 
@@ -6106,7 +6107,7 @@ let view='stable';
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.v)));
 function setView(v){if(ar.running)return;if(v!=='arena')leaveRide();view=v;document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===v));
   ['stable','arena','market','base','reg','trophy'].forEach(k=>{const s=$('#v-'+k);s.hidden=k!==v;if(k===v)s.style.display='flex'});
-  if(v==='arena'){resetArena();renderArenaUI()}if(v==='market')renderMarket();if(v==='trophy'){renderTrophy();renderClub();renderWeek();candlePoll()}if(v==='reg'){renderReg();if(ON.ok&&ON.be==='supa'&&Date.now()-(ON.lastRef||0)>15000)supaRefresh().then(()=>{if(view==='reg')renderReg()})}if(v==='base')renderBase();ui()}
+  if(v==='arena'){resetArena();renderArenaUI()}if(v==='market')renderMarket();if(v==='trophy'){renderTrophy();renderClub();renderWeek();candlePoll();foalPoll()}if(v==='reg'){renderReg();if(ON.ok&&ON.be==='supa'&&Date.now()-(ON.lastRef||0)>15000)supaRefresh().then(()=>{if(view==='reg')renderReg()})}if(v==='base')renderBase();ui()}
 
 
 /* ============ BASE: сезон, тренировки, постройки, персонал, ежедневное ============ */
@@ -6190,6 +6191,24 @@ function renderMarket(){
   if(stallsUsed()>=S.stalls)hs.insertAdjacentHTML('beforeend',`<p class="hint" style="text-align:left;margin:0">Все ${S.stalls} денников заняты. Новый денник покупается во вкладке «Денник».</p>`);
 }
 
+/* ---- Жеребячий бум: рождения считает и награждает сервер ---- */
+const FLB={st:null,at:0};
+async function foalReport(n){if(ON.be!=='supa'||!ON.ok||!n)return;
+  try{const r=await ON.sb.rpc('foal_report',{p_n:n,p_nick:String(ON.nick||'').slice(0,24)});if(r.data&&r.data.got>0)toast('🐴 Жеребёнок засчитан в «Жеребячьем буме»!');foalPoll(true)}catch(e){}}
+async function foalPoll(force){if(ON.be!=='supa'||!ON.ok)return;if(!force&&Date.now()-FLB.at<60000)return;FLB.at=Date.now();
+  try{const r=await ON.sb.rpc('foal_state');if(r.error||!r.data)return;FLB.st=r.data;
+    if(FLB.st.started&&!FLB.st.ended&&!S.foalInfo){S.foalInfo=1;save();toast('🐴 Начался «Жеребячий бум»! Подробности во вкладке «Трофеи»')}
+    renderFoal()}catch(e){}}
+function renderFoal(){const el=$('#foalCard');if(!el)return;const st=FLB.st;if(!st||!st.on){el.hidden=true;return}
+  const fmt=d=>new Date(d).toLocaleString('ru-RU',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Moscow'})+' по Москве';
+  const rows=(st.board||[]).map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nick||'Игрок')}</td><td>${+p.n||0}</td></tr>`).join('');
+  const when=st.ended?'Ивент закончился.':(st.started?'Идёт до '+fmt(st.ends)+'.':'Старт: '+fmt(st.starts)+'.');
+  el.innerHTML=`<span class="label">🐴 Жеребячий бум</span>
+    <p class="note" style="text-align:left"><b>Правила.</b> Побеждает тот, у кого за время ивента родится больше всего жеребят в конюшне. Жеребёнок считается, когда появляется на свет после ночи. Чтобы родились жеребята, нужны жеребые кобылы, а в игре нужно быть онлайн, чтобы рождения засчитались.</p>
+    <p class="note" style="text-align:left">${when} 🥇 1 место: 2000 монет, 🥈 2 место: 1400, 🥉 3 место: 1000. Твои жеребята: <b>${+st.mine||0}</b>.</p>
+    ${rows?`<div class="tablewrap"><table><thead><tr><th>#</th><th>Игрок</th><th>Жеребята</th></tr></thead><tbody>${rows}</tbody></table></div>`:''}
+    ${st.prize>0?`<div class="row" style="justify-content:flex-start"><button class="btn" id="foalClaim">Забрать приз: ${st.prize} монет (${st.place} место)</button></div>`:''}`;
+  el.hidden=false;const cb=$('#foalClaim');if(cb)cb.onclick=async()=>{cb.disabled=true;try{const r=await ON.sb.rpc('foal_claim');const c=+(r.data||0);if(c>0){S.coins+=c;save();pushPlayer(true);SFX.coin();toast('Приз получен: +'+c+' монет');ui()}foalPoll(true)}catch(e){toast('Не получилось забрать приз, попробуй ещё раз');cb.disabled=false}}}
 /* ---- Празднование: свечи считает и выдаёт сервер, правила на клиенте не хранятся ---- */
 const CND={st:null,at:0};
 function candleSnap(){return{k:'night',nick:String(ON.nick||'').slice(0,24),hs:S.horses.map(h=>({hu:Math.round(h.hunger),th:Math.round(h.thirst),dr:(h.dirt||[]).length,mn:(h.manure||[]).length,en:Math.round(h.energy),jy:Math.round(h.joy||0),hv:Math.round(h.hooves||0),lv:h.level||1}))}}
@@ -6733,13 +6752,13 @@ async function initClaude(){
   if(view==='arena'&&disc==='end')joinRide(ENDUR[sel.end].km);
 }
 /* ---- supabase ---- */
-async function supaSignedIn(u){ON.uid=u.id;ON.needLogin=false;ON.ok=true;setTimeout(()=>candlePoll(true),1200);setTimeout(()=>{if(view==='market')renderMarket()},900);
+async function supaSignedIn(u){ON.uid=u.id;ON.needLogin=false;ON.ok=true;setTimeout(()=>{candlePoll(true);foalPoll(true)},1200);setTimeout(()=>{if(view==='market')renderMarket()},900);
   try{const {data}=await ON.sb.from('players').select('nick').eq('id',ON.uid).maybeSingle();ON.nick=cleanNick((data&&data.nick)||(u.user_metadata&&u.user_metadata.nick)||'Игрок')}catch(e){ON.nick='Игрок'}
   ON.names[ON.uid]=ON.nick;
   try{const {data}=await ON.sb.from('saves').select('day,coins,horses,updated_at,state').eq('id',ON.uid).maybeSingle();ON.cloud=data?{day:data.day,coins:data.coins,horses:data.horses,at:Date.parse(data.updated_at),state:data.state}:null}catch(e){}
   await supaRefresh();pushPlayer(true);
   if(view==='arena'&&disc==='end')joinRide(ENDUR[sel.end].km)}
-async function supaRefresh(){if(ON.be!=='supa'||!ON.ok)return;ON.poll=0;ON.lastRef=Date.now();candlePoll();
+async function supaRefresh(){if(ON.be!=='supa'||!ON.ok)return;ON.poll=0;ON.lastRef=Date.now();candlePoll();foalPoll();
   try{const {data}=await ON.sb.from('players').select('id,nick,score,ribbons,cups,end_km,top,best').order('score',{ascending:false}).limit(300);
     if(data){ON.players=data.map(p=>({id:p.id,score:p.score,ribbons:p.ribbons,cups:p.cups,endKm:p.end_km,top:p.top,best:p.best||{}}));data.forEach(p=>{ON.names[p.id]=cleanNick(p.nick)||'Игрок'})}}catch(e){}
   try{const {data}=await ON.sb.from('trades').select('id,seller,seller_nick,horse,name,breed,level,price,status').eq('status','open').order('created_at',{ascending:false}).limit(100);
@@ -7169,7 +7188,7 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
 
 
 /* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
-const APP_V='4.2',SITE='https://aslan-bolshoy.github.io/podkova/';
+const APP_V='4.3',SITE='https://aslan-bolshoy.github.io/podkova/';
 const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
 const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
 let updShown=null,updTimer=null,updLater=0;

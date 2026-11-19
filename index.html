@@ -301,7 +301,7 @@ details summary{cursor:pointer}
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
     <div class="row" style="justify-content:center;gap:8px"><button class="btn ghost" id="verCheck" type="button">Проверить обновление</button><button class="btn ghost" id="verHard" type="button">Перезагрузить без кэша</button></div><p class="note" id="verMsg" role="status" style="text-align:center"></p>
-    <p class="note" id="verNote" style="text-align:center">Версия игры 4.1 · еда и вода не убывают, пока тебя нет, Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 4.2 · еда и вода не убывают, пока тебя нет, Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
     <div class="card" id="wkCard"><span class="label">Лига недели · обнуляется каждый понедельник</span><div id="wkBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card" id="candleCard" hidden></div>
     <div class="card" id="lbCard" hidden><span class="label">Рейтинг игроков</span><div id="lb"></div></div>
@@ -6197,13 +6197,13 @@ async function candleReport(){if(ON.be!=='supa'||!ON.ok)return;const ev=candleSn
   try{const r=await ON.sb.rpc('candle_report',{ev});if(r.data&&r.data.got>0)toast('🕯 Ты нашёл свечу!');candlePoll(true)}catch(e){}}
 async function candlePoll(force){if(ON.be!=='supa'||!ON.ok)return;if(!force&&Date.now()-CND.at<60000)return;CND.at=Date.now();
   try{const r=await ON.sb.rpc('candle_state');if(r.error||!r.data)return;CND.st=r.data;
-    if(CND.st.on&&!S.candleInfo){S.candleInfo=1;save();toast('🕯 Началось «Празднование»! Подробности во вкладке «Трофеи»')}
+    if(CND.st.on&&!S.candleInfo){S.candleInfo=1;save();toast('🕯 «Празднование» открыто для всех! Подробности во вкладке «Трофеи»')}
     renderCandle()}catch(e){}}
 function renderCandle(){const el=$('#candleCard');if(!el)return;const st=CND.st;if(!st||!st.on){el.hidden=true;return}
   const end=new Date(st.ends),ds=end.toLocaleString('ru-RU',{day:'numeric',month:'long',hour:'2-digit',minute:'2-digit',timeZone:'Europe/Moscow'})+' по Москве';
   const rows=(st.board||[]).map((p,i)=>`<tr><td>${i+1}</td><td>${esc(p.nick||'Игрок')}</td><td>${+p.n||0}</td></tr>`).join('');
   el.innerHTML=`<span class="label">🕯 Празднование</span>
-    <p class="note" style="text-align:left"><b>Инструкция.</b> Началось празднование! Первую свечу уже нашёл${st.first_nick?' игрок '+esc(st.first_nick):' один из игроков'}. Свечи выдаются за особые действия в игре, но какие именно, не сказано. Наблюдай за своей конюшней, пробуй разное и не забывай про ночь.</p>
+    <p class="note" style="text-align:left"><b>Инструкция.</b> Праздник начался, и борьба за свечи открыта для всех! ${st.first_nick?'Первую свечу уже нашёл игрок '+esc(st.first_nick)+'. Остальным пора поторопиться.':'Свечи уже ждут в конюшнях, но пока их никто не нашёл. Кто окажется первым?'} Свечи выдаются за особые заслуги в игре, но какие именно, не сказано. Присмотрись к своей конюшне, пробуй разное и не забывай про ночь.</p>
     <p class="note" style="text-align:left">${st.ended?'Празднование закончилось.':'Идёт до '+ds+'.'} Побеждает тот, у кого больше всех свечей. 🥇 1 место: 1000 монет, 🥈 2 место: 700, 🥉 3 место: 500. Твои свечи: <b>${+st.mine||0}</b>.</p>
     ${rows?`<div class="tablewrap"><table><thead><tr><th>#</th><th>Игрок</th><th>Свечи</th></tr></thead><tbody>${rows}</tbody></table></div>`:''}
     ${st.prize>0?`<div class="row" style="justify-content:flex-start"><button class="btn" id="candleClaim">Забрать приз: ${st.prize} монет (${st.place} место)</button></div>`:''}`;
@@ -7169,7 +7169,7 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
 
 
 /* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
-const APP_V='4.1',SITE='https://aslan-bolshoy.github.io/podkova/';
+const APP_V='4.2',SITE='https://aslan-bolshoy.github.io/podkova/';
 const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
 const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
 let updShown=null,updTimer=null,updLater=0;

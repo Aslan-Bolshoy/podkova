@@ -301,7 +301,7 @@ details summary{cursor:pointer}
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
     <div class="row" style="justify-content:center;gap:8px"><button class="btn ghost" id="verCheck" type="button">Проверить обновление</button><button class="btn ghost" id="verHard" type="button">Перезагрузить без кэша</button></div><p class="note" id="verMsg" role="status" style="text-align:center"></p>
-    <p class="note" id="verNote" style="text-align:center">Версия игры 3.9 · Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 4.0 · еда и вода не убывают, пока тебя нет, Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
     <div class="card" id="wkCard"><span class="label">Лига недели · обнуляется каждый понедельник</span><div id="wkBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card" id="lbCard" hidden><span class="label">Рейтинг игроков</span><div id="lb"></div></div>
     <div class="card" id="teamCard" hidden><span class="label">Команды</span><div id="teamBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
@@ -7149,7 +7149,7 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
 
 
 /* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
-const APP_V='3.9',SITE='https://aslan-bolshoy.github.io/podkova/';
+const APP_V='4.0',SITE='https://aslan-bolshoy.github.io/podkova/';
 const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
 const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
 let updShown=null,updTimer=null,updLater=0;
@@ -7178,8 +7178,7 @@ document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest
 setInterval(checkUpdate,3*60e3);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpdate()});setTimeout(checkUpdate,4000);
 function start(data){
   S=(data&&data.state)||load()||fresh();
-  if(!data||!data.state){const mins=Math.min(180,(Date.now()-(S.seen||Date.now()))/60000);
-    if(mins>1)S.horses.forEach(h=>{h.hunger=clamp(h.hunger-mins*.5);h.thirst=clamp(h.thirst-mins*.7)})}
+  /* пока игрока нет в игре, еда и вода не убывают: время идёт только при открытой игре */
   S.horses.forEach(h=>{h.mangerHay=h.mangerHay||0;if(!h.sex)h.sex=h.name==='Звёздочка'?'f':(Math.random()<.5?'f':'m');if(h.hooves==null)h.hooves=85;if(!h.permit)h.permit=40;if(h.prone==null)h.prone=.12;if(h.load==null)h.load=0;if(!h.stones)h.stones=[]});
   if(S.offers&&S.offers[0]&&!S.offers[0].sex)S.offers=genOffers();
   if(!S.tasks)S.tasks=genTasks();

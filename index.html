@@ -225,6 +225,7 @@ details summary{cursor:pointer}
     <div class="card">
       <div class="row"><span class="label">Твои лошади</span><span class="label" id="stalls"></span></div>
       <div class="herd" id="herdF"></div>
+      <div class="row" id="herdTools" style="justify-content:flex-start;gap:6px;flex-wrap:wrap;margin:6px 0"></div><div id="massBox"></div>
       <div class="herd" id="herd"></div>
       <div class="row" id="herdMv" style="justify-content:flex-start;gap:8px;margin-top:6px"><button class="btn ghost" id="mvL" aria-label="Сдвинуть денник влево">◀ Влево</button><button class="btn ghost" id="mvR" aria-label="Сдвинуть денник вправо">Вправо ▶</button><small style="color:var(--muted)">меняет денники местами</small></div>
     </div>
@@ -299,10 +300,11 @@ details summary{cursor:pointer}
 
   <!-- TROPHIES -->
   <section id="v-trophy" hidden style="flex-direction:column;gap:12px">
+    <div class="card" id="modeCard"></div>
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
     <div class="row" style="justify-content:center;gap:8px"><button class="btn ghost" id="verCheck" type="button">Проверить обновление</button><button class="btn ghost" id="verHard" type="button">Перезагрузить без кэша</button></div><p class="note" id="verMsg" role="status" style="text-align:center"></p>
-    <p class="note" id="verNote" style="text-align:center">Версия игры 4.6 · при входе прогресс сам загружается с сервера, клубы игроков, конкурс красоты недели, свои вальтрапы и продажа вальтрапов, новые ежедневные задания, исправлен вход, ивент «Жеребячий бум», еда и вода не убывают, пока тебя нет, Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 4.7 · режимы всадника и коннозаводчика, кнопка «Свести всех кобыл», продажа нескольких лошадей сразу, при входе прогресс сам загружается с сервера, клубы игроков, конкурс красоты недели, свои вальтрапы и продажа вальтрапов, новые ежедневные задания, исправлен вход, ивент «Жеребячий бум», еда и вода не убывают, пока тебя нет, Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
     <div class="card" id="wkCard"><span class="label">Лига недели · обнуляется каждый понедельник</span><div id="wkBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card" id="foalCard" hidden></div>
     <div class="card" id="beautyCard" hidden></div>
@@ -5458,7 +5460,8 @@ const seasonPts=()=>S.season&&S.season.id===seasonKey()?S.season.pts:0;
 function calEvent(d){const e=CAL[sDay(d)];if(!e)return null;if(e.q&&seasonPts()<e.q)return Object.assign({closed:true},e);return e}
 function calAward(place){wkAward(place);const e=calEvent();if(!e||e.closed)return 0;if(!S.season||S.season.id!==seasonKey())S.season={id:seasonKey(),pts:0,days:{}};
   const pts=Math.round(([10,7,5,3,1][place]||1)*e.p),prev=S.season.days[S.day]||0;if(pts>prev){S.season.pts+=pts-prev;S.season.days[S.day]=pts;return pts-prev}return 0}
-const prizeMult=()=>{const e=calEvent();return Math.max(S.day%5===0?2:1,e&&!e.closed?e.m:1)};
+const prizeMult=()=>{const e=calEvent();return Math.max(S.day%5===0?2:1,e&&!e.closed?e.m:1)*(S.mode==='rider'?1.25:1)};
+const breedCost=()=>60;
 function seasonEnd(news,oldDay){const k=yearOf(oldDay)+'-'+seasonOf(oldDay);if(!S.season||S.season.id!==k)return;const pts=S.season.pts;
   S.seasons=S.seasons||[];let r='';if(pts>=45){S.coins+=500;S.cups=(S.cups||0)+1;r='Чемпион сезона! +500 монет и кубок'}else if(pts>=25){S.coins+=200;r='Призёр сезона: +200 монет'}else if(pts>=10){S.coins+=60;r='Участник сезона: +60 монет'}
   S.seasons.unshift({id:k,n:SEASONS[seasonOf(oldDay)]+' '+yearOf(oldDay),pts,r});S.seasons=S.seasons.slice(0,8);S.season=null;news.unshift(`Сезон окончен: ${pts} очков. ${r||'В следующем сезоне получится лучше'}`)}
@@ -6077,14 +6080,15 @@ function renderBreed(h){const el=$('#breedBox');
   if(isFoal(h)){el.innerHTML=`<p class="note">Жеребёнок растёт: ${h.age} из 5 дней, до взрослой жизни ${nightsW(foalNights(h.age,stf('breeder')))}${stf('breeder')?' (с учётом коневода)':''}.</p>`;return}
   if(h.preg){el.innerHTML=`<p class="note">Ждёт жеребёнка: родится через ${nightsW(pregNights(h.preg.days,stf('breeder')))}${stf('breeder')?' (с учётом коневода)':''}.</p>`;return}
   if(h.sex!=='f'){el.innerHTML='';return}
+  if(S.mode==='rider'){el.innerHTML='<p class="note">В режиме всадника разведение отключено. Режим меняется во вкладке «Клуб».</p>';return}
   const dads=S.horses.filter(x=>x.sex==='m'&&!isFoal(x)&&!x.sick).sort((a,b)=>b.level-a.level);
   if(!dads.length){el.innerHTML='<p class="note">Нужен жеребец (не мерин): купи его на ярмарке или в Реестре, и у кобылы сможет родиться жеребёнок.</p>';return}
   S.sireSel=S.sireSel||{};let dad=dads.find(x=>x.id===S.sireSel[h.id])||dads[0];
-  const ok=h.level>=2&&S.coins>=80&&stallsUsed()<S.stalls;
+  const ok=h.level>=2&&S.coins>=breedCost()&&stallsUsed()<S.stalls;
   el.innerHTML=`<div style="display:flex;flex-direction:column;gap:8px"><label class="note" for="sireSel">Отец жеребёнка:</label><select id="sireSel" class="search">${dads.map(x=>`<option value="${esc(x.id)}" ${x===dad?'selected':''}>${esc(x.name)} · ур. ${x.level}${SPEC[x.spec]?' · '+SPEC[x.spec].n.toLowerCase():''}</option>`).join('')}</select>
-    <div class="row"><p class="note">Жеребёнок от ${esc(dad.name)} родится через ${nightsW(pregNights(2,stf('breeder')))}${stf('breeder')?' (с учётом коневода)':''}${h.level<2?'. Кобыле нужен уровень 2':''}${stallsUsed()>=S.stalls?'. Нет свободного денника — купи денник':''}${S.coins<80?'. Нужно 80 монет':''}</p><button class="btn ghost" id="breedBtn" ${ok?'':'disabled'}>Свести · 80</button></div></div>`;
+    <div class="row"><p class="note">Жеребёнок от ${esc(dad.name)} родится через ${nightsW(pregNights(2,stf('breeder')))}${stf('breeder')?' (с учётом коневода)':''}${h.level<2?'. Кобыле нужен уровень 2':''}${stallsUsed()>=S.stalls?'. Нет свободного денника — купи денник':''}${S.coins<breedCost()?'. Нужно '+breedCost()+' монет':''}</p><button class="btn ghost" id="breedBtn" ${ok?'':'disabled'}>Свести · ${breedCost()}</button></div></div>`;
   $('#sireSel').onchange=e=>{S.sireSel[h.id]=e.target.value;save();renderBreed(h)};
-  $('#breedBtn').onclick=()=>{if(!ok)return;S.coins-=80;fixHorse(dad);h.preg={days:2,breed:dad.breed,coat:dad.coat,gen:dad.gen,spd:dad.spd,spec:dad.spec,char:dad.char,cm:heightCm(dad.hands||BREEDS[dad.breed].hands),sire:dad.name};toast(`${h.name} ждёт жеребёнка`);ui();save()}}
+  $('#breedBtn').onclick=()=>{if(!ok)return;S.coins-=breedCost();fixHorse(dad);h.preg={days:2,breed:dad.breed,coat:dad.coat,gen:dad.gen,spd:dad.spd,spec:dad.spec,char:dad.char,cm:heightCm(dad.hands||BREEDS[dad.breed].hands),sire:dad.name};toast(`${h.name} ждёт жеребёнка`);ui();save()}}
 const TASKS={feed:{t:'Покормить сеном',n:3,r:15},brush:{t:'Счистить пятна грязи',n:8,r:15},manure:{t:'Убрать навоз',n:3,r:10},hoof:{t:'Вынуть камни из копыт',n:2,r:15},
   pat:{t:'Погладить лошадей',n:10,r:10},treat:{t:'Угостить лакомством',n:2,r:10},show:{t:'Выступить на соревнованиях',n:1,r:20},ribbon:{t:'Выиграть розетку',n:1,r:30},dress:{t:'Выездка на 60% и выше',n:1,r:30},endrun:{t:'Финишировать в пробеге',n:1,r:30}};
 function genTasks(){return Object.keys(TASKS).sort(()=>Math.random()-.5).slice(0,3).map(k=>({k,got:0}))}
@@ -6127,24 +6131,59 @@ function liteUI(){ // bars only (called on tick)
   const first=document.querySelectorAll('#bars .bar')[6];if(first)first.firstChild.textContent=`Настроение · ${moodWord(m)}`;
 }
 let herdKey='';
-let herdFilt='all';
+let herdFilt='all';let herdSelMode=false;const herdSel=new Set();let toolsKey='';
 const HFILT=[['all','Все',()=>1],['jump','Конкур',h=>!isFoal(h)&&h.spec==='jump'],['dress','Выездка',h=>!isFoal(h)&&h.spec==='dress'],['race','Скачки',h=>!isFoal(h)&&h.spec==='race'],['end','Пробег',h=>!isFoal(h)&&h.spec==='end'],['m','Жеребцы',h=>!isFoal(h)&&h.sex==='m'],['f','Кобылы',h=>!isFoal(h)&&h.sex==='f'],['g','Мерины',h=>!isFoal(h)&&h.sex==='g'],['foal','Жеребята',h=>isFoal(h)]];
 function herdList(){const f=(HFILT.find(x=>x[0]===herdFilt)||HFILT[0])[2];let l=S.horses.filter(f);
   if(herdFilt==='all'){const out=[];l.forEach(h=>{if(momOf(h)&&l.includes(momOf(h)))return;out.push(h);S.horses.filter(x=>x!==h&&x.dam===h.id&&isFoal(x)&&l.includes(x)).forEach(x=>out.push(x))});return out}
   return l}
 function moveHorse(d){const l=herdList().filter(h=>!(isFoal(h)&&momOf(h))),me=momOf(cur())||cur(),i=l.indexOf(me);if(i<0)return;const o=l[i+d];if(!o)return;const a=S.horses.indexOf(me),b=S.horses.indexOf(o);[S.horses[a],S.horses[b]]=[S.horses[b],S.horses[a]];herdKey='';renderHerd();save()}
 document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('#mvL,#mvR');if(t)moveHorse(t.id==='mvL'?-1:1)});
-function renderHerd(){const list=herdList();const key=list.map(h=>h.id+h.name+h.level+h.coat+h.age+(h.preg?1:0)+(h.inj?h.inj.type:'')+(h.retired?1:0)).join('|')+S.cur+herdFilt+S.horses.length;
-  if(key===herdKey)return;herdKey=key;
+/* ---- массовое разведение и продажа ---- */
+function isMare(h){return h.sex==='f'&&!isFoal(h)&&!h.preg&&!h.sick&&!h.retired&&h.level>=2}
+function breedPlan(){const dads=S.horses.filter(x=>x.sex==='m'&&!isFoal(x)&&!x.sick).sort((a,b)=>b.level-a.level);S.sireSel=S.sireSel||{};
+  const mares=S.horses.filter(isMare),free=Math.max(0,S.stalls-stallsUsed()),n=dads.length&&S.mode!=='rider'?Math.min(mares.length,free,Math.floor(S.coins/breedCost())):0;
+  return{dads,mares,free,n,list:mares.slice(0,n).map(m=>({m,d:dads.find(x=>x.id===S.sireSel[m.id])||dads[0]}))}}
+function massBreedRun(){const pl=breedPlan();let c=0;pl.list.forEach(({m,d})=>{if(S.coins<breedCost())return;S.coins-=breedCost();fixHorse(d);
+  m.preg={days:2,breed:d.breed,coat:d.coat,gen:d.gen,spd:d.spd,spec:d.spec,char:d.char,cm:heightCm(d.hands||BREEDS[d.breed].hands),sire:d.name};c++});
+  $('#massBox').innerHTML='';herdKey='';toolsKey='';SFX.neigh();toast(c?`Сведено кобыл: ${c}, потрачено ${c*breedCost()} монет`:'Некого сводить');ui();save()}
+function selInfo(){let t=0,n=0;S.horses.forEach(h=>{if(herdSel.has(h.id)&&!h.preg){t+=sellPrice(h);n++}});return{t,n}}
+function renderHerdTools(force){const el=$('#herdTools');if(!el)return;const pl=breedPlan();
+  const key=[pl.n,pl.mares.length,herdSelMode?1:0,herdSel.size,S.horses.length].join('|');if(!force&&key===toolsKey)return;toolsKey=key;
+  const bs='padding:5px 10px;font-size:12px;flex:0 0 auto';
+  el.innerHTML=`<button class="btn ghost" id="mbBtn" style="${bs}" ${pl.n?'':'disabled'}>🍼 Свести всех кобыл${pl.n?' ('+pl.n+')':''}</button><button class="btn${herdSelMode?'':' ghost'}" id="msBtn" style="${bs}">${herdSelMode?'Закончить выбор':'💰 Продать нескольких'}</button>`+(herdSelMode?`<button class="btn ghost" data-ms="foals" style="${bs}">Все жеребята</button><button class="btn ghost" data-ms="vis" style="${bs}">Все в списке</button><button class="btn ghost" data-ms="none" style="${bs}">Снять выбор</button>`:'');
+  const box=$('#massBox');
+  $('#mbBtn').onclick=()=>{const p=breedPlan();if(!p.n){return}
+    const why=p.n<p.mares.length?`<p class="note">Свободных денников: ${p.free}, монет хватает на ${Math.floor(S.coins/breedCost())}. Сводятся первые ${p.n} из ${p.mares.length} подходящих кобыл.</p>`:'';
+    box.innerHTML=`<div class="card" style="margin:6px 0"><p class="note"><b>Свести кобыл: ${p.n}</b> за ${p.n*breedCost()} монет. Отец берётся тот, которого ты выбрал для кобылы, а если не выбирал, то самый высокий по уровню.</p>${why}<div class="tablewrap"><table><tbody>${p.list.map(x=>`<tr><td>${esc(x.m.name)}</td><td>×</td><td>${esc(x.d.name)}</td></tr>`).join('')}</tbody></table></div><div class="row" style="justify-content:flex-start;margin-top:8px"><button class="btn ghost" id="mbNo">Отмена</button><button class="btn" id="mbYes">Свести</button></div></div>`;
+    $('#mbNo').onclick=()=>{box.innerHTML=''};$('#mbYes').onclick=massBreedRun};
+  $('#msBtn').onclick=()=>{herdSelMode=!herdSelMode;herdSel.clear();box.innerHTML='';herdKey='';toolsKey='';renderHerd()};
+  el.querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>{const m=b.dataset.ms;if(m==='none')herdSel.clear();else if(m==='foals')S.horses.forEach(h=>{if(isFoal(h)&&!h.preg)herdSel.add(h.id)});else herdList().forEach(h=>{if(!h.preg)herdSel.add(h.id)});herdKey='';toolsKey='';renderHerd()});
+  if(herdSelMode&&herdSel.size){const si=selInfo(),left=S.horses.length-si.n;
+    box.innerHTML=`<div class="card" style="margin:6px 0"><p class="note">Выбрано лошадей: <b>${si.n}</b>. Выручка: <b>${si.t} монет</b>. Розетки уедут вместе с лошадьми. Кобылы в положении не продаются.</p>${left<1?'<p class="note" style="color:var(--bad)">Нужно оставить хотя бы одну лошадь</p>':''}<div class="row" style="justify-content:flex-start"><button class="btn" id="msGo" ${left<1||!si.n?'disabled':''}>Продать выбранных</button></div></div>`;
+    $('#msGo').onclick=()=>{const g=$('#msGo');if(g.dataset.ask!=='1'){g.dataset.ask='1';g.textContent='Точно продать '+si.n+'?';setTimeout(()=>{if(g.isConnected){g.dataset.ask='';g.textContent='Продать выбранных'}},3500);return}
+      const info=selInfo();S.coins+=info.t;S.horses=S.horses.filter(h=>!(herdSel.has(h.id)&&!h.preg));if(!S.horses.find(z=>z.id===S.cur))S.cur=S.horses[0].id;herdSel.clear();herdSelMode=false;box.innerHTML='';herdKey='';toolsKey='';SFX.coin();toast(`Продано лошадей: ${info.n}, +${info.t} монет`);ui();save()}}
+  else if(!document.getElementById('mbNo'))box.innerHTML=''}
+function renderHerd(){const list=herdList();const key=list.map(h=>h.id+h.name+h.level+h.coat+h.age+(h.preg?1:0)+(h.inj?h.inj.type:'')+(h.retired?1:0)).join('|')+S.cur+herdFilt+S.horses.length+(herdSelMode?'S'+[...herdSel].join(','):'');
+  renderHerdTools();if(key===herdKey)return;herdKey=key;
   const fe=$('#herdF');if(fe){fe.innerHTML=HFILT.filter(x=>x[0]==='all'||S.horses.some(x[2])).map(x=>`<button class="btn${x[0]===herdFilt?'':' ghost'}" data-hf="${x[0]}" style="padding:5px 10px;font-size:12px;flex:0 0 auto">${x[1]}</button>`).join('');fe.querySelectorAll('[data-hf]').forEach(b=>b.onclick=()=>{herdFilt=b.dataset.hf;herdKey='';renderHerd()})}
   const el=$('#herd');el.innerHTML='';
   if(!list.length)el.innerHTML='<p class="note">В этой категории пока нет лошадей.</p>';
   list.forEach(h=>{const b=document.createElement('button');b.className='hchip';b.setAttribute('aria-current',h.id===S.cur);
     if(isFoal(h)&&momOf(h)&&herdFilt==='all')b.style.marginLeft='-4px',b.style.borderLeft='3px solid var(--straw)';
     const cv=document.createElement('canvas');cv.width=152;cv.height=100;b.appendChild(cv);
-    b.insertAdjacentHTML('beforeend',`<span>${esc(h.name)}</span><small>${h.retired?'на пенсии':h.inj?'травма':isFoal(h)&&momOf(h)?'с мамой':sexWord(h)+' · ур. '+h.level}</small>`);
-    b.addEventListener('click',()=>{$('#sellBox').hidden=true;S.cur=h.id;anim=null;neckCur=0;xoCur=0;herdKey='';ui();save()});el.appendChild(b);miniHorse(cv,h)})}
-function renderTrophy(){const got=ACH.filter(a=>S.ach[a.id]).length;$('#achHead').textContent=`${got} из ${ACH.length}`;
+    b.insertAdjacentHTML('beforeend',`<span>${herdSelMode&&herdSel.has(h.id)?'✓ ':''}${esc(h.name)}</span><small>${h.retired?'на пенсии':h.inj?'травма':isFoal(h)&&momOf(h)?'с мамой':sexWord(h)+' · ур. '+h.level}</small>`);
+    if(herdSelMode&&herdSel.has(h.id)){b.style.boxShadow='0 0 0 3px #e8ad48';b.style.borderRadius='14px'}
+    b.addEventListener('click',()=>{if(herdSelMode){if(h.preg){toast('Кобылу в положении продать нельзя');return}herdSel.has(h.id)?herdSel.delete(h.id):herdSel.add(h.id);herdKey='';renderHerd();return}$('#sellBox').hidden=true;S.cur=h.id;anim=null;neckCur=0;xoCur=0;herdKey='';ui();save()});el.appendChild(b);miniHorse(cv,h)})}
+/* ---- режимы игры: коннозаводчик и всадник ---- */
+const MODES={breeder:{n:'Коннозаводчик',e:'🐴',d:'Случка дешевле (60 монет), кнопка «Свести всех кобыл», все инструменты разведения.'},
+  rider:{n:'Всадник',e:'🏇',d:'Призы за соревнования ×1,25. Растёт мастерство всадника (до 100): меньше падений и усталости. Разведение отключено.'}};
+function renderModeCard(){const el=$('#modeCard');if(!el)return;const cur_=S.mode==='rider'?'rider':'breeder',can=S.modeDay!==S.day||!S.mode;
+  el.innerHTML=`<span class="label">⚙ Режим игры</span><div class="row" style="gap:8px;align-items:stretch;flex-wrap:wrap">${Object.entries(MODES).map(([k,m])=>`<button class="btn${k===cur_?'':' ghost'}" data-mode="${k}" style="flex:1;min-width:140px;display:block;text-align:left;padding:10px 12px;height:auto"><b style="display:block">${m.e} ${m.n}${k===cur_?' · выбран':''}</b><small style="display:block;margin-top:4px;white-space:normal;font-weight:500;line-height:1.3">${m.d}</small></button>`).join('')}</div>
+    <p class="note" style="text-align:left">${cur_==='rider'?`Мастерство всадника: <b>${Math.round(S.skill||0)}</b> из 100 (падения реже на ${Math.round((S.skill||0)*.4)}%, усталость копится медленнее на ${Math.round((S.skill||0)*.3)}%). `:''}Режим можно менять один раз за игровой день. Лошади, деньги и прогресс не теряются.</p>`;
+  el.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{const k=b.dataset.mode;if(k===cur_)return;if(!can){toast('Режим уже меняли сегодня. Следующая смена после ночи');return}
+    if(b.dataset.ask!=='1'){b.dataset.ask='1';const t=b.querySelector('b');t.textContent='Точно сменить?';setTimeout(()=>{if(b.isConnected)renderModeCard()},3000);return}
+    S.mode=k;S.modeDay=S.day;herdKey='';toolsKey='';SFX.neigh();toast('Режим: '+MODES[k].n);ui();save();renderModeCard();try{renderBreed(cur())}catch(e){}})}
+function renderTrophy(){renderModeCard();const got=ACH.filter(a=>S.ach[a.id]).length;$('#achHead').textContent=`${got} из ${ACH.length}`;
   $('#achList').innerHTML=ACH.map(a=>{const ok=S.ach[a.id];return`<div class="item${ok?'':' locked'}"><svg><use href="#i-ros"/></svg><div><b>${a.n}</b><small>${a.d}${!ok&&a.prog?' · '+a.prog():''}${ok?' · день '+ok:''}</small></div><span class="tag">${ok?'есть':'+'+a.r}</span></div>`}).join('');
   $('#fameHead').textContent=`кубков ${S.cups||0} · чистых кругов ${S.stats.clear||0}`;
   $('#fame').innerHTML=S.horses.map(h=>{const n=[0,0,0];h.ribbons.forEach(r=>n[r.p]++);return`<div class="task"><span>${esc(h.name)} <small style="color:var(--muted)">ур. ${h.level}</small></span><span class="dots">${n.map((v,i)=>`<span><i class="dot" style="background:${PLACE_COL[i]}"></i>${v}</span>`).join('')}</span><small></small></div>`}).join('')}
@@ -6692,12 +6731,12 @@ function stepArena(dt){if(ar.kind==='race')stepRace(dt);else if(ar.kind==='dress
 /* усталость всадника копится за игровой день: каждый старт добавляет, ночью сбрасывается */
 function riderBase(){return S.rt&&S.rt.d===S.day?S.rt.v:0}
 function riderTire(p){return Math.max(.05,Math.min(1,.05+riderBase()+.04*(p||0)))}
-function riderAdd(kind){const a={jump:.13,event:.22,race:.08,end:.1,dress:.07,volt:.06}[kind]||.08;S.rt={d:S.day,v:Math.min(1,riderBase()+a)}}
+function riderAdd(kind){const a=({jump:.13,event:.22,race:.08,end:.1,dress:.07,volt:.06}[kind]||.08)*(1-(S.mode==='rider'?(S.skill||0)*.003:0));S.rt={d:S.day,v:Math.min(1,riderBase()+a)};if(S.mode==='rider')S.skill=Math.min(100,+((S.skill||0)+(kind==='jump'||kind==='event'?1:.5)).toFixed(1))}
 function jumpApproach(fi){const h=cur(),n=ar.fences.length,F=riderTire(fi/(n-1)),hf=Math.min(1.1,(ar.cm||80)/120),k=1-cond(h);
   if(ar.tf&&ar.tf.at===fi){const T=S.tack;T.brk[ar.tf.key]=1;const w=ar.tf.w;ar.tf=null;save();
     if(w==='s'){ar.msg={t:1.6,txt:'Лопнула подпруга!',col:'#e2604f'};return riderFall('Лопнула подпруга, седло съехало')}
     ar.faults+=8;ar.rein=true;ar.msg={t:1.6,txt:'Порвался повод! −8',col:'#e2604f'};SFX.bad();toast('Порвался повод: за него −8 штрафа. Амуниция требует починки');return}
-  const fall=.0015+.032*hf*hf*F*F+k*.012*F;
+  const fall=(.0025+hf*hf*(.005+.06*F*F)+k*.01*(.3+F))*(1-(S.mode==='rider'?(S.skill||0)*.004:0));
   if(Math.random()<fall)riderFall(F>.7?'Всадник устал и потерял равновесие':'Всадник потерял равновесие у препятствия')}
 function jumpAfter(fi){if(ar.fallen||fi>=ar.fences.length-1)return;const h=cur(),F=riderTire((fi+1)/(ar.fences.length-1)),hf=Math.min(1.1,(ar.cm||80)/120),k=1-cond(h);
   if(Math.random()<.04+k*.06+(h.prone||0)*.08){ar.buck=.8;ar.msg={t:1.2,txt:'Лошадь брыкается!',col:'#e8ad48'};SFX.thunk();
@@ -6740,7 +6779,12 @@ function stepJump(dt){const c=ax;
   ar.dust=ar.dust.filter(d=>(d.l-=dt*2)>0);ar.dust.forEach(d=>{d.x+=d.vx*dt;d.y+=d.vy*dt;c.globalAlpha=d.l*.6;c.fillStyle='#c4a274';c.beginPath();c.arc(d.x,d.y,3,0,7);c.fill()});c.globalAlpha=1;
   c.restore();const done=ar.fences.filter(f=>f.passed).length;
   weatherFx(c);hud(c,`Препятствие ${Math.min(8,done+1)}/8`,`Штраф: ${ar.faults}`,`${ar.t.toFixed(1)} с`,ar.faults?'#e2604f':'#7cc46b');
-  {const F=riderTire(Math.min(7,done)/7);c.fillStyle='rgba(19,32,26,.8)';c.beginPath();c.roundRect(AW-112,38,104,16,6);c.fill();c.fillStyle=F<.45?'#7cc46b':F<.75?'#e8ad48':'#e2604f';c.beginPath();c.roundRect(AW-108,42,Math.max(4,92*F),8,4);c.fill();c.fillStyle='#fff';c.font='700 9px Nunito, sans-serif';c.textAlign='right';c.textBaseline='middle';c.fillText('Всадник',AW-114,46)}
+  {const F=riderTire(Math.min(7,done)/7),lv=F<.2?0:F<.45?1:F<.7?2:F<.9?3:4,W_=['свеж','бодр','устаёт','устал','выдохся'][lv],col=['#7cc46b','#a8cf5a','#e8ad48','#e8863a','#e2604f'][lv],now=performance.now();
+    c.fillStyle='rgba(19,32,26,.82)';c.beginPath();c.roundRect(AW-158,36,150,22,11);c.fill();
+    c.fillStyle='#f3efe0';c.beginPath();c.arc(AW-146,48,5,Math.PI,0);c.fill();c.fillRect(AW-151,48,10,2);
+    c.font='700 10px Nunito, sans-serif';c.textAlign='left';c.textBaseline='middle';c.fillStyle=lv===4&&((now/350)|0)%2?'#fff':col;c.fillText(W_,AW-136,47.5);
+    for(let k=0;k<5;k++){const on=F>=(k+.5)/5-.0001;c.fillStyle=on?col:'rgba(255,255,255,.18)';c.beginPath();c.roundRect(AW-84+k*15,42,12,10,3);c.fill()}
+    if(F>.45){const hy=GY-112-(ar.jy||0),hx=HX-8,sp=F>.75?420:650;for(let k=0;k<3;k++){const t=((now/sp)+k/3)%1;c.globalAlpha=(1-t)*.9;c.fillStyle='#bfe6ff';c.beginPath();c.ellipse(hx-9+k*7,hy-6+t*20,1.6,2.6,0,0,7);c.fill()}c.globalAlpha=1}}
   floatMsg(c,dt,HX+40,90);
   if(!ar.running&&!ar.done)overlay(c,`Конкур · ${CLASSES[sel.jump].cm} см`,'8 препятствий · нажми «Старт»');
 }
@@ -7331,7 +7375,7 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
 
 
 /* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
-const APP_V='4.6',SITE='https://aslan-bolshoy.github.io/podkova/';
+const APP_V='4.7',SITE='https://aslan-bolshoy.github.io/podkova/';
 const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
 const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
 let updShown=null,updTimer=null,updLater=0;

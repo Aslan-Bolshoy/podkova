@@ -302,7 +302,7 @@ details summary{cursor:pointer}
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
     <div class="row" style="justify-content:center;gap:8px"><button class="btn ghost" id="verCheck" type="button">Проверить обновление</button><button class="btn ghost" id="verHard" type="button">Перезагрузить без кэша</button></div><p class="note" id="verMsg" role="status" style="text-align:center"></p>
-    <p class="note" id="verNote" style="text-align:center">Версия игры 4.5 · при входе прогресс сам загружается с сервера, клубы игроков, конкурс красоты недели, свои вальтрапы и продажа вальтрапов, новые ежедневные задания, исправлен вход, ивент «Жеребячий бум», еда и вода не убывают, пока тебя нет, Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 4.6 · при входе прогресс сам загружается с сервера, клубы игроков, конкурс красоты недели, свои вальтрапы и продажа вальтрапов, новые ежедневные задания, исправлен вход, ивент «Жеребячий бум», еда и вода не убывают, пока тебя нет, Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
     <div class="card" id="wkCard"><span class="label">Лига недели · обнуляется каждый понедельник</span><div id="wkBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card" id="foalCard" hidden></div>
     <div class="card" id="beautyCard" hidden></div>
@@ -6422,7 +6422,7 @@ function evFinish(){const h=cur(),cl=EV.cl,me={me:true,rider:'Ты',horse:h.name
 function resetVolt(){const cl=VOLT[sel.volt];const sd=sel.dress;DRESS.push(Object.assign({},DRESS[0],{gap:cl.gap,n:cl.n}));sel.dress=DRESS.length-1;resetDress();DRESS.pop();sel.dress=sd;ar.volt=true;ar.gait='walk'}
 function finishVolt(){const h=cur(),i=sel.volt;let sc=ar.score/ar.cues.length;sc=Math.max(0,Math.min(10,sc*(.92+.08*cond(h))+(h.bond-50)*.004+((h.sk&&h.sk.dress)||0)*.02+(charOf(h).d>0?.15:0)));
   const rows=rivals(5).map(r=>({...r,v:+rnd(5.6,7.6).toFixed(3)+i*.15}));rows.push({me:true,rider:'Ты',horse:h.name,v:+sc.toFixed(3)});rows.sort((a,b)=>b.v-a.v);settle(rows,VOLT[i],'volt',sc>=6)}
-function renderArenaUI(){const h=cur();{const e=calEvent();const t=e&&!e.closed?`Сегодня ${e.n}: призы ×${e.m}, очки рейтинга сезона (у тебя ${seasonPts()})`:e&&e.closed?`Сегодня ${e.n} — нужно ${e.q} очков сезона, у тебя ${seasonPts()}`:cupDay()?'Сегодня Кубок выходного дня: призы ×2, за 1 место — кубок на полку в деннике':'';const th_=dayTheme(),t2=(t?t+' · ':'')+`Тема дня: ${th_[2]}, очки недели ×${th_[1]}`;$('#cupNote').hidden=false;$('#cupNote').textContent=t2}
+function renderArenaUI(){const h=cur();{const e=calEvent();const t=e&&!e.closed?`Сегодня ${e.n}: призы ×${e.m}, очки рейтинга сезона (у тебя ${seasonPts()})`:e&&e.closed?`Сегодня ${e.n} — нужно ${e.q} очков сезона, у тебя ${seasonPts()}`:cupDay()?'Сегодня Кубок выходного дня: призы ×2, за 1 место — кубок на полку в деннике':'';const th_=dayTheme(),t2=(t?t+' · ':'')+`Тема дня: ${th_[2]}, очки недели ×${th_[1]} · Всадник устал на ${Math.round(riderBase()*100)}%`;$('#cupNote').hidden=false;$('#cupNote').textContent=t2}
   $('#disc').innerHTML=[['jump','Конкур'],['dress','Выездка'],['end','Пробег'],['event','Троеборье'],['volt','Вольтижир.'],['race','Скачки']].map(([k,n])=>`<button data-d="${k}" aria-pressed="${disc===k}">${n}</button>`).join('');
   $('#disc').querySelectorAll('button').forEach(b=>b.onclick=()=>{if(ar.running)return;disc=b.dataset.d;resetArena();renderArenaUI()});
   $('#clsLabel').textContent=disc==='race'?'Дистанция скачки':disc==='jump'?'Высота препятствий':disc==='dress'?'Уровень езды':disc==='event'?'Уровень соревнований':disc==='volt'?'Категория':'Дистанция пробега';
@@ -6464,7 +6464,7 @@ addEventListener('keydown',e=>{if(view!=='arena')return;
   if((e.code==='Space'||e.code==='ArrowUp')&&!(document.activeElement&&document.activeElement.tagName==='BUTTON')){e.preventDefault();if(ar.kind==='jump'||!ar.running)startOrJump()}});
 
 function settle(rows,cl,kind,extra){const h=cur();const place=rows.findIndex(r=>r.me);ar.running=false;ar.done=true;
-  h.load=clamp((h.load||0)+(kind==='jump'?10+sel.jump*5:kind==='event'?16+sel.event*5:6+sel.dress*3));h.workedToday=true;h.lastWork=kind;let injMsg='';
+  riderAdd(kind);h.load=clamp((h.load||0)+(kind==='jump'?10+sel.jump*5:kind==='event'?16+sel.event*5:6+sel.dress*3));h.workedToday=true;h.lastWork=kind;let injMsg='';
   if(kind==='jump'){const k=ar.fallen?1:Math.round(ar.faults/4);let hit=false;for(let j=0;j<k;j++)if(Math.random()<.05+sel.jump*.03+h.load/500+(h.prone||0)*.1+(hasCh(h,'tendon')?.03:0))hit=true;if(k>=3&&Math.random()<.25)hit=true;
     if(hit){const t=k>=3&&sel.jump>=2&&Math.random()<.25?'tendon':'bruise';injure(h,t,t==='tendon'?'неудачное приземление после сбитого барьера':`удары о жерди (${k} за заезд)`);injMsg=INJ[t].n}
     else if(sel.jump>=2&&h.load>60&&Math.random()<.08){injure(h,'back','высокие прыжки при большой нагрузке');injMsg=INJ.back.n}}
@@ -6689,7 +6689,10 @@ function stepEnd(dt){const c=ax,h=cur(),g=ENDG[ar.gait],L=ar.st[ar.stage];ridePr
 $('#enBtns').querySelectorAll('button').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();enPress(+b.dataset.i)}));
 function stepArena(dt){if(ar.kind==='race')stepRace(dt);else if(ar.kind==='dress')stepDress(dt);else if(ar.kind==='end')stepEnd(dt);else stepJump(dt)}
 /* ---- риски на маршруте: падения, брыкание, порча амуниции ---- */
-function riderTire(p){return Math.max(0,Math.min(1,.3+.7*p))}
+/* усталость всадника копится за игровой день: каждый старт добавляет, ночью сбрасывается */
+function riderBase(){return S.rt&&S.rt.d===S.day?S.rt.v:0}
+function riderTire(p){return Math.max(.05,Math.min(1,.05+riderBase()+.04*(p||0)))}
+function riderAdd(kind){const a={jump:.13,event:.22,race:.08,end:.1,dress:.07,volt:.06}[kind]||.08;S.rt={d:S.day,v:Math.min(1,riderBase()+a)}}
 function jumpApproach(fi){const h=cur(),n=ar.fences.length,F=riderTire(fi/(n-1)),hf=Math.min(1.1,(ar.cm||80)/120),k=1-cond(h);
   if(ar.tf&&ar.tf.at===fi){const T=S.tack;T.brk[ar.tf.key]=1;const w=ar.tf.w;ar.tf=null;save();
     if(w==='s'){ar.msg={t:1.6,txt:'Лопнула подпруга!',col:'#e2604f'};return riderFall('Лопнула подпруга, седло съехало')}
@@ -7328,7 +7331,7 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
 
 
 /* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
-const APP_V='4.5',SITE='https://aslan-bolshoy.github.io/podkova/';
+const APP_V='4.6',SITE='https://aslan-bolshoy.github.io/podkova/';
 const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
 const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
 let updShown=null,updTimer=null,updLater=0;

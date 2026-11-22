@@ -304,7 +304,7 @@ details summary{cursor:pointer}
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
     <div class="row" style="justify-content:center;gap:8px"><button class="btn ghost" id="verCheck" type="button">Проверить обновление</button><button class="btn ghost" id="verHard" type="button">Перезагрузить без кэша</button></div><p class="note" id="verMsg" role="status" style="text-align:center"></p>
-    <p class="note" id="verNote" style="text-align:center">Версия игры 4.7 · режимы всадника и коннозаводчика, кнопка «Свести всех кобыл», продажа нескольких лошадей сразу, при входе прогресс сам загружается с сервера, клубы игроков, конкурс красоты недели, свои вальтрапы и продажа вальтрапов, новые ежедневные задания, исправлен вход, ивент «Жеребячий бум», еда и вода не убывают, пока тебя нет, Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 4.8 · пять режимов игры на неделю (спрашиваем каждый понедельник), кнопка «Свести всех кобыл», продажа нескольких лошадей сразу, при входе прогресс сам загружается с сервера, клубы игроков, конкурс красоты недели, свои вальтрапы и продажа вальтрапов, новые ежедневные задания, исправлен вход, ивент «Жеребячий бум», еда и вода не убывают, пока тебя нет, Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
     <div class="card" id="wkCard"><span class="label">Лига недели · обнуляется каждый понедельник</span><div id="wkBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card" id="foalCard" hidden></div>
     <div class="card" id="beautyCard" hidden></div>
@@ -5461,7 +5461,11 @@ function calEvent(d){const e=CAL[sDay(d)];if(!e)return null;if(e.q&&seasonPts()<
 function calAward(place){wkAward(place);const e=calEvent();if(!e||e.closed)return 0;if(!S.season||S.season.id!==seasonKey())S.season={id:seasonKey(),pts:0,days:{}};
   const pts=Math.round(([10,7,5,3,1][place]||1)*e.p),prev=S.season.days[S.day]||0;if(pts>prev){S.season.pts+=pts-prev;S.season.days[S.day]=pts;return pts-prev}return 0}
 const prizeMult=()=>{const e=calEvent();return Math.max(S.day%5===0?2:1,e&&!e.closed?e.m:1)*(S.mode==='rider'?1.25:1)};
-const breedCost=()=>60;
+const modeId=()=>MODES[S.mode]?S.mode:'breeder';
+const breedCost=()=>modeId()==='breeder'?60:80;
+const xpMult=()=>modeId()==='trainer'?1.4:1;
+const decayMult=()=>modeId()==='keeper'?.6:1;
+const taskMult=()=>modeId()==='keeper'?1.5:1;
 function seasonEnd(news,oldDay){const k=yearOf(oldDay)+'-'+seasonOf(oldDay);if(!S.season||S.season.id!==k)return;const pts=S.season.pts;
   S.seasons=S.seasons||[];let r='';if(pts>=45){S.coins+=500;S.cups=(S.cups||0)+1;r='Чемпион сезона! +500 монет и кубок'}else if(pts>=25){S.coins+=200;r='Призёр сезона: +200 монет'}else if(pts>=10){S.coins+=60;r='Участник сезона: +60 монет'}
   S.seasons.unshift({id:k,n:SEASONS[seasonOf(oldDay)]+' '+yearOf(oldDay),pts,r});S.seasons=S.seasons.slice(0,8);S.season=null;news.unshift(`Сезон окончен: ${pts} очков. ${r||'В следующем сезоне получится лучше'}`)}
@@ -5485,7 +5489,7 @@ const ACH=[
   {id:'healed',n:'Вылечили',d:'Полностью вылечи серьёзную травму',r:40,ok:()=>!!S.stats.healed},
   {id:'rich',n:'Богатая конюшня',d:'Накопи 1000 монет',r:50,ok:()=>S.coins>=1000}];
 function checkAch(){S.ach=S.ach||{};ACH.forEach(a=>{if(!S.ach[a.id]&&a.ok()){S.ach[a.id]=S.day;S.coins+=a.r;setTimeout(()=>{toast(`Достижение «${a.n}»: +${a.r} монет`);SFX.win()},600)}})}
-const sellPrice=h=>Math.round(BREEDS[h.breed].price*.6+h.level*25+h.ribbons.length*5);
+const sellPrice=h=>Math.round((BREEDS[h.breed].price*.6+h.level*25+h.ribbons.length*5)*(S.mode==='dealer'?1.2:1));
 function addXP(h,n){h.xp+=n;while(h.level<10&&h.xp>=need(h.level)){h.xp-=need(h.level);h.level++;toast(`${h.name} теперь на уровне ${h.level}`)}if(h.level>=10)h.xp=Math.min(h.xp,need(10))}
 
 /* ============ HORSE DRAWING v2: анатомия, суставы и настоящие аллюры ============ */
@@ -6033,7 +6037,7 @@ $('#nightBtn').addEventListener('click',()=>{if(night)return;try{candleReport()}
   {const w=staffWage();if(w){if(S.coins>=w){S.coins-=w;news.push(`Зарплата персоналу: −${w} монет`)}else{Object.keys(S.staff).forEach(k=>S.staff[k]=0);news.push('Не хватило денег на зарплату — персонал уволился')}}}
   const bl=S.build||{};if(bl.barn){S.food.hay+=bl.barn*2}if(stf('feeder'))S.food.hay+=3*stf('feeder');
   {const n=S.horses.length,need=[['groom',groomCap()],['farrier',stf('farrier')*6]].filter(([k,c])=>(k==='groom'?(stf('groom')||stf('headgroom')):stf(k))&&c<n);if(need.length)news.push(`Персоналу не хватает рук: ${need.map(([k,c])=>`${k==='groom'?'конюхи':STAFF[k].n.toLowerCase()} обслуживают ${c} из ${n} лошадей`).join(', ')}`)}
-  S.horses.slice().forEach(h=>{h.energy=clamp(h.energy+65);h.hunger=clamp(h.hunger-18);h.thirst=clamp(h.thirst-22);h.hooves=clamp(h.hooves-(hasCh(h,'hoof')?10:5));h.joy=0;
+  S.horses.slice().forEach(h=>{h.energy=clamp(h.energy+65);h.hunger=clamp(h.hunger-Math.round(18*decayMult()));h.thirst=clamp(h.thirst-Math.round(22*decayMult()));h.hooves=clamp(h.hooves-(hasCh(h,'hoof')?10:5));h.joy=0;
     addManure(h,ri(1,3));addDirt(h,h.rug?ri(0,1):ri(2,4)+(S.weather==='rain'?2:0));addStones(h,ri(0,2));h.mangerHay=0;
     h.load=clamp((h.load||0)-(h.workedToday?4:16));h.workedToday=false;if(h.rest>0)h.rest--;
     if(h.inj){const i=h.inj,I=INJ[i.type];i.care+=Math.min(2,i.cToday||0);i.careDays++;i.cToday=0;i.done={};
@@ -6095,8 +6099,8 @@ function genTasks(){return Object.keys(TASKS).sort(()=>Math.random()-.5).slice(0
 const DQ={start:{n:'Проведи 2 старта',g:2,r:30},train:{n:'Сделай 2 тренировки',g:2,r:30},groom:{n:'Счисти 15 пятен грязи',g:15,r:20},podium:{n:'Займи место на подиуме',g:1,r:40},win:{n:'Выиграй соревнование',g:1,r:60},clear:{n:'Пройди конкур без штрафов',g:1,r:50}};
 const today=()=>new Date().toISOString().slice(0,10);
 function dqInit(){if(!S.dq||S.dq.date!==today()){const ks=Object.keys(DQ).sort(()=>Math.random()-.5).slice(0,3);S.dq={date:today(),q:ks.map(k=>({k,got:0,done:0}))}}}
-function dq(k,n=1){dqInit();S.dq.q.forEach(q=>{const d=DQ[q.k];if(q.k===k&&!q.done){q.got=Math.min(d.g,q.got+n);if(q.got>=d.g){q.done=1;S.coins+=d.r;setTimeout(()=>{toast(`Ежедневное задание «${d.n}»: +${d.r} монет`);SFX.coin()},500)}}});if(!S.dq.bonus&&S.dq.q.every(q=>q.done)){S.dq.bonus=1;S.coins+=50;if(fairOn())giftAdd(1);setTimeout(()=>toast('Все задания дня выполнены: бонус +50 монет'+(fairOn()?' и подарок':'')),1400)}}
-function task(k,n=1){if(k==='show')dq('start');if(k==='brush')dq('groom',n);if(k==='ribbon')dq('podium');(S.tasks||[]).forEach(q=>{const d=TASKS[q.k];if(q.k===k&&q.got<d.n){q.got=Math.min(d.n,q.got+n);if(q.got>=d.n){S.coins+=d.r;toast(`Задание выполнено: +${d.r} монет`);SFX.coin()}}});renderTasks()}
+function dq(k,n=1){dqInit();S.dq.q.forEach(q=>{const d=DQ[q.k];if(q.k===k&&!q.done){q.got=Math.min(d.g,q.got+n);if(q.got>=d.g){q.done=1;const rw=Math.round(d.r*taskMult());S.coins+=rw;setTimeout(()=>{toast(`Ежедневное задание «${d.n}»: +${rw} монет`);SFX.coin()},500)}}});if(!S.dq.bonus&&S.dq.q.every(q=>q.done)){S.dq.bonus=1;S.coins+=50;if(fairOn())giftAdd(1);setTimeout(()=>toast('Все задания дня выполнены: бонус +50 монет'+(fairOn()?' и подарок':'')),1400)}}
+function task(k,n=1){if(k==='show')dq('start');if(k==='brush')dq('groom',n);if(k==='ribbon')dq('podium');(S.tasks||[]).forEach(q=>{const d=TASKS[q.k];if(q.k===k&&q.got<d.n){q.got=Math.min(d.n,q.got+n);if(q.got>=d.n){const rw=Math.round(d.r*taskMult());S.coins+=rw;toast(`Задание выполнено: +${rw} монет`);SFX.coin()}}});renderTasks()}
 function renderTasks(){$('#tasks').innerHTML=(S.tasks||[]).map(q=>{const d=TASKS[q.k];const done=q.got>=d.n;return`<div class="task${done?' done':''}"><span>${d.t}</span><b>${done?'готово':q.got+'/'+d.n}</b><small>+${d.r}</small></div>`}).join('')}
 
 /* rename */
@@ -6174,15 +6178,30 @@ function renderHerd(){const list=herdList();const key=list.map(h=>h.id+h.name+h.
     b.insertAdjacentHTML('beforeend',`<span>${herdSelMode&&herdSel.has(h.id)?'✓ ':''}${esc(h.name)}</span><small>${h.retired?'на пенсии':h.inj?'травма':isFoal(h)&&momOf(h)?'с мамой':sexWord(h)+' · ур. '+h.level}</small>`);
     if(herdSelMode&&herdSel.has(h.id)){b.style.boxShadow='0 0 0 3px #e8ad48';b.style.borderRadius='14px'}
     b.addEventListener('click',()=>{if(herdSelMode){if(h.preg){toast('Кобылу в положении продать нельзя');return}herdSel.has(h.id)?herdSel.delete(h.id):herdSel.add(h.id);herdKey='';renderHerd();return}$('#sellBox').hidden=true;S.cur=h.id;anim=null;neckCur=0;xoCur=0;herdKey='';ui();save()});el.appendChild(b);miniHorse(cv,h)})}
-/* ---- режимы игры: коннозаводчик и всадник ---- */
-const MODES={breeder:{n:'Коннозаводчик',e:'🐴',d:'Случка дешевле (60 монет), кнопка «Свести всех кобыл», все инструменты разведения.'},
-  rider:{n:'Всадник',e:'🏇',d:'Призы за соревнования ×1,25. Растёт мастерство всадника (до 100): меньше падений и усталости. Разведение отключено.'}};
-function renderModeCard(){const el=$('#modeCard');if(!el)return;const cur_=S.mode==='rider'?'rider':'breeder',can=S.modeDay!==S.day||!S.mode;
-  el.innerHTML=`<span class="label">⚙ Режим игры</span><div class="row" style="gap:8px;align-items:stretch;flex-wrap:wrap">${Object.entries(MODES).map(([k,m])=>`<button class="btn${k===cur_?'':' ghost'}" data-mode="${k}" style="flex:1;min-width:140px;display:block;text-align:left;padding:10px 12px;height:auto"><b style="display:block">${m.e} ${m.n}${k===cur_?' · выбран':''}</b><small style="display:block;margin-top:4px;white-space:normal;font-weight:500;line-height:1.3">${m.d}</small></button>`).join('')}</div>
-    <p class="note" style="text-align:left">${cur_==='rider'?`Мастерство всадника: <b>${Math.round(S.skill||0)}</b> из 100 (падения реже на ${Math.round((S.skill||0)*.4)}%, усталость копится медленнее на ${Math.round((S.skill||0)*.3)}%). `:''}Режим можно менять один раз за игровой день. Лошади, деньги и прогресс не теряются.</p>`;
-  el.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>{const k=b.dataset.mode;if(k===cur_)return;if(!can){toast('Режим уже меняли сегодня. Следующая смена после ночи');return}
-    if(b.dataset.ask!=='1'){b.dataset.ask='1';const t=b.querySelector('b');t.textContent='Точно сменить?';setTimeout(()=>{if(b.isConnected)renderModeCard()},3000);return}
-    S.mode=k;S.modeDay=S.day;herdKey='';toolsKey='';SFX.neigh();toast('Режим: '+MODES[k].n);ui();save();renderModeCard();try{renderBreed(cur())}catch(e){}})}
+/* ---- режимы игры: меняются раз в неделю, в понедельник спрашиваем при входе ---- */
+const MODES={breeder:{n:'Коннозаводчик',e:'🐴',d:'Случка 60 монет вместо 80, кнопка «Свести всех кобыл», все инструменты разведения.'},
+  rider:{n:'Всадник',e:'🏇',d:'Призы за соревнования ×1,25 и растущее мастерство всадника: меньше падений и усталости. Разведение отключено.'},
+  trainer:{n:'Тренер',e:'🎓',d:'Опыт лошадей за соревнования ×1,4: уровни растут быстрее.'},
+  dealer:{n:'Торговец',e:'💰',d:'Лошади продаются дороже на 20%, цены по умолчанию выше при продаже и выставлении на рынок.'},
+  keeper:{n:'Хранитель конюшни',e:'🧺',d:'Еда и вода убывают на 40% медленнее, награды за задания дня ×1,5.'}};
+function modeGrid(sel,onPick){const w=document.createElement('div');w.style.cssText='display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px';
+  Object.entries(MODES).forEach(([k,m])=>{const b=document.createElement('button');b.className='btn'+(k===sel?'':' ghost');b.dataset.mode=k;b.style.cssText='display:block;text-align:left;padding:10px 12px;height:auto';
+    b.innerHTML=`<b style="display:block">${m.e} ${m.n}${k===sel?' · выбран':''}</b><small style="display:block;margin-top:4px;white-space:normal;font-weight:500;line-height:1.3">${m.d}</small>`;b.onclick=()=>onPick(k,b);w.appendChild(b)});return w}
+function pickMode(k){S.mode=k;S.modeWeek=weekId();herdKey='';toolsKey='';SFX.neigh();toast('Режим на неделю: '+MODES[k].n);ui();save();try{renderBreed(cur())}catch(e){}}
+function renderModeCard(){const el=$('#modeCard');if(!el)return;const cur_=modeId(),can=S.modeWeek!==weekId()||!S.mode;
+  el.innerHTML=`<span class="label">⚙ Режим игры</span>`;const g=modeGrid(cur_,(k,b)=>{if(k===cur_)return;if(!can){toast('Режим уже выбран на эту неделю. Смена в понедельник, при входе в игру тебя спросят');return}
+    if(b.dataset.ask!=='1'){b.dataset.ask='1';b.querySelector('b').textContent='Точно выбрать на неделю?';setTimeout(()=>{if(b.isConnected)renderModeCard()},3000);return}
+    pickMode(k);renderModeCard()});el.appendChild(g);
+  el.insertAdjacentHTML('beforeend',`<p class="note" style="text-align:left">${cur_==='rider'?`Мастерство всадника: <b>${Math.round(S.skill||0)}</b> из 100 (падения реже на ${Math.round((S.skill||0)*.4)}%, усталость копится медленнее на ${Math.round((S.skill||0)*.3)}%). `:''}${can?'Режим можно выбрать сейчас.':'Режим выбран до понедельника.'} Каждый понедельник при входе в игру тебя спросят, оставить режим или выбрать другой. Лошади, деньги и прогресс не теряются.</p>`)}
+function checkModePrompt(){if(!S||!S.horses||!S.horses.length||document.getElementById('modeModal'))return;if(S.modeWeek===weekId())return;
+  if([...document.querySelectorAll('button')].some(b=>b.offsetParent&&b.textContent.trim()==='Пропустить'))return;
+  const ov=document.createElement('div');ov.id='modeModal';ov.style.cssText='position:fixed;inset:0;z-index:300;background:rgba(5,12,8,.78);display:flex;align-items:center;justify-content:center;padding:14px;overflow:auto';
+  const card=document.createElement('div');card.className='card';card.style.cssText='max-width:560px;width:100%;max-height:92vh;overflow:auto';
+  const first=!S.mode;card.innerHTML=`<span class="label">${first?'Выбери режим игры':'Новая неделя'}</span><p class="note" style="text-align:left">${first?'Режим задаёт стиль игры.':'Начался новый понедельник.'} Выбери режим на неделю, он будет действовать до следующего понедельника.</p>`;
+  card.appendChild(modeGrid(modeId(),(k)=>{pickMode(k);ov.remove();renderModeCard()}));
+  const keep=document.createElement('div');keep.className='row';keep.style.cssText='justify-content:flex-start;margin-top:10px';keep.innerHTML=`<button class="btn ghost" id="modeKeep">Оставить: ${MODES[modeId()].n}</button>`;card.appendChild(keep);
+  ov.appendChild(card);document.body.appendChild(ov);$('#modeKeep').onclick=()=>{pickMode(modeId());ov.remove();renderModeCard()}}
+setInterval(()=>{try{checkModePrompt()}catch(e){}},6000);setTimeout(()=>{try{checkModePrompt()}catch(e){}},3500);
 function renderTrophy(){renderModeCard();const got=ACH.filter(a=>S.ach[a.id]).length;$('#achHead').textContent=`${got} из ${ACH.length}`;
   $('#achList').innerHTML=ACH.map(a=>{const ok=S.ach[a.id];return`<div class="item${ok?'':' locked'}"><svg><use href="#i-ros"/></svg><div><b>${a.n}</b><small>${a.d}${!ok&&a.prog?' · '+a.prog():''}${ok?' · день '+ok:''}</small></div><span class="tag">${ok?'есть':'+'+a.r}</span></div>`}).join('');
   $('#fameHead').textContent=`кубков ${S.cups||0} · чистых кругов ${S.stats.clear||0}`;
@@ -6508,7 +6527,7 @@ function settle(rows,cl,kind,extra){const h=cur();const place=rows.findIndex(r=>
     if(hit){const t=k>=3&&sel.jump>=2&&Math.random()<.25?'tendon':'bruise';injure(h,t,t==='tendon'?'неудачное приземление после сбитого барьера':`удары о жерди (${k} за заезд)`);injMsg=INJ[t].n}
     else if(sel.jump>=2&&h.load>60&&Math.random()<.08){injure(h,'back','высокие прыжки при большой нагрузке');injMsg=INJ.back.n}}
   else if(h.load>70&&Math.random()<.05){injure(h,'back','перегрузка на выездке');injMsg=INJ.back.n}
-  const coins=Math.round((place<3?cl.prize[place]:5)*prizeMult()*(1+.1*stf('manager'))),xp=Math.round((place<3?cl.xp:cl.xp/2)*(1+.25*stf('trainer')));const cpts=calAward(place);
+  const coins=Math.round((place<3?cl.prize[place]:5)*prizeMult()*(1+.1*stf('manager'))),xp=Math.round((place<3?cl.xp:cl.xp/2)*(1+.25*stf('trainer'))*xpMult());const cpts=calAward(place);
   S.coins+=coins;addXP(h,xp);h.energy=clamp(h.energy-(h.stamina?12:25));h.hunger=clamp(h.hunger-8);h.thirst=clamp(h.thirst-12);h.hooves=clamp(h.hooves-3);addDirt(h,kind==='jump'?3:2);addStones(h,1);
   task('show');if(place<3){h.ribbons.push({p:place,kind,day:S.day});task('ribbon');if(fairOn()&&Math.random()<.2&&giftAdd())setTimeout(()=>toast('🎁 Новогодний подарок! Открой его на рынке'),900)}if(place===0)dq('win');if(kind==='jump'&&rows[place]&&rows[place].f===0&&!ar.fallen)dq('clear');if(extra)task('dress');
   const me=rows[place];
@@ -6596,7 +6615,7 @@ function finishEnd(){const h=cur(),cl=ENDUR[sel.end];ar.running=false;ar.done=tr
   raceSubmit('end',{t:Math.round(myT),v:+(ar.tot/Math.max(.01,ar.clock/60)).toFixed(1),elim:ar.elim?ar.code:null,km:+ar.tot.toFixed(1)});
   settleEnd(rows,cl)}
 function settleEnd(rows,cl){const h=cur();const place=rows.findIndex(r=>r.me);const me=rows[place];const fin=!me.elim;const cup=cupDay();
-  const coins=fin?Math.round((place<3?cl.prize[place]:15)*prizeMult()*(1+.1*stf('manager'))):0;const xp=Math.round((fin?cl.xp:cl.xp/3)*(1+.25*stf('trainer')));const cpts=fin?calAward(place):0;if(cpts)setTimeout(()=>toast(`+${cpts} очков рейтинга сезона`),1200);
+  const coins=fin?Math.round((place<3?cl.prize[place]:15)*prizeMult()*(1+.1*stf('manager'))):0;const xp=Math.round((fin?cl.xp:cl.xp/3)*(1+.25*stf('trainer'))*xpMult());const cpts=fin?calAward(place):0;if(cpts)setTimeout(()=>toast(`+${cpts} очков рейтинга сезона`),1200);
   S.coins+=coins;addXP(h,xp);h.energy=clamp(h.energy-(h.stamina?18:35));h.hunger=clamp(h.hunger-15);h.thirst=clamp(h.thirst-(100-ar.hydr)*.4-10);h.hooves=clamp(h.hooves-6);addStones(h,ri(1,2));addDirt(h,4);
   task('show');S.stats.endKm=(S.stats.endKm||0)+Math.round(me.km||0);
   h.load=clamp((h.load||0)+15+cl.km/5);h.workedToday=true;h.lastWork='end';
@@ -6852,7 +6871,7 @@ function stepRace(dt){const c=ax,h=cur(),cl=RACE[sel.race];
   if(!ar.running&&!ar.done)overlay(c,`Скачки · ${cl.n}`,`${cl.m} м · береги силы к финишу · «Старт»`)}
 function finishRace(){const h=cur(),cl=RACE[sel.race];ar.running=false;ar.done=true;const me=ar.t;
   const rows=ar.riv.map(r=>({rider:r.name,horse:pickReal().n,t:cl.m/r.v}));rows.push({me:true,rider:'Ты',horse:h.name,t:me});rows.sort((a,b)=>a.t-b.t);const place=rows.findIndex(r=>r.me);
-  const coins=Math.round((place<3?cl.prize[place]:8)*prizeMult()*(1+.1*stf('manager'))),xp=Math.round((place<3?cl.xp:cl.xp/2)*(1+.25*stf('trainer'))),cpts=calAward(place);
+  const coins=Math.round((place<3?cl.prize[place]:8)*prizeMult()*(1+.1*stf('manager'))),xp=Math.round((place<3?cl.xp:cl.xp/2)*(1+.25*stf('trainer'))*xpMult()),cpts=calAward(place);
   S.coins+=coins;addXP(h,xp);h.energy=clamp(h.energy-30);h.hunger=clamp(h.hunger-12);h.thirst=clamp(h.thirst-18);h.hooves=clamp(h.hooves-5);addDirt(h,3);addStones(h,1);h.load=clamp((h.load||0)+10+cl.m/250);h.workedToday=true;h.lastWork='race';
   let inj='';const risk=ar.rush/Math.max(5,ar.tt)*.12+(h.load||0)/900+(h.prone||0)*.05;if(Math.random()<risk){const t=Math.random()<.2?'fracture':Math.random()<.5?'splint':'tendon';injure(h,t,'травма на скачках: слишком много рывков');inj=INJ[t].n}
   task('show');if(place<3){h.ribbons.push({p:place,kind:'race',day:S.day});task('ribbon')}if(place<3)SFX.win();else SFX.bad();
@@ -7375,7 +7394,7 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
 
 
 /* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
-const APP_V='4.7',SITE='https://aslan-bolshoy.github.io/podkova/';
+const APP_V='4.8',SITE='https://aslan-bolshoy.github.io/podkova/';
 const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
 const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
 let updShown=null,updTimer=null,updLater=0;

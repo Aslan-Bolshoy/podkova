@@ -302,7 +302,7 @@ details summary{cursor:pointer}
     <div class="card" id="onCard"><span class="label">Онлайн-клуб</span><p class="note">Подключаемся…</p></div>
     <p class="note card" id="errBox" hidden style="color:var(--bad)"></p>
     <div class="row" style="justify-content:center;gap:8px"><button class="btn ghost" id="verCheck" type="button">Проверить обновление</button><button class="btn ghost" id="verHard" type="button">Перезагрузить без кэша</button></div><p class="note" id="verMsg" role="status" style="text-align:center"></p>
-    <p class="note" id="verNote" style="text-align:center">Версия игры 4.4 · клубы игроков, конкурс красоты недели, свои вальтрапы и продажа вальтрапов, новые ежедневные задания, исправлен вход, ивент «Жеребячий бум», еда и вода не убывают, пока тебя нет, Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
+    <p class="note" id="verNote" style="text-align:center">Версия игры 4.5 · при входе прогресс сам загружается с сервера, клубы игроков, конкурс красоты недели, свои вальтрапы и продажа вальтрапов, новые ежедневные задания, исправлен вход, ивент «Жеребячий бум», еда и вода не убывают, пока тебя нет, Уголёк, починены кнопки обновления, сброс пароля, рекорды недели, старшие конюхи, соперники на экране, фильтры денников</p>
     <div class="card" id="wkCard"><span class="label">Лига недели · обнуляется каждый понедельник</span><div id="wkBox" style="display:flex;flex-direction:column;gap:8px"></div></div>
     <div class="card" id="foalCard" hidden></div>
     <div class="card" id="beautyCard" hidden></div>
@@ -6892,6 +6892,7 @@ async function supaSignedIn(u){ON.uid=u.id;ON.needLogin=false;ON.ok=true;setTime
   try{const {data}=await ON.sb.from('players').select('nick').eq('id',ON.uid).maybeSingle();ON.nick=cleanNick((data&&data.nick)||(u.user_metadata&&u.user_metadata.nick)||'Игрок')}catch(e){ON.nick='Игрок'}
   ON.names[ON.uid]=ON.nick;
   try{const {data}=await ON.sb.from('saves').select('day,coins,horses,updated_at,state').eq('id',ON.uid).maybeSingle();ON.cloud=data?{day:data.day,coins:data.coins,horses:data.horses,at:Date.parse(data.updated_at),state:data.state}:null}catch(e){}
+  if(S&&S.day<=2&&S.horses.length<=2&&ON.cloud&&ON.cloud.day>=5&&ON.cloud.state){try{cloudLoad()}catch(e){}}
   await supaRefresh();pushPlayer(true);
   if(view==='arena'&&disc==='end')joinRide(ENDUR[sel.end].km)}
 async function supaRefresh(){if(ON.be!=='supa'||!ON.ok)return;ON.poll=0;ON.lastRef=Date.now();candlePoll();foalPoll();
@@ -6919,7 +6920,8 @@ function pushPlayer(force){if(!ON.ok||ON.ro)return;const now=Date.now();if(!forc
   const body={score:Math.round(rib*10+(S.cups||0)*50+(S.stats.endKm||0)/5+ach*5+S.horses.reduce((a,h)=>a+h.level,0)*3),ribbons:rib,cups:S.cups||0,endKm:Math.round(S.stats.endKm||0),ach,day:S.day,horses:S.horses.length,top:topHorse().slice(0,60),best:Object.assign({},S.best||{},S.lastRace?{race:S.lastRace}:{},S.team?{team:S.team}:{},S.wk?{wk:{id:S.wk.id,pts:S.wk.pts}}:{},{herd:herdSnap(),offers:(S.myOffers||[]).slice(-6),dec:(S.declined||[]).slice(-20),duel:duelState()}),at:now};
   if(ON.be==='claude')writeQ(()=>ON.db.doc('players/'+ON.uid).set(body));
   else writeQ(()=>ON.sb.from('players').upsert({id:ON.uid,nick:ON.nick||'Игрок',score:body.score,ribbons:rib,cups:body.cups,end_km:body.endKm,ach,day:S.day,horses:body.horses,top:body.top,best:body.best,updated_at:new Date().toISOString()}).then(()=>{}))}
-function cloudSave(manual){if(!ON.ok||ON.ro)return;const txt=JSON.stringify(S);if(!manual&&txt===ON.lastSaved)return;ON.lastSaved=txt;
+function cloudBehind(){const c=ON.cloud;return !!(c&&c.day>=5&&S&&S.day+3<c.day&&S.horses.length<c.horses)}
+function cloudSave(manual){if(!ON.ok||ON.ro)return;if(cloudBehind()){if(manual)toast('На сервере прогресс дальше (день '+ON.cloud.day+'). Нажми «Загрузить с сервера», чтобы не потерять его');return}const txt=JSON.stringify(S);if(!manual&&txt===ON.lastSaved)return;ON.lastSaved=txt;
   if(ON.be==='claude'&&txt.length>240000){if(manual)toast('Сохранение слишком большое для облака');return}
   const at=Date.now();const body={state:txt,at,day:S.day,coins:S.coins,horses:S.horses.length};
   const done=()=>{ON.cloud=body;renderClub();if(manual)toast('Сохранено на сервере')},fail=()=>{if(manual)toast('Не удалось сохранить: нет связи с сервером')};
@@ -7326,7 +7328,7 @@ function loop(now){const dt=Math.min(.05,(now-(last||now))/1000);last=now;T+=dt;
 
 
 /* ===== обновления: игра сама узнаёт о новой версии и обновляется ===== */
-const APP_V='4.4',SITE='https://aslan-bolshoy.github.io/podkova/';
+const APP_V='4.5',SITE='https://aslan-bolshoy.github.io/podkova/';
 const vNum=v=>String(v||'0').split('.').map(Number).reduce((a,x)=>a*1000+(x||0),0);
 const onSite=()=>/github\.io$/.test(location.hostname),inApk=()=>location.protocol==='file:';
 let updShown=null,updTimer=null,updLater=0;
